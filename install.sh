@@ -103,10 +103,6 @@ if [ "$link" = 0 ]; then
 fi
 run mkdir -p "$dir"
 [ "$dry" = 1 ] || dir=$(cd "$dir" && pwd -P)
-# Personal skills get no CLAUDE_PLUGIN_ROOT and may not live in ~/.claude, so point the hook at the installed guard.
-# shellcheck disable=SC2016  # literal text in the frontmatter
-hook_from='${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/skills/raystack/hooks/'
-hook_to="$dir/raystack/hooks/"
 for s in $SKILLS; do
   dest="$dir/$s"
   ! skip_foreign "$dest" "$s" || continue
@@ -123,19 +119,11 @@ for s in $SKILLS; do
     rm -rf "$tmp"
     cp -R "$ROOT/skills/$s" "$tmp" || { rm -rf "$tmp"; die "copy failed for $s"; }
     cat "$ROOT/VERSION" > "$tmp/.raystack-installed" || { rm -rf "$tmp"; die "marker failed for $s"; }
-    if grep -qF "$hook_from" "$tmp/SKILL.md"; then
-      body=$(cat "$tmp/SKILL.md") || { rm -rf "$tmp"; die "hook read failed for $s"; }
-      printf '%s\n' "${body//"$hook_from"/$hook_to}" > "$tmp/SKILL.md" || { rm -rf "$tmp"; die "hook rewrite failed for $s"; }
-    fi
   fi
   rm -rf "$dest"
   mv "$tmp" "$dest"
 done
 
-if [ "$link" = 1 ]; then
-  echo "WARNING: --link cannot point the review hooks at the guard. In Claude Code the review" >&2
-  echo "skills will block every Bash command. Use a copy install, or claude --plugin-dir <checkout>." >&2
-fi
 [ -z "$hint" ] || echo "Tip: $agent also has a native plugin install: $hint"
 echo "Note: the read-only guard hook is enforced automatically only in Claude Code."
 echo "On other agents, pair reviews with read-only credentials. See docs/agents.md."

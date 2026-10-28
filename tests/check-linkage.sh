@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.." || exit 1
 REVIEWS=(aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review)
 CONTRACT='../raystack/references/review-contract.md'
 # shellcheck disable=SC2016  # literal text expected in the frontmatter
-HOOK='f="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/skills/raystack/hooks/readonly-guard.sh"; [ -x "$f" ] || { echo "RayStack review is read-only: guard missing at $f" >&2; exit 2; }; exec "$f"'
+HOOK='for f in "${CLAUDE_PLUGIN_ROOT}/skills/raystack/hooks/readonly-guard.sh" "${CLAUDE_PLUGIN_ROOT}/../raystack/hooks/readonly-guard.sh" "$HOME/.claude/skills/raystack/hooks/readonly-guard.sh"; do [ -x "$f" ] && exec "$f"; done; echo "RayStack review is read-only: guard missing" >&2; exit 2'
 
 check() { # check <description> <command...>
   local d=$1; shift

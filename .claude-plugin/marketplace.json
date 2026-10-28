@@ -9,7 +9,7 @@
     {
       "name": "raystack",
       "source": "./",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "description": "Skills by Harun R. Rayhan: read-only infrastructure reviews (AWS billing, security, bottlenecks, infra, scaling, databases), working principles, and blog writing in your own voice.",
       "category": "devops"
     }

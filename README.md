@@ -26,8 +26,7 @@ npx skills add HarunRRayhan/raystack -g -a claude-code
 
 The [skills CLI](https://skills.sh) installs all sixteen skills globally. Swap `claude-code` for
 `codex` or `cursor`, list several (`-a claude-code codex`), or drop `-a` to pick from a list of
-agents. In Claude Code, the read-only guard works from `~/.claude/skills/`. A project-level
-install (without `-g`) can't find it, so its reviews block every shell command.
+agents.
 
 The per-agent options below do the same thing in each agent's own way.
 
@@ -84,9 +83,6 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ```
 
 `--dry-run` shows what it would do and `--uninstall` removes exactly the sixteen RayStack skills.
-A copy install points each review's guard hook at the installed guard. A `--link` install
-can't, so in Claude Code its reviews block every shell command; use a copy install or
-`claude --plugin-dir` there.
 Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 
 ## Run a review
