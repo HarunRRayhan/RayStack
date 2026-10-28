@@ -106,11 +106,14 @@ and the SQL clients get read verbs only, one SQL read per call with no SQL comme
 such as `pulumi`, `cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked outright, as are
 `pg_dump` and `pg_restore`, and commands that print secret values or credentials (for example
 `terraform show`, `helm get values`, `aws ecr get-login-password`). A name counts even inside a
-hyphenated or slashed word (`aws-cdk`, `amazon/aws-cli`), and package runners (`npx`, `bunx`,
-`uvx`, `pnpm dlx`, `pipx run`) and `docker run` are blocked during a review.
+hyphenated or slashed word (`aws-cdk`, `amazon/aws-cli`). Package runners (`npx`, `bunx`, `uvx`),
+shells (`bash`, `sh -c`, `env`) and most `npm`, `yarn` and `docker` subcommands are blocked during
+a review; only a short list of reads such as `docker ps`, `docker logs --tail 200` and `npm ls`
+gets through. Reads that return env vars or user data (Lambda configs, ECS task definitions,
+launch templates) are left for you to run.
 
 Everything else is not checked: other tools, the agent's own file Read tool, and scripts in
-the repo (a `make` target or `npm run` script can do anything). The guard is a seatbelt, not a
+the repo (a `make` target can do anything). The guard is a seatbelt, not a
 sandbox, and it only switches on by itself in Claude Code. In Cursor, Codex and Grok the
 reviews follow the same rules but nothing enforces them. Either way, run reviews with read-only
 credentials (AWS `ReadOnlyAccess` or `ViewOnlyAccess`, a read-only DB role). Those are the real

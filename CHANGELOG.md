@@ -17,8 +17,28 @@ Read-only guard fixes.
   `helm get values|all|manifest`.
 - More tools are blocked outright: `vc`, `ntl`, `cdktf`, `sst`, `amplify`, `copilot`, `dropuser`,
   `createuser`, `pg_dump`, `pg_dumpall` and `pg_restore`.
-- `docker --context x compose config` and other global flags before `compose` no longer skip the
-  compose secret check.
+- Container CLIs (`docker`, `podman`, `nerdctl`, compose) are a read allow-list: `ps`, `images`,
+  `image ls|inspect`, `version`, `info`, `system df`, `stats --no-stream`, `logs --tail N` (N at
+  most 200) and `compose ps|ls|images|logs|config --services`. No flags before the subcommand, and
+  no `NAME=value`, `export` or `set` in the same command. `docker inspect` is blocked (env vars).
+- Shells and `env` are blocked as any word in a command, so `sh -c "..."` can't hide a command.
+- `npm` allows only `ls`, `list`, `view`, `outdated`, `audit` (no `fix`), `why`, `explain` and
+  `--version`. `yarn`, `pnpm` and `bun` allow only `--version` (they run package.json scripts for
+  unknown verbs).
+- Cloud ops whose names look secret-ish (secret, password, token, credential, keys list,
+  connection string, decrypt, ...) are blocked unless on a short metadata-only list (`kms
+  list-keys`, `secretsmanager list-secrets`, `iam list-access-keys`, `gcloud secrets list`, ...).
+  `--with-decryption`, `--include-value`, `--cli-input-*` and `--generate-cli-skeleton` are blocked
+  by prefix, so abbreviations count.
+- Reads that return env vars, user data or passwords are blocked outright: `ssm get-parameter*`,
+  Lambda function configs and lists, `ecs describe-task-definition`, launch template data and
+  versions, `glue get-connection(s)`, `cognito-idp describe-user-pool-client` and userData
+  attributes. Checklist steps that used them are now commands for you to run.
+- `kubectl get` takes only allow-listed flags, and `-o` only `json`, `yaml`, `wide`, `name`,
+  `jsonpath=` or `custom-columns=`. No `-f`, `-k`, `-R`, `-w` or `--raw`.
+- `helm`: `list`, `history` and `status` only in table form, `status` only with `--hide-notes`,
+  `get metadata` only, and no `template`.
+- The review contract notes that logs can hold secrets and must be redacted before quoting.
 
 ## 0.1.0 (2026-10-28)
 
