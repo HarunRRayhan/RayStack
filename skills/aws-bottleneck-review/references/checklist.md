@@ -65,7 +65,7 @@ Conventions:
 - **Check:** integration timeout on buffered REST/HTTP APIs (29 s REST default, 30 s HTTP API
   max) against Lambda `Timeout` and any long-running or streaming endpoint (SSE, long polling).
 - **IaC:** `grep -rnE --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.terraform 'timeout_milliseconds|TimeoutInMillis|timeoutInMillis|integration_timeout' .`
-- **Live:** `aws lambda list-functions --query 'Functions[].[FunctionName,Timeout,MemorySize,Runtime]' --output table`
+- **Live:** (Commands for you to run: the guard blocks Lambda config reads, which include env vars; keep a `--query` that leaves out Environment) `aws lambda list-functions --query 'Functions[].[FunctionName,Timeout,MemorySize,Runtime]' --output table`
 - **Why:** the gateway cuts the client at about 29 s while the function keeps running and
   billing. SSE through API Gateway dies at the same mark.
 - **Fix:** set the function timeout just below the gateway (28 s); move long work to a queue and
@@ -182,7 +182,7 @@ Conventions:
 
 ### C5. Memory sizing (CPU scales with memory)
 - **Check:** CPU-bound functions at low memory; `Max Memory Used` vs `MemorySize`.
-- **Live:** `aws lambda get-function-configuration --function-name FUNCTION_NAME --query '[MemorySize,Timeout,Architectures,EphemeralStorage.Size]'`
+- **Live:** (Commands for you to run: the guard blocks Lambda config reads, which include env vars; keep a `--query` that leaves out Environment) `aws lambda get-function-configuration --function-name FUNCTION_NAME --query '[MemorySize,Timeout,Architectures,EphemeralStorage.Size]'`
 - **Why:** under 1,769 MB a function gets less than one vCPU; doubling memory can halve duration
   at the same cost.
 - **Fix:** power-tune memory; move to `arm64` where dependencies allow.

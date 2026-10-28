@@ -430,6 +430,22 @@ BLOCK=(
   # v0.1.1 round 2: helm status needs --hide-notes; no helm template
   'helm template x ./c'
   'helm template x ./c --validate'
+  # v0.1.1 round 2: deny outright, no --query exceptions; any shell or env word denies
+  "aws lambda get-function-configuration --function-name f --query '[MemorySize,Timeout]'"
+  "aws lambda list-functions --query 'Functions[].[FunctionName,Runtime]' --output table"
+  "aws lambda list-functions --qu 'Functions[].Environment'"
+  "aws ecs describe-task-definition --task-definition t --query 'taskDefinition.cpu'"
+  "aws ec2 describe-launch-template-versions --launch-template-id lt --query 'LaunchTemplateVersions[].VersionNumber'"
+  'aws glue get-connections --hide-password'
+  'aws glue get-connections --hide-password --no-hide-password'
+  'bash -o posix -c "npx x"'
+  'fish -c "npx x"'
+  'bash x.sh'
+  '/bin/sh x.sh'
+  'busybox sh'
+  'tcsh -c ls'
+  'env ls'
+  'ls | env'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -512,7 +528,6 @@ ALLOW=(
   'docker compose ps'
   'ls fly.toml serverless.yml cdk.json'
   # v0.1.1
-  'bash skills/raystack/scripts/report-pdf.sh /r/reviews/2026-10-28-aws-billing-review.md'
   'docker ps'
   'npm ls'
   'helm get metadata x'
@@ -562,13 +577,7 @@ ALLOW=(
   'kubectl get pods --context c'
   'kubectl get pods -nx'
   # v0.1.1 round 2 (E)
-  "aws lambda get-function-configuration --function-name f --query '[MemorySize,Timeout]'"
-  "aws lambda list-functions --query 'Functions[].[FunctionName,Runtime]' --output table"
-  "aws ecs describe-task-definition --task-definition t --query 'taskDefinition.cpu'"
-  "aws ec2 describe-launch-template-versions --launch-template-id lt --query 'LaunchTemplateVersions[].VersionNumber'"
-  'aws glue get-connections --hide-password'
   'aws ec2 describe-instance-attribute --instance-id i-1 --attribute instanceType'
-  'bash skills/raystack/scripts/report-pdf.sh r.md'
   # v0.1.1 round 2: reads that stay allowed
   'npm ls'
   'npm list --depth 0'
@@ -590,6 +599,8 @@ ALLOW=(
   'kubectl get pods -oname'
   "kubectl get pods -o custom-columns=NAME:.metadata.name"
   'helm status x --hide-notes'
+  '/abs/skills/raystack/scripts/report-pdf.sh /r/reviews/2026-10-28-aws-billing-review.md'
+  'skills/raystack/scripts/report-pdf.sh r.md'
 )
 
 for c in "${BLOCK[@]}"; do

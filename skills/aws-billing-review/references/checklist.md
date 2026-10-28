@@ -64,7 +64,7 @@ Conventions:
 ### B2. Graviton candidates
 - **Check:** x86 instances, RDS classes, Fargate tasks and Lambdas running Linux workloads with no x86-only binaries.
 - **IaC:** `grep -rnE 'instance_type.*(m[5-7]i?|c[5-7]i?|r[5-7]i?|t3)[.]|cpu_architecture|architectures' --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.terraform --exclude-dir=cdk.out --exclude='*.tfstate*' .`
-- **Cmd:** `aws lambda list-functions --query 'Functions[].[FunctionName,Architectures[0],MemorySize,Runtime]' --output table`
+- **Cmd:** (Commands for you to run: the guard blocks Lambda config reads, which include env vars; keep a `--query` that leaves out Environment) `aws lambda list-functions --query 'Functions[].[FunctionName,Architectures[0],MemorySize,Runtime]' --output table`
 - **Fix:** switch to the `g` family (m7g, c7g, r7g, t4g, db.m7g) or `arm64` / `ARM64`. Rebuild container images multi-arch first.
 - **$/mo:** about 20% of the instance cost for EC2/RDS (compare the two list prices), 20% of Lambda duration cost, 20% of Fargate vCPU+memory cost.
 

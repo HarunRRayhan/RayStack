@@ -352,7 +352,8 @@ with the value masked, for example `AKIA************WXYZ`.
 
 ### 8.1 IMDSv2 required
 - **Evidence:** `aws ec2 describe-instances --query 'Reservations[].Instances[].[InstanceId,MetadataOptions.HttpTokens,MetadataOptions.HttpPutResponseHopLimit]' --output text`;
-  `aws ec2 get-instance-metadata-defaults`;
+  `aws ec2 get-instance-metadata-defaults`. Launch templates (Commands for you to run: the guard
+  blocks them because they include UserData; keep a `--query` that leaves out UserData):
   `aws ec2 describe-launch-template-versions --launch-template-id LT_ID --query 'LaunchTemplateVersions[].[VersionNumber,LaunchTemplateData.MetadataOptions.HttpTokens]' --output text`.
   IaC: missing `metadata_options { http_tokens = "required" }`.
 - **Why:** with IMDSv1, one SSRF bug in the app hands out the instance role credentials.

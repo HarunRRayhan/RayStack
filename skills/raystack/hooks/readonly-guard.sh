@@ -80,35 +80,6 @@ _walk() {
   return 0
 }
 
-# _aws_leaky "<svc op>" args...: 1 (GUARD_REASON set) when the op prints env vars, user data or passwords.
-# Some are allowed with a --query that names none of those fields.
-_aws_leaky() {
-  local op=$1 q="" bad="" all; shift
-  all=" $(_lc "$*") "
-  while [ $# -gt 0 ]; do
-    case "$1" in --query) q=${2:-}; shift ;; --query=*) q=${1#*=} ;; esac
-    shift
-  done
-  q=$(_lc "$q")
-  case "$op" in
-    "ssm get-parameter"*|"cognito-idp describe-user-pool-client"|"ec2 get-launch-template-data") _deny "aws $op prints secret values"; return 1 ;;
-    "glue get-connection"|"glue get-connections") case "$all" in *" --hide-password "*) return 0 ;; esac
-      _deny "aws $op only with --hide-password"; return 1 ;;
-    "ec2 describe-instance-attribute") [[ "$all" == *userdata* ]] || return 0
-      _deny "aws $op userData can hold secrets"; return 1 ;;
-    "lambda get-function"|"lambda get-function-configuration"|"lambda list-functions"|"lambda list-versions-by-function") bad=environment ;;
-    "ecs describe-task-definition") bad="environment secret" ;;
-    "ec2 describe-launch-template-versions") bad=userdata ;;
-    *) return 0 ;;
-  esac
-  # shortcut: a --query that projects whole objects (Functions[]) still leaks; reviews use field lists.
-  [ -n "$q" ] || { _deny "aws $op only with a --query that avoids $bad"; return 1; }
-  for w in $bad; do
-    [[ "$q" == *"$w"* ]] && { _deny "aws $op --query must not include $w"; return 1; }
-  done
-  return 0
-}
-
 # _tail_ok args...: a --tail N with N <= 200 is present (bounded log reads).
 _tail_ok() {
   while [ $# -gt 0 ]; do
@@ -176,7 +147,12 @@ _eval_cli() {
       a="${P[0]:-}"; b="${P[1]:-}"
       [ -z "$b" ] && [ "$a" != configure ] && return 0
       _secret_op "aws $a $b" && return 1
-      _aws_leaky "$a $b" "$@" || return 1
+      # Env vars, user data and passwords: no --query or flag filters them reliably, so deny outright.
+      case "$a $b" in
+        "ssm get-parameter"*|"cognito-idp describe-user-pool-client"|"lambda get-function"|"lambda get-function-configuration"|"lambda list-functions"|"lambda list-versions-by-function"|"ecs describe-task-definition"|"ec2 describe-launch-template-versions"|"ec2 get-launch-template-data"|"glue get-connection"|"glue get-connections")
+          _deny "aws $a $b prints env vars, user data or secrets"; return 1 ;;
+        "ec2 describe-instance-attribute") [[ "$(_lc "$*")" == *userdata* ]] && { _deny "aws $a $b userData can hold secrets"; return 1; } ;;
+      esac
       [ "$a $b" = "configure get" ] && [[ "$(_lc "$*")" =~ $_SECRET_OP ]] && { _deny "aws configure get prints credentials"; return 1; }
       case "$a $b" in
         "s3 ls"|"logs start-query"|"logs stop-query"|"logs get-query-results"|"configure list"|"configure get"|"configure list-profiles") return 0 ;;
@@ -446,12 +422,8 @@ guard_check() {
         esac
         _deny "$name ${TOK[i + 1]:-} is not on the read allow-list"; return 1 ;;
       pipx|uv) f=' run ' ;;
-      # A shell -c string hides its command from these checks.
-      sh|bash|zsh|dash|ksh)
-        for ((j = i + 1; j < n; j++)); do
-          case "${TOK[j]}" in -*c*) [[ "${TOK[j]}" =~ ^-[a-zA-Z]*c ]] && { _deny "$name -c not allowed during review"; return 1; } ;; -*) ;; *) break ;; esac
-        done
-        continue ;;
+      # A shell (or env) runs a string or a command these checks never see.
+      sh|bash|zsh|dash|ksh|mksh|fish|csh|tcsh|busybox|env) _deny "$name not allowed during review"; return 1 ;;
       docker|podman|nerdctl|docker-compose|podman-compose)
         # DOCKER_HOST, COMPOSE_FILE and friends point the read at another daemon or file.
         [ "$i" -gt 0 ] && [[ "${TOK[i - 1]}" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] && { _deny "env prefix before $name not allowed during review"; return 1; }
