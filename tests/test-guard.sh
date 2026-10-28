@@ -267,6 +267,11 @@ BLOCK=(
   'docker -H tcp://h compose config'
   'docker --context=x --debug compose config'
   'podman compose config'
+  # v0.1.1: kubectl raw reads and secret paths
+  'kubectl get --raw /api/v1/namespaces/default/secrets'
+  'kubectl get --raw=/healthz'
+  'oc get -raw /healthz'
+  'kubectl get deploy/x,v1/secrets'
 )
 ALLOW=(
   'aws ec2 describe-instances'

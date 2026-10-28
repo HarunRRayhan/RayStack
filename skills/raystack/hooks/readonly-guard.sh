@@ -144,7 +144,9 @@ _eval_cli() {
       a="${P[0]:-}"
       if [ "$a" = get ]; then
         for w in "$@"; do
-          [[ "$(_lc "$w")" =~ (^|,)secrets?([/,.]|$) ]] && { _deny "$cli get secret prints secret values"; return 1; }
+          # --raw reaches any API path, secrets included.
+          case "$w" in --raw|--raw=*|-raw|-raw=*) _deny "$cli get --raw not allowed during review"; return 1 ;; esac
+          [[ "$(_lc "$w")" =~ (^|[,/])secrets?([/,.?]|$) ]] && { _deny "$cli get secret prints secret values"; return 1; }
         done
       fi
       [ -z "$a" ] || [[ "$a" =~ $_KUBE_READ ]] && return 0
