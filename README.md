@@ -121,7 +121,11 @@ boundary. The full rules are in [the review contract](skills/raystack/references
 
 In Claude Code, once a review starts the guard stays on for the rest of the session. It then
 also blocks `$`, backslashes, unquoted globs (`*`, `?`, `[ ]`) and redirects (`>`, `<`) in any
-shell command, not only cloud ones. Start a new session after a review.
+shell command, not only cloud ones. It also blocks any command that mentions a shell, `env`,
+`ssh` or `scp`, a package runner (`npx`, `uv run`, `npm test` or other scripts, `yarn`, `pnpm`
+and `bun` except `--version`), a container lifecycle command (`docker compose up`, `docker run`),
+a docker flag before the subcommand, or a monitored tool's name anywhere (so `grep -n npm
+Dockerfile` and `grep -rn "@aws-sdk" .` are blocked too). Start a new session after a review.
 
 ## What you get back
 
