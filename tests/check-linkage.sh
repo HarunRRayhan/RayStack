@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Each review skill links the shared contract, its checklist and the guard hook.
-# The entry skill names all six reviews.
+# The entry skill names all six reviews. The blog skill names the content skills.
 cd "$(dirname "$0")/.." || exit 1
 # shellcheck source=/dev/null
 . ./tests/lib.sh
@@ -35,4 +35,26 @@ if [ -f "$entry" ]; then
 else
   fail "missing $entry"
 fi
+
+# The blog entry skill names the content skills, both voice paths and the voice sections.
+CONTENT=(blog-topics blog-draft humanize blog-cover)
+VOICE_H2=('## Tone' '## Openings' '## Sentences' '## Never' '## Formatting' '## Closing' '## Cover footer' '## Topics and stack' '## Ideas file')
+blog=skills/blog/SKILL.md
+if [ -f "$blog" ]; then
+  for s in "${CONTENT[@]}"; do
+    check "blog names $s" grep -qF "$s" "$blog"
+  done
+  check "blog names repo voice path" grep -qF '.raystack/voice.md' "$blog"
+  # shellcheck disable=SC2088  # literal tilde path expected in the text
+  check "blog names home voice path" grep -qF '~/.raystack/voice.md' "$blog"
+else
+  fail "missing $blog"
+fi
+for v in voice-template voice-example; do
+  f="skills/blog/references/$v.md"
+  if [ ! -f "$f" ]; then fail "missing $f"; continue; fi
+  for h in "${VOICE_H2[@]}"; do
+    check "$v has $h" grep -qxF "$h" "$f"
+  done
+done
 exit "$FAILED"
