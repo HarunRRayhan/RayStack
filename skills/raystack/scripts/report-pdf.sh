@@ -12,17 +12,8 @@ in="$1"
 out="${2:-${in%.md}.pdf}"
 here="$(cd "$(dirname "$0")" && pwd)"
 
-chrome=""
-mac="${RAYSTACK_MAC_CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
-if [ -n "${CHROME:-}" ]; then
-  chrome="$CHROME"
-elif [ -x "$mac" ]; then
-  chrome="$mac"
-else
-  for c in ${RAYSTACK_CHROME_NAMES:-google-chrome google-chrome-stable chromium chromium-browser}; do
-    if command -v "$c" >/dev/null 2>&1; then chrome="$c"; break; fi
-  done
-fi
+# shellcheck source=find-chrome.sh source-path=SCRIPTDIR
+. "$here/find-chrome.sh"
 if [ -z "$chrome" ]; then
   echo "report-pdf: no Chrome or Chromium found. Install one or set CHROME=/path/to/chrome." >&2
   exit 1

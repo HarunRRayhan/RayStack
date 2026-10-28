@@ -1,6 +1,6 @@
 # Agent support
 
-RayStack ships the same eleven skills (`skills/<name>/SKILL.md`) to every agent. Each agent gets
+RayStack ships the same sixteen skills (`skills/<name>/SKILL.md`) to every agent. Each agent gets
 a manifest only when it has a documented plugin format. Researched 2026-10-28. Anything marked
 **unverified** was not confirmed against official docs or a local run.
 
