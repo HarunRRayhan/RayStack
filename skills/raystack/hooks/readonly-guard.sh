@@ -80,14 +80,24 @@ _walk() {
   return 0
 }
 
-# _docker_sub i: index of the docker/podman subcommand after TOK[i], skipping global flags and their values.
-_docker_sub() {
-  local k=$(($1 + 1))
-  while [[ "${TOK[k]:-}" == -* ]]; do
-    _in "${TOK[k]}" "-c --config --context -H --host -l --log-level --tlscacert --tlscert --tlskey --connection --url --identity" && k=$((k + 1))
-    k=$((k + 1))
-  done
-  echo "$k"
+# _docker_ok <docker|podman|nerdctl|*-compose> words...: 0 when the call is a listed read subcommand.
+# No flag may come before the subcommand (global flags pick other daemons or configs).
+_docker_ok() {
+  local base=$1 w; shift
+  case "$base" in *-compose) set -- compose "$@" ;; esac
+  case "${1:-}" in -*) _deny "$base flag before subcommand: $1"; return 1 ;; esac
+  case "$(_lc "${1:-} ${2:-}")" in
+    " "|"ps "*|"logs "*|"images "*|"inspect "*|"version "*|"info "*|"image ls"|"system df"|"compose ps"|"compose ls"|"compose logs"|"compose images") return 0 ;;
+    "stats "*) case " $* " in *" --no-stream "*) return 0 ;; esac ;;
+    # config prints interpolated secrets: only the service or volume names.
+    "compose config")
+      shift 2; [ $# -gt 0 ] || { _deny "docker compose config only with --services or --volumes"; return 1; }
+      for w in "$@"; do
+        case "$w" in --services|--volumes) ;; *) _deny "docker compose config only with --services or --volumes"; return 1 ;; esac
+      done
+      return 0 ;;
+  esac
+  _no "$base ${1:-} ${2:-}"
 }
 
 # _tf_only <name=value> args...: every -name/--name flag in args is exactly that value, and one exists.
@@ -312,7 +322,7 @@ _filter_ok() {
 }
 
 guard_check() {
-  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f
+  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w
   local -a TOK ARGS
   GUARD_REASON=""
   case "$1" in
@@ -348,40 +358,29 @@ guard_check() {
   [ $intok = 1 ] && TOK+=("$tok")
 
   lc=$(_lc "$1"); strip=${lc//[\"\']/}
-  # Package runners and container runs fetch and execute any tool (npx aws-cdk deploy, docker run amazon/aws-cli).
+  # Package runners fetch and execute any tool (npx aws-cdk deploy); container CLIs are a read allow-list.
   n=${#TOK[@]}
   for ((i = 0; i < n; i++)); do
     case "${TOK[i]}" in --with-decryption*|--include-value*) _deny "${TOK[i]%%=*} prints secret values"; return 1 ;; esac
-    case "$(_lc "${TOK[i]##*/}")" in
-      npx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
-      pnpm|yarn) f=' dlx ' ;;
-      npm) f=' exec x ' ;;
-      bun) f=' x ' ;;
-      pipx|uv|docker|podman) f=' run ' ;;
+    name=$(_lc "${TOK[i]##*/}")
+    case "$name" in
+      npx|pnpx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
+      npm|pnpm|yarn|bun) f=' init create exec dlx x ' ;;
+      pipx|uv) f=' run ' ;;
+      docker|podman|nerdctl|docker-compose|podman-compose) f='' ;;
       *) continue ;;
     esac
-    # shortcut: any later word in the pipe segment counts (docker logs run denies), fail closed.
+    ARGS=()
     for ((j = i + 1; j < n; j++)); do
       [ "${TOK[j]}" = "$PIPE" ] && break
-      _in "$(_lc "${TOK[j]}")" "$f" && { _deny "package runners are not allowed during a review"; return 1; }
+      ARGS+=("${TOK[j]}")
+    done
+    if [ -z "$f" ]; then _docker_ok "$name" "${ARGS[@]}" || return 1; continue; fi
+    # shortcut: any later word in the pipe segment counts (npm ls x denies), fail closed.
+    for w in "${ARGS[@]}"; do
+      _in "$(_lc "$w")" "$f" && { _deny "package runners are not allowed during a review"; return 1; }
     done
   done
-  # docker compose config/convert prints interpolated secrets: only --services or --volumes.
-  if [[ "$strip" =~ docker|podman ]]; then
-    f=0
-    for ((i = 0; i < n; i++)); do
-      name=$(_lc "${TOK[i]##*/}")
-      if [ "$name" = docker-compose ] || [ "$name" = podman-compose ] || { { [ "$name" = docker ] || [ "$name" = podman ]; } && [ "$(_lc "${TOK[$(_docker_sub "$i")]:-}")" = compose ]; }; then f=1
-      elif [ $f = 1 ] && { [ "$name" = config ] || [ "$name" = convert ]; }; then
-        f=2
-        for ((j = i + 1; j < n; j++)); do
-          case "${TOK[j]}" in --services|--volumes) f=3 ;; "$PIPE") break ;; *) f=2; break ;; esac
-        done
-        [ $f = 3 ] || { _deny "docker compose $name only with --services or --volumes"; return 1; }
-        f=1
-      fi
-    done
-  fi
   # RayStack's own skill names (report paths like reviews/...-aws-billing-review.md) are not CLI mentions.
   for name in aws-billing-review aws-security-review aws-bottleneck-review; do strip=${strip//$name/ }; done
   [[ "$strip" =~ $_MENTION ]] || return 0
