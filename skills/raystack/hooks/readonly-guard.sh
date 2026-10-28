@@ -197,12 +197,15 @@ _eval_cli() {
       _no "$cli $a" ;;
     helm)
       _walk 1 "-n --namespace --kube-context" "--help" "$@" || return 1
-      case "${P[0]:-}" in ''|list|ls|status|history|version|template|search) return 0 ;; esac
-      # get values/all/manifest can print secrets.
-      if [ "${P[0]}" = get ]; then
-        _walk 2 "-n --namespace --kube-context --revision" "--help" "$@" || return 1
-        case "${P[1]:-}" in notes|metadata|hooks) return 0 ;; esac
-      fi
+      case "${P[0]:-}" in
+        ''|version|template|search) return 0 ;;
+        # Table output only: -o json/yaml includes release values.
+        list|ls|status|history) case " $* " in *" -o"*|*" --output"*) _deny "helm ${P[0]} -o not allowed during review"; return 1 ;; esac
+                                return 0 ;;
+        # get values/all/manifest/notes/hooks can print secrets.
+        get) _walk 2 "-n --namespace --kube-context --revision" "--help" "$@" || return 1
+             [ "${P[1]:-}" = metadata ] && return 0 ;;
+      esac
       _no "helm ${P[*]}" ;;
     railway)
       case " $* " in *" --set"*) _deny "railway --set"; return 1 ;; esac

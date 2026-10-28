@@ -364,6 +364,13 @@ BLOCK=(
   'kubectl get pods --watch'
   'oc get pods --template x'
   'kubectl get pods --unknown-flag'
+  # v0.1.1 round 2 (D): helm table output only; get metadata only
+  'helm get notes x'
+  'helm get hooks x'
+  'helm status x -o json'
+  'helm list --output=yaml'
+  'helm history x -oyaml'
+  'helm ls -o json'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -449,9 +456,7 @@ ALLOW=(
   'bash skills/raystack/scripts/report-pdf.sh /r/reviews/2026-10-28-aws-billing-review.md'
   'docker ps'
   'npm ls'
-  'helm get notes x'
   'helm get metadata x'
-  'helm get hooks x'
   'helm status x'
   'helm history x'
   'helm search repo x'
