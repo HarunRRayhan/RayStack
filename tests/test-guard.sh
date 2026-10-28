@@ -272,6 +272,12 @@ BLOCK=(
   'kubectl get --raw=/healthz'
   'oc get -raw /healthz'
   'kubectl get deploy/x,v1/secrets'
+  # v0.1.1: terraform show and state show print attribute values
+  'terraform show'
+  'terraform show -json plan.out'
+  'tofu show -no-color plan.out'
+  'terragrunt show -json'
+  'terraform state show aws_db_instance.x'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -281,7 +287,6 @@ ALLOW=(
   'aws cloudwatch get-metric-statistics --namespace x'
   'gcloud compute instances list'
   'terraform plan -lock=false'
-  'terraform show'
   'kubectl get pods'
   'psql -c "EXPLAIN ANALYZE SELECT 1"'
   'psql -c "select * from pg_stat_statements"'

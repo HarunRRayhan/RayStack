@@ -160,7 +160,8 @@ _eval_cli() {
       _walk 1 "-chdir" "-help -version" "$@" || return 1
       a="${P[0]:-}"
       case "$a" in
-        ''|show|validate|providers|version|graph) return 0 ;;
+        # No show or state show: they print attribute values, sensitive ones included.
+        ''|validate|providers|version|graph) return 0 ;;
         # init must not touch the backend; plan must not take the state lock.
         init) _tf_only backend=false "$@" && return 0
               _deny "$cli init only with -backend=false during review"; return 1 ;;
@@ -168,7 +169,7 @@ _eval_cli() {
               _deny "$cli plan only with -lock=false during review"; return 1 ;;
         fmt) case " $* " in *" -check "*) return 0 ;; esac ;;
         state) _walk 2 "-chdir" "-help" "$@" || return 1
-               case "${P[1]:-}" in list|show) return 0 ;; esac ;;
+               [ "${P[1]:-}" = list ] && return 0 ;;
       esac
       _no "$cli $a" ;;
     helm)

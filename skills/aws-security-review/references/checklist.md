@@ -410,8 +410,9 @@ with the value masked, for example `AKIA************WXYZ`.
 - **Evidence:** the agent does not run `terraform plan`: it takes the state lock, can run
   external data sources, and drift output can print secret values. Under Commands for you to run,
   ask the human for `terraform plan -lock=false -refresh-only` (drift) and
-  `terraform plan -lock=false -out=plan.out`, and warn that the output may contain secrets. With
-  a saved plan, read addresses only:
+  `terraform plan -lock=false -out=plan.out`, and warn that the output may contain secrets. The
+  guard blocks `terraform show` (the JSON holds sensitive values), so also ask the human to run
+  these on the saved plan and paste the addresses:
   `terraform show -json plan.out | jq -r '.resource_changes[] | select(.change.actions | index("delete")) | .address'`;
   `terraform show -json plan.out | jq -r '.resource_changes[] | select(.type | test("iam|kms|cloudtrail|log_group|security_group")) | select(.change.actions | index("no-op") | not) | .address'`.
   For those IAM addresses, compare the policy `before` and `after`, not only the `.tf` diff.
