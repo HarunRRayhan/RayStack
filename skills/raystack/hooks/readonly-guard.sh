@@ -3,13 +3,22 @@
 # stdin: PreToolUse JSON (Claude/Codex/Cursor `.tool_input.command`, Grok `.toolInput.command`). Exit 0 = allow, exit 2 = block (reason on stderr).
 # Source this file to call guard_check "<cmd>" directly (0 = allow, 1 = block, reason in GUARD_REASON).
 # shortcut: token heuristics, not a sandbox; aliases/functions/scripts can evade; pair with read-only credentials
-# Accepted out-of-scope evasions: `echo <b64> | base64 -d | sh`, scripts/functions/aliases, other-language SDKs.
+# Accepted out-of-scope evasions: scripts run by path, functions/aliases, other-language SDKs.
 # This guard is a seatbelt, not a boundary: always run reviews with read-only credentials.
 # Design: a command that mentions a monitored CLI must be exactly
 #   [NAME=literal ...] <cli> args... [| <filter> args ...]...
 # and the CLI's verb must be on that CLI's read allow-list. Everything else is denied.
-# SQL: one statement per command; every `name(` must be on a read-only function list.
-# Unquoted glob/redirect chars ([ ] ( ) * ? ! < >) and braces deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq always deny.
+# SQL: one statement per command, no comments (--, /*, and # for MySQL/usql); every `name(` must be on a read-only function list.
+# Unquoted glob/redirect chars ([ ] ( ) * ? ! < >) and braces deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq,
+#   deploy tools and pg_dump/pg_restore always deny. Names match on `-`/`/` boundaries too (aws-cdk, amazon/aws-cli).
+# Any word that is a shell, env, ssh/scp/sftp/mosh, or a package runner (npx pnpx bunx uvx) denies.
+# Allow-lists, checked on every word: npm ls/list/view/outdated/audit (no fix)/why/explain; yarn/pnpm/bun --version;
+#   docker/podman/nerdctl ps, images, image ls, version, info, system df, stats --no-stream,
+#   logs --tail N<=200, compose ps|ls|images|logs|config --services/--volumes (no flags before the subcommand,
+#   no NAME=value, export or set anywhere in the command).
+# Secret-ish cloud ops (secret, password, token, credential, keys list, ...) deny unless on a metadata list;
+#   ops that return env vars, user data or passwords (lambda config, ecs task defs, launch templates) deny outright.
+# kubectl/oc describe only for nodes, services, ingress, events and namespaces (workloads print env values).
 
 GUARD_REASON=""
 KEYS_ONLY=0
@@ -19,14 +28,21 @@ PIPE=$'\001'
 _deny() { GUARD_REASON="$1"; return 1; }
 _shape() { _deny "unsupported command shape during review"; }
 _no() { _deny "$1 is not on the read allow-list"; }
+# _secret_op "<cli path verb>": 0 (and GUARD_REASON set) when the op may print secrets and is not allow-listed.
+_secret_op() {
+  case "$_SECRET_OK" in *"|$1|"*) return 1 ;; esac
+  [[ "$1" =~ $_SECRET_OP ]] || return 1
+  _deny "$1 may print secrets or credentials"; return 0
+}
 _in() { case " $2 " in *" $1 "*) return 0 ;; esac; return 1; }
 # Lower-case only names/verbs/SQL; flags keep their case (-S vs -s, -X vs -x).
 _lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
-_NAMES='aws gcloud az kubectl oc terraform tofu terragrunt helm railway wrangler redis-cli bq psql mysql mariadb sqlite3 sqlcmd mongosh clickhouse-client cqlsh snowsql usql pgcli mycli awscli pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin'
-_MENTION="(^|[^a-z0-9_.-])(${_NAMES// /|})([^a-z0-9_.-]|\$)"
+_NAMES='aws gcloud az kubectl oc terraform tofu terragrunt helm railway wrangler redis-cli bq psql mysql mariadb sqlite3 sqlcmd mongosh clickhouse-client cqlsh snowsql usql pgcli mycli awscli pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot'
+# `-` and `/` are boundaries, so hyphen/slash-joined names count too (aws-cdk, netlify-cli, amazon/aws-cli).
+_MENTION="(^|[^a-z0-9_.])(${_NAMES// /|})([^a-z0-9_.]|\$)"
 _SQL_CLIS=' psql mysql mariadb sqlite3 usql pgcli mycli '
-_UNSUPPORTED=' mongosh cqlsh clickhouse-client snowsql sqlcmd bq pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin '
+_UNSUPPORTED=' mongosh cqlsh clickhouse-client snowsql sqlcmd bq pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot '
 _FILTERS=' jq head tail grep sort uniq wc cut column tr '
 _LONGFLAGS=' --raw-output --compact-output --count --ignore-case --unique --reverse --numeric-sort '
 # No KUBECONFIG (or --kubeconfig): a kubeconfig can run exec credential plugins.
@@ -41,6 +57,9 @@ _REDIS_VF='-h -p -a -n -u --user --pass --sni --cacert --cert --key -r -i -d -t 
 _REDIS_BF='-c --tls --raw --no-raw -e --no-auth-warning --insecure'
 _AWS_READ='^(describe|list|get|head|search|lookup|filter|batch-get|validate|simulate|estimate|scan|query|select|tail|wait)(-|$)'
 _GC_READ='^(list|describe|show|get|get-iam-policy|read)$'
+# Ops that look like they print secrets or credentials deny unless on the metadata-only list below.
+_SECRET_OP='(secret|password|passwd|token|credential|login|keys? list|list-keys|access-details|connection-string|decrypt|api-key|private-key|print-|ssh-public-key)'
+_SECRET_OK='|aws kms list-keys|aws kms describe-key|aws kms list-aliases|aws kms get-key-rotation-status|aws kms get-key-policy|aws iam list-access-keys|aws iam get-access-key-last-used|aws secretsmanager list-secrets|aws secretsmanager describe-secret|aws ssm describe-parameters|aws iam get-credential-report|aws iam get-login-profile|aws iam get-account-password-policy|gcloud secrets list|gcloud secrets describe|az keyvault secret list|az keyvault list|'
 _GC_GROUPS=' compute instances disks images snapshots networks subnets firewall-rules routers addresses instance-templates instance-groups forwarding-rules backend-services url-maps zones regions machine-types operations projects project iam service-accounts roles keys sql databases backups users flags run services revisions jobs executions functions pubsub topics subscriptions storage buckets objects container clusters node-pools logging logs sinks metrics config configurations auth accounts dns managed-zones record-sets kms keyrings secrets versions artifacts repositories builds triggers app deployments monitoring policies organizations folders billing scheduler tasks queues redis memcache spanner bigtable firestore dataflow dataproc composer eventarc vm group resource account tag network vnet subnet nsg rule public-ip nic lb container blob queue table file webapp functionapp appservice plan aks nodepool acr repository keyvault secret key certificate role assignment definition ad user sp app monitor activity-log log-analytics workspace server db elastic-pool postgres mysql flexible-server cosmosdb lock policy provider feature deployment sub disk image snapshot vmss extension identity zone record-set eventhubs servicebus namespace topic apim cdn front-door '
 _KUBE_READ='^(get|describe|logs|top|explain|version|api-resources|api-versions|cluster-info|events)$'
 _REDIS_READ='^(info|get|mget|scan|ttl|pttl|type|exists|strlen|llen|scard|zcard|hlen|hget|hgetall|smembers|lrange|zrange|memory|slowlog|latency|dbsize|ping|keys|object|xinfo|xlen)$'
@@ -65,6 +84,41 @@ _walk() {
     shift
   done
   return 0
+}
+
+# _tail_ok args...: a --tail N with N <= 200 is present (bounded log reads).
+_tail_ok() {
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --tail) [[ "${2:-}" =~ ^[0-9]{1,3}$ ]] && [ "$2" -le 200 ] && return 0 ;;
+      --tail=*) [[ "${1#*=}" =~ ^[0-9]{1,3}$ ]] && [ "${1#*=}" -le 200 ] && return 0 ;;
+    esac
+    shift
+  done
+  return 1
+}
+
+# _docker_ok <docker|podman|nerdctl|*-compose> words...: 0 when the call is a listed read subcommand.
+# No flag may come before the subcommand (global flags pick other daemons or configs).
+_docker_ok() {
+  local base=$1 w; shift
+  case "$base" in *-compose) set -- compose "$@" ;; esac
+  case "${1:-}" in -*) _deny "$base flag before subcommand: $1"; return 1 ;; esac
+  case "$(_lc "${1:-} ${2:-}")" in
+    # No container or image inspect: Config.Env can hold secrets.
+    " "|"ps "*|"images "*|"version "*|"info "*|"image ls"|"system df"|"compose ps"|"compose ls"|"compose images") return 0 ;;
+    "logs "*|"compose logs") _tail_ok "$@" && return 0
+      _deny "$base logs only with --tail N (N at most 200)"; return 1 ;;
+    "stats "*) case " $* " in *" --no-stream "*) return 0 ;; esac ;;
+    # config prints interpolated secrets: only the service or volume names.
+    "compose config")
+      shift 2; [ $# -gt 0 ] || { _deny "docker compose config only with --services or --volumes"; return 1; }
+      for w in "$@"; do
+        case "$w" in --services|--volumes) ;; *) _deny "docker compose config only with --services or --volumes"; return 1 ;; esac
+      done
+      return 0 ;;
+  esac
+  _no "$base ${1:-} ${2:-}"
 }
 
 # _tf_only <name=value> args...: every -name/--name flag in args is exactly that value, and one exists.
@@ -98,11 +152,22 @@ _eval_cli() {
       _walk 2 "$_AWS_VF" "$_AWS_BF" "$@" || return 1
       a="${P[0]:-}"; b="${P[1]:-}"
       [ -z "$b" ] && [ "$a" != configure ] && return 0
-      # Reads that print secret values.
-      case "$a $b" in "secretsmanager "*get-secret-value) _deny "aws $a $b prints secret values"; return 1 ;; esac
-      if [ "$a" = ssm ] && [[ "$b" == get-parameter* ]]; then
-        case " $* " in *" --with-decryption"*) _deny "aws ssm --with-decryption prints secret values"; return 1 ;; esac
-      fi
+      _secret_op "aws $a $b" && return 1
+      # The CLI accepts unique prefixes of long flags (--w for --with-decryption).
+      for w in "$@"; do
+        w=${w%%=*}
+        case "$w" in --?*) ;; *) continue ;; esac
+        for nm in --with-decryption --include-value --include-values --cli-input-json --cli-input-yaml --generate-cli-skeleton; do
+          [ "$w" != "$nm" ] && [[ "$nm" == "$w"* ]] && { _deny "aws flag $w is an abbreviation of $nm"; return 1; }
+        done
+      done
+      # Env vars, user data and passwords: no --query or flag filters them reliably, so deny outright.
+      case "$a $b" in
+        "ssm get-parameter"*|"cognito-idp describe-user-pool-client"|"lambda get-function"|"lambda get-function-configuration"|"lambda list-functions"|"lambda list-versions-by-function"|"ecs describe-task-definition"|"ec2 describe-launch-template-versions"|"ec2 get-launch-template-data"|"glue get-connection"|"glue get-connections")
+          _deny "aws $a $b prints env vars, user data or secrets"; return 1 ;;
+        "ec2 describe-instance-attribute") [[ "$(_lc "$*")" == *userdata* ]] && { _deny "aws $a $b userData can hold secrets"; return 1; } ;;
+      esac
+      [ "$a $b" = "configure get" ] && [[ "$(_lc "$*")" =~ $_SECRET_OP ]] && { _deny "aws configure get prints credentials"; return 1; }
       case "$a $b" in
         "s3 ls"|"logs start-query"|"logs stop-query"|"logs get-query-results"|"configure list"|"configure get"|"configure list-profiles") return 0 ;;
       esac
@@ -118,7 +183,7 @@ _eval_cli() {
               elif ! _in "$nm" "$_GC_BF"; then _deny "unknown flag before verb: $1"; return 1; fi ;;
           *) w=$(_lc "$1")
              if [[ "$w" =~ $_GC_READ ]] && [ $seen -gt 0 ]; then
-               [ "$w" = list ] || case "$b" in *" keyvault secret") _deny "$cli keyvault secret $w prints secret values"; return 1 ;; esac
+               _secret_op "$cli$b $w" && return 1
                return 0
              elif [ $seen = 0 ] && [[ "$w" =~ ^(version|info)$ ]]; then return 0
              elif _in "$w" "$_GC_GROUPS"; then seen=$((seen + 1)); b="$b $w"
@@ -132,9 +197,34 @@ _eval_cli() {
       _walk 1 "$_KUBE_VF" "$_KUBE_BF" "$@" || return 1
       a="${P[0]:-}"
       if [ "$a" = get ]; then
-        for w in "$@"; do
-          [[ "$(_lc "$w")" =~ (^|,)secrets?([/,.]|$) ]] && { _deny "$cli get secret prints secret values"; return 1; }
+        # Flag allow-list: no --raw (any API path), -f/-k/-R (files), -w (watch loops).
+        set -- "$@" ""
+        while [ $# -gt 1 ]; do
+          w=$1; nm=""
+          case "$w" in
+            -o|--output) nm=$2; shift ;;
+            -o=*|--output=*) nm=${w#*=} ;;
+            -o?*) nm=${w#-o} ;;
+          esac
+          case "$w:$nm" in
+            -o*:?*|--output*:?*) case "$nm" in json|yaml|wide|name|jsonpath=*|custom-columns=*) ;; *) _deny "$cli get -o $nm not allowed during review"; return 1 ;; esac
+                                 shift; continue ;;
+          esac
+          case "$w" in
+            -n?*|-l?*|-A|--all-namespaces|--show-labels|--no-headers) ;;
+            -*) nm=${w%%=*}
+                _in "$nm" "-l --selector --field-selector --sort-by $_KUBE_VF $_KUBE_BF" || { _deny "$cli get flag $nm not allowed during review"; return 1; } ;;
+          esac
+          [[ "$(_lc "$w")" =~ (^|[,/])secrets?([/,.?]|$) ]] && { _deny "$cli get secret prints secret values"; return 1; }
+          shift
         done
+      fi
+      # describe prints literal env values for workloads: only kinds without pod templates.
+      if [ "$a" = describe ]; then
+        _walk 2 "$_KUBE_VF" "$_KUBE_BF" "$@" || return 1
+        w=${P[1]:-}; w=${w%%/*}; w=${w%%.*}
+        _in "$w" "node nodes no service services svc ingress ingresses ing event events ev namespace namespaces ns" && return 0
+        _deny "$cli describe ${P[1]:-} not allowed during review (env values)"; return 1
       fi
       [ -z "$a" ] || [[ "$a" =~ $_KUBE_READ ]] && return 0
       if [ "$a" = auth ] || [ "$a" = config ]; then
@@ -147,7 +237,8 @@ _eval_cli() {
       _walk 1 "-chdir" "-help -version" "$@" || return 1
       a="${P[0]:-}"
       case "$a" in
-        ''|show|validate|providers|version|graph) return 0 ;;
+        # No show or state show: they print attribute values, sensitive ones included.
+        ''|validate|providers|version|graph) return 0 ;;
         # init must not touch the backend; plan must not take the state lock.
         init) _tf_only backend=false "$@" && return 0
               _deny "$cli init only with -backend=false during review"; return 1 ;;
@@ -155,13 +246,24 @@ _eval_cli() {
               _deny "$cli plan only with -lock=false during review"; return 1 ;;
         fmt) case " $* " in *" -check "*) return 0 ;; esac ;;
         state) _walk 2 "-chdir" "-help" "$@" || return 1
-               case "${P[1]:-}" in list|show) return 0 ;; esac ;;
+               [ "${P[1]:-}" = list ] && return 0 ;;
       esac
       _no "$cli $a" ;;
     helm)
       _walk 1 "-n --namespace --kube-context" "--help" "$@" || return 1
-      case "${P[0]:-}" in ''|list|ls|status|history|version|template|search|get|show) return 0 ;; esac
-      _no "helm ${P[0]}" ;;
+      case "${P[0]:-}" in
+        # No template: --validate and --dry-run=server reach the cluster.
+        ''|version|search) return 0 ;;
+        # Table output only: -o json/yaml includes release values.
+        list|ls|status|history) case " $* " in *" -o"*|*" --output"*) _deny "helm ${P[0]} -o not allowed during review"; return 1 ;; esac
+                                # status prints release notes, which can hold secrets.
+                                [ "${P[0]}" != status ] || case " $* " in *" --hide-notes "*) ;; *) _deny "helm status only with --hide-notes"; return 1 ;; esac
+                                return 0 ;;
+        # get values/all/manifest/notes/hooks can print secrets.
+        get) _walk 2 "-n --namespace --kube-context --revision" "--help" "$@" || return 1
+             [ "${P[1]:-}" = metadata ] && return 0 ;;
+      esac
+      _no "helm ${P[*]}" ;;
     railway)
       case " $* " in *" --set"*) _deny "railway --set"; return 1 ;; esac
       _walk 1 "" "--help --version" "$@" || return 1
@@ -237,7 +339,9 @@ _sql_stmt() {
   local s rest pre
   s=$(_lc "$2"); s="${s#"${s%%[![:space:]]*}"}"
   s="${s%"${s##*[![:space:]]}"}"; s="${s%;}"
-  case "$s" in *\;*|*/\**) _deny "$1 statement has multiple statements or comments"; return 1 ;; esac
+  # Comments can hide the gap between a function name and `(` (name--<newline>()); MySQL also uses #.
+  case "$s" in *\;*|*/\**|*--*) _deny "$1 statement has multiple statements or comments"; return 1 ;; esac
+  case "$1:$s" in mysql:*\#*|mariadb:*\#*|mycli:*\#*|usql:*\#*) _deny "$1 statement has a # comment"; return 1 ;; esac
   if [[ "$s" =~ ^pragma ]]; then
     [[ "$s" =~ $_PRAGMA_RO ]] && return 0
     _deny "sqlite pragma is not on the read allow-list"; return 1
@@ -282,7 +386,7 @@ _filter_ok() {
 }
 
 guard_check() {
-  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f
+  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w
   local -a TOK ARGS
   GUARD_REASON=""
   case "$1" in
@@ -318,22 +422,53 @@ guard_check() {
   [ $intok = 1 ] && TOK+=("$tok")
 
   lc=$(_lc "$1"); strip=${lc//[\"\']/}
-  # docker compose config/convert prints interpolated secrets: only --services or --volumes.
-  if [[ "$strip" =~ docker ]]; then
-    n=${#TOK[@]}; f=0
-    for ((i = 0; i < n; i++)); do
-      name=$(_lc "${TOK[i]##*/}")
-      if [ "$name" = docker-compose ] || { [ "$name" = docker ] && [ "$(_lc "${TOK[i + 1]:-}")" = compose ]; }; then f=1
-      elif [ $f = 1 ] && { [ "$name" = config ] || [ "$name" = convert ]; }; then
-        f=2
-        for ((j = i + 1; j < n; j++)); do
-          case "${TOK[j]}" in --services|--volumes) f=3 ;; "$PIPE") break ;; *) f=2; break ;; esac
+  # Package runners fetch and execute any tool (npx aws-cdk deploy); container CLIs are a read allow-list.
+  n=${#TOK[@]}
+  for ((i = 0; i < n; i++)); do
+    # Prefixes catch CLI abbreviations; --cli-input-* and skeletons can smuggle the same options.
+    case "${TOK[i]}" in --with-d*|--include-v*|--cli-in*|--generate-cli*) _deny "${TOK[i]%%=*} not allowed during review"; return 1 ;; esac
+    name=$(_lc "${TOK[i]##*/}")
+    case "$name" in
+      npx|pnpx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
+      npm|pnpm|yarn|bun)
+        # Read allow-list; npm accepts prefixes and aliases (exe, innit, c), and yarn/pnpm/bun run a
+        # package.json script for any verb they don't know, so they only get --version.
+        case "$name $(_lc "${TOK[i + 1]:-}") $(_lc "${TOK[i + 2]:-}")" in
+          *" --version "|"npm -v ") continue ;;
+          "npm ls "*|"npm list "*|"npm view "*|"npm outdated "*|"npm why "*|"npm explain "*) continue ;;
+          "npm audit "*) f=' fix '
+             for ((j = i + 1; j < n; j++)); do
+               [ "${TOK[j]}" = "$PIPE" ] && break
+               _in "$(_lc "${TOK[j]}")" "$f" && { _deny "$name audit fix not allowed during review"; return 1; }
+             done
+             continue ;;
+        esac
+        _deny "$name ${TOK[i + 1]:-} is not on the read allow-list"; return 1 ;;
+      pipx|uv) f=' run ' ;;
+      # A shell (or env) runs a string or a command these checks never see.
+      sh|bash|zsh|dash|ksh|mksh|fish|csh|tcsh|busybox|env|ssh|scp|sftp|mosh) _deny "$name not allowed during review"; return 1 ;;
+      docker|podman|nerdctl|docker-compose|podman-compose)
+        # DOCKER_HOST, COMPOSE_FILE and friends point the read at another daemon or file.
+        for w in "${TOK[@]}"; do
+          [[ "$w" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] || _in "$w" "export declare typeset set" || continue
+          _deny "env assignment with $name not allowed during review"; return 1
         done
-        [ $f = 3 ] || { _deny "docker compose $name only with --services or --volumes"; return 1; }
-        f=1
-      fi
+        f='' ;;
+      *) continue ;;
+    esac
+    ARGS=()
+    for ((j = i + 1; j < n; j++)); do
+      [ "${TOK[j]}" = "$PIPE" ] && break
+      ARGS+=("${TOK[j]}")
     done
-  fi
+    if [ -z "$f" ]; then _docker_ok "$name" "${ARGS[@]}" || return 1; continue; fi
+    # shortcut: any later word in the pipe segment counts (npm ls x denies), fail closed.
+    for w in "${ARGS[@]}"; do
+      _in "$(_lc "$w")" "$f" && { _deny "package runners are not allowed during a review"; return 1; }
+    done
+  done
+  # RayStack's own skill names (report paths like reviews/...-aws-billing-review.md) are not CLI mentions.
+  for name in aws-billing-review aws-security-review aws-bottleneck-review; do strip=${strip//$name/ }; done
   [[ "$strip" =~ $_MENTION ]] || return 0
   if [ -n "$q" ] || [ $ops = 1 ]; then _shape; return 1; fi
   [ $tilde = 0 ] || { _deny "leading ~ in a word during review"; return 1; }

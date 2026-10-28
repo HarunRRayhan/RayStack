@@ -96,7 +96,7 @@ objects the user can access.
 ### PG11. Backups and PITR (self-hosted or platform)
 - **Check:** WAL archiving really works; a logical dump exists off-platform; a restore was tested.
 - **Evidence:** `psql -X -c "show archive_mode"`. `psql -X -c "select archived_count, failed_count, last_archived_time, last_failed_time from pg_stat_archiver"`.
-  Grep: `grep -rnE 'pg_dump|pg_basebackup|wal-g|pgbackrest|barman|backup' --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git .`
+  Grep: `grep -rnE 'pg_(dump|basebackup)|wal-g|pgbackrest|barman|backup' --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git .`
   On managed platforms, read the backup list and schedule back, do not trust the toggle.
 - **Why:** "PITR on" with `archive_mode=off`, or zero backups and zero schedules, is common. PITR starts at the first base backup, not before. Daily snapshots cannot meet a 15-minute RPO.
 - **Fix:** platform PITR plus a nightly `pg_dump` to an external bucket with a 30-day lifecycle, and a monthly restore drill into a scratch instance that compares table counts, columns and constraints. State RPO/RTO from the drill, not from docs.
@@ -210,7 +210,7 @@ the fallbacks listed in each item.
 
 ### MY8. Backups and binlog
 - **Evidence:** `mysql -e "show variables like 'log_bin'"`. `mysql -e "show variables like 'binlog_expire_logs_seconds'"` (MariaDB before 10.6 and MySQL 5.7: `mysql -e "show variables like 'expire_logs_days'"`). RDS MySQL: binlog retention hours come from `call mysql.rds_show_configuration` (command for the human).
-  `grep -rnE 'mysqldump|mariadb-dump|xtrabackup|mariabackup|backup' --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git .`
+  `grep -rnE 'mysqldump|mariadb.dump|xtrabackup|mariabackup|backup' --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git .`
 - **Why:** no binlog means no point-in-time recovery; dumps never restored are not backups.
 - **Fix:** binlog on with retention covering the backup interval; nightly dump off-host; restore drill.
 
@@ -220,7 +220,7 @@ the fallbacks listed in each item.
 - **Fix:** pin the image major you support; `depends_on: { db: { condition: service_healthy } }`.
 
 ### MY10. Database on the app host
-- **Evidence:** `grep -rnE 'user_data|mysql-server|mariadb-server' --include='*.tf' --include='*.sh' --include='*.yml' --exclude-dir=node_modules --exclude-dir=.git . | cut -d: -f1,2` (file:line only: user data can hold passwords)
+- **Evidence:** `grep -rnE 'user_data|mysql.server|mariadb.server' --include='*.tf' --include='*.sh' --include='*.yml' --exclude-dir=node_modules --exclude-dir=.git . | cut -d: -f1,2` (file:line only: user data can hold passwords)
 - **Why:** DB on the app instance with credentials in `user_data` and no backups is a single point of failure and a secret leak.
 - **Fix:** managed DB (or a dedicated host with backups); credentials from a secrets manager.
 

@@ -131,7 +131,7 @@ with the value masked, for example `AKIA************WXYZ`.
   `sts.amazonaws.com`; no AWS keys in CI secrets.
 - **Evidence:** IaC grep (config form): `token.actions.githubusercontent.com:sub.*[*]`.
   Stored keys (location-only form, the line may hold a literal key):
-  `grep -rnE 'AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|aws-access-key-id|aws-secret-access-key' .github | cut -d: -f1,2`.
+  `grep -rniE 'AWS.ACCESS.KEY.ID|AWS.SECRET.ACCESS.KEY' .github | cut -d: -f1,2`.
   A `secrets.NAME` reference is a stored CI secret; a literal value is also a leaked key. Live:
   `aws iam list-roles --output json | jq -r '.Roles[] | select(.AssumeRolePolicyDocument | tostring | contains("token.actions.githubusercontent.com")) | .RoleName'`;
   `gh secret list` (names only).
@@ -286,7 +286,8 @@ with the value masked, for example `AKIA************WXYZ`.
   `grep -rnE --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.terraform --exclude='*.tfstate*' 'AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}' . | cut -d: -f1,2`;
   `grep -rnE --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.terraform --exclude='*.tfstate*' 'user_data.*(password|secret|token)|(PASSWORD|SECRET|TOKEN|API_KEY) *[:=] *[A-Za-z0-9/+]{12,}' . | cut -d: -f1,2`.
   Committed state or env files, by name only (never open them): `git ls-files | grep -iE 'tfstate|[.]env'`.
-  Live, names only: `aws lambda get-function-configuration --function-name FUNCTION_NAME --query 'keys(Environment.Variables)'`
+  The guard blocks env-var reads, so ask the human to run these names-only reads (Commands for you to run):
+  `aws lambda get-function-configuration --function-name FUNCTION_NAME --query 'keys(Environment.Variables)'`
   (an error on a function with no env vars means none; move on);
   `aws ecs describe-task-definition --task-definition TASK_DEF --query 'taskDefinition.containerDefinitions[].{name:name,env:environment[].name,secrets:secrets[].name}'`.
   User data is base64; ask the human to decode and check it (Commands for you to run).
@@ -351,7 +352,8 @@ with the value masked, for example `AKIA************WXYZ`.
 
 ### 8.1 IMDSv2 required
 - **Evidence:** `aws ec2 describe-instances --query 'Reservations[].Instances[].[InstanceId,MetadataOptions.HttpTokens,MetadataOptions.HttpPutResponseHopLimit]' --output text`;
-  `aws ec2 get-instance-metadata-defaults`;
+  `aws ec2 get-instance-metadata-defaults`. Launch templates (Commands for you to run: the guard
+  blocks them because they include UserData; keep a `--query` that leaves out UserData):
   `aws ec2 describe-launch-template-versions --launch-template-id LT_ID --query 'LaunchTemplateVersions[].[VersionNumber,LaunchTemplateData.MetadataOptions.HttpTokens]' --output text`.
   IaC: missing `metadata_options { http_tokens = "required" }`.
 - **Why:** with IMDSv1, one SSRF bug in the app hands out the instance role credentials.
@@ -410,8 +412,9 @@ with the value masked, for example `AKIA************WXYZ`.
 - **Evidence:** the agent does not run `terraform plan`: it takes the state lock, can run
   external data sources, and drift output can print secret values. Under Commands for you to run,
   ask the human for `terraform plan -lock=false -refresh-only` (drift) and
-  `terraform plan -lock=false -out=plan.out`, and warn that the output may contain secrets. With
-  a saved plan, read addresses only:
+  `terraform plan -lock=false -out=plan.out`, and warn that the output may contain secrets. The
+  guard blocks `terraform show` (the JSON holds sensitive values), so also ask the human to run
+  these on the saved plan and paste the addresses:
   `terraform show -json plan.out | jq -r '.resource_changes[] | select(.change.actions | index("delete")) | .address'`;
   `terraform show -json plan.out | jq -r '.resource_changes[] | select(.type | test("iam|kms|cloudtrail|log_group|security_group")) | select(.change.actions | index("no-op") | not) | .address'`.
   For those IAM addresses, compare the policy `before` and `after`, not only the `.tf` diff.

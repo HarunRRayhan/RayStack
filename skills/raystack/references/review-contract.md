@@ -56,8 +56,13 @@ Use what is available, in this order:
   - `mongosh`, `cqlsh`, `clickhouse-client`, `snowsql`, `sqlcmd` and `bq` are always denied.
 - Do not run repo scripts, Makefile targets, package scripts (`npm run`, `composer`, etc.) or
   test suites during a review. The guard does not check what they do.
-- To grep for a CLI name, write it as a bracket class, e.g. `grep -rn '[r]ailway' .`. The guard
-  denies any command that mentions a monitored CLI.
+- The guard also denies any command that mentions a shell, `env`, `ssh` or `scp`, a package
+  runner (`npx`, `uv run`, `npm test` or other scripts, `yarn`, `pnpm` and `bun` except
+  `--version`), a container lifecycle command (`docker compose up`, `docker run`), a docker flag
+  before the subcommand, or a monitored tool's name anywhere (e.g. `grep -n npm Dockerfile`,
+  `grep -rn "@aws-sdk" .`).
+- To grep for such a name, write it as a bracket class in single quotes, e.g.
+  `grep -rn '[r]ailway' .`, `'[n]pm'`, `'[a]ws-sdk'`, `'[d]ocker'`.
 - For a literal dot in a pattern use `[.]`, not a backslash (backslashes are denied).
 - If the guard blocks a read command for its shape, rewrite it once: quote it, split it, drop
   the redirect.
@@ -118,3 +123,5 @@ Use what is available, in this order:
     or `cat` any other `.env*` file, `*.tfstate*`, kubeconfigs or credential files. Report the
     path and that it exists.
   - If a value slips into output anyway, redact it before quoting it in the report.
+  - Logs can hold secrets. The guard only allows bounded reads (`docker logs --tail 200` or
+    fewer); redact them the same way before quoting.

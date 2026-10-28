@@ -102,12 +102,18 @@ No review changes anything live. Fixes come back as diffs or as commands for you
 Each review turns on a guard hook (`skills/raystack/hooks/readonly-guard.sh`) that checks every
 shell command before it runs. Only the CLIs it lists are checked: `aws`, `gcloud`, `az`,
 `kubectl`, `oc`, `terraform`, `tofu`, `terragrunt`, `helm`, `railway`, `wrangler`, `redis-cli`
-and the SQL clients get read verbs only, one SQL read per call. Deploy tools such as `pulumi`,
-`cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked outright, as are commands that
-print secret values.
+and the SQL clients get read verbs only, one SQL read per call with no SQL comments. Deploy tools
+such as `pulumi`, `cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked outright, as are
+`pg_dump` and `pg_restore`, and commands that print secret values or credentials (for example
+`terraform show`, `helm get values`, `aws ecr get-login-password`). A name counts even inside a
+hyphenated or slashed word (`aws-cdk`, `amazon/aws-cli`). Package runners (`npx`, `bunx`, `uvx`),
+shells (`bash`, `sh -c`, `env`), `ssh` and most `npm`, `yarn` and `docker` subcommands are blocked during
+a review; only a short list of reads such as `docker ps`, `docker logs --tail 200` and `npm ls`
+gets through. Reads that return env vars or user data (Lambda configs, ECS task definitions,
+launch templates) are left for you to run.
 
 Everything else is not checked: other tools, the agent's own file Read tool, and scripts in
-the repo (a `make` target or `npm run` script can do anything). The guard is a seatbelt, not a
+the repo (a `make` target can do anything). The guard is a seatbelt, not a
 sandbox, and it only switches on by itself in Claude Code. In Cursor, Codex and Grok the
 reviews follow the same rules but nothing enforces them. Either way, run reviews with read-only
 credentials (AWS `ReadOnlyAccess` or `ViewOnlyAccess`, a read-only DB role). Those are the real
@@ -115,7 +121,11 @@ boundary. The full rules are in [the review contract](skills/raystack/references
 
 In Claude Code, once a review starts the guard stays on for the rest of the session. It then
 also blocks `$`, backslashes, unquoted globs (`*`, `?`, `[ ]`) and redirects (`>`, `<`) in any
-shell command, not only cloud ones. Start a new session after a review.
+shell command, not only cloud ones. It also blocks any command that mentions a shell, `env`,
+`ssh` or `scp`, a package runner (`npx`, `uv run`, `npm test` or other scripts, `yarn`, `pnpm`
+and `bun` except `--version`), a container lifecycle command (`docker compose up`, `docker run`),
+a docker flag before the subcommand, or a monitored tool's name anywhere (so `grep -n npm
+Dockerfile` and `grep -rn "@aws-sdk" .` are blocked too). Start a new session after a review.
 
 ## What you get back
 
