@@ -410,10 +410,12 @@ guard_check() {
     case "$name" in
       npx|pnpx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
       npm|pnpm|yarn|bun)
-        # Read allow-list; npm accepts prefixes and aliases (exe, innit, c), so nothing else passes.
-        case "$(_lc "${TOK[i + 1]:-}") $(_lc "${TOK[i + 2]:-}")" in
-          "--version "|"-v "|"ls "*|"list "*|"view "*|"info "*|"outdated "*|"why "*|"explain "*) continue ;;
-          "audit "*) f=' fix '
+        # Read allow-list; npm accepts prefixes and aliases (exe, innit, c), and yarn/pnpm/bun run a
+        # package.json script for any verb they don't know, so they only get --version.
+        case "$name $(_lc "${TOK[i + 1]:-}") $(_lc "${TOK[i + 2]:-}")" in
+          *" --version "|"npm -v ") continue ;;
+          "npm ls "*|"npm list "*|"npm view "*|"npm outdated "*|"npm why "*|"npm explain "*) continue ;;
+          "npm audit "*) f=' fix '
              for ((j = i + 1; j < n; j++)); do
                [ "${TOK[j]}" = "$PIPE" ] && break
                _in "$(_lc "${TOK[j]}")" "$f" && { _deny "$name audit fix not allowed during review"; return 1; }
@@ -426,7 +428,10 @@ guard_check() {
       sh|bash|zsh|dash|ksh|mksh|fish|csh|tcsh|busybox|env) _deny "$name not allowed during review"; return 1 ;;
       docker|podman|nerdctl|docker-compose|podman-compose)
         # DOCKER_HOST, COMPOSE_FILE and friends point the read at another daemon or file.
-        [ "$i" -gt 0 ] && [[ "${TOK[i - 1]}" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] && { _deny "env prefix before $name not allowed during review"; return 1; }
+        for w in "${TOK[@]}"; do
+          [[ "$w" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] || _in "$w" "export declare typeset set" || continue
+          _deny "env assignment with $name not allowed during review"; return 1
+        done
         f='' ;;
       *) continue ;;
     esac

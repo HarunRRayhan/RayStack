@@ -446,6 +446,20 @@ BLOCK=(
   'tcsh -c ls'
   'env ls'
   'ls | env'
+  # v0.1.1 round 2: yarn/pnpm/bun run package.json scripts for unknown verbs
+  'npm info x'
+  'pnpm why x'
+  'yarn why x'
+  'yarn ls'
+  'pnpm ls'
+  'bun pm ls'
+  # v0.1.1 round 2: no env assignment or export near a container CLI
+  'A=1 B=2 docker ps'
+  'docker ps A=1'
+  'export DOCKER_HOST=x; docker ps'
+  'export DOCKER_HOST=x && docker ps'
+  'declare -x DOCKER_HOST=x && docker ps'
+  'set -a && docker ps'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -582,11 +596,8 @@ ALLOW=(
   'npm ls'
   'npm list --depth 0'
   'npm view x version'
-  'npm info x'
   'npm outdated'
   'npm audit'
-  'pnpm why x'
-  'yarn why x'
   'npm explain x'
   'npm --version'
   'bun --version'
@@ -601,6 +612,8 @@ ALLOW=(
   'helm status x --hide-notes'
   '/abs/skills/raystack/scripts/report-pdf.sh /r/reviews/2026-10-28-aws-billing-review.md'
   'skills/raystack/scripts/report-pdf.sh r.md'
+  'yarn --version'
+  'pnpm --version'
 )
 
 for c in "${BLOCK[@]}"; do
