@@ -1,0 +1,353 @@
+#!/usr/bin/env bash
+# Tests for skills/raystack/hooks/readonly-guard.sh
+cd "$(dirname "$0")/.." || exit 1
+# shellcheck source=/dev/null
+. ./tests/lib.sh
+GUARD=skills/raystack/hooks/readonly-guard.sh
+if [ ! -f "$GUARD" ]; then fail "guard missing: $GUARD"; exit 1; fi
+# shellcheck source=/dev/null
+. "$GUARD"
+
+# shellcheck disable=SC2016,SC2088  # single quotes are intentional: commands are test data
+BLOCK=(
+  'aws ec2 terminate-instances --instance-ids i-1'
+  'aws s3 rm s3://b/k'
+  'aws s3 sync . s3://b --delete'
+  'aws iam delete-user --user-name x'
+  'aws rds modify-db-instance --db-instance-identifier x'
+  'ls && aws ec2 run-instances --image-id x'
+  'bash -c "aws iam attach-user-policy --user-name u --policy-arn p"'
+  'env AWS_PROFILE=p aws rds delete-db-instance --db-instance-identifier x'
+  'gcloud compute instances delete x'
+  'az vm delete -n x'
+  'terraform apply'
+  'terraform destroy'
+  'tofu apply'
+  'railway up'
+  'railway variable set A=b'
+  'wrangler deploy'
+  'kubectl delete pod x'
+  'kubectl apply -f x.yaml'
+  'psql -c "DROP TABLE users"'
+  'psql -c "update users set a=1"'
+  'mysql -e "DELETE FROM t"'
+  'redis-cli FLUSHALL'
+  'psql -c "EXPLAIN ANALYZE DELETE FROM t"'
+  'aws ec2 describe-instances && aws ec2 stop-instances --instance-ids i-1'
+  'aws --profile p ec2 reboot-instances --instance-ids i-1'
+  'aws s3 cp a s3://b/a'
+  'echo $(aws ec2 terminate-instances --instance-ids i-1)'
+  'xargs aws ec2 terminate-instances --instance-ids i-1'
+  'eval "aws ec2 terminate-instances --instance-ids i-1"'
+  'timeout 10 aws ec2 terminate-instances --instance-ids i-1'
+  'sudo -u root aws ec2 terminate-instances --instance-ids i-1'
+  'env -i aws ec2 terminate-instances --instance-ids i-1'
+  '\aws ec2 terminate-instances --instance-ids i-1'
+  '{ aws ec2 terminate-instances --instance-ids i-1; }'
+  'if true; then aws ec2 terminate-instances --instance-ids i-1; fi'
+  'for i in 1; do terraform destroy; done'
+  'ssh bastion "aws ec2 terminate-instances --instance-ids i-1"'
+  'docker exec db psql -c "drop table users"'
+  'kubectl exec pod -- psql -c "drop table users"'
+  'railway run psql -c "drop table users"'
+  'kubectl --insecure-skip-tls-verify delete pod x'
+  'redis-cli -c flushall'
+  'redis-cli --tls flushall'
+  'echo FLUSHALL | redis-cli'
+  'aws ssm send-command --document-name x'
+  'aws lambda invoke --function-name f out'
+  'aws sqs purge-queue --queue-url u'
+  'aws dynamodb batch-write-item --request-items x'
+  'aws ec2 authorize-security-group-ingress --group-id g'
+  'aws kms schedule-key-deletion --key-id k'
+  'aws route53 change-resource-record-sets --hosted-zone-id z'
+  'aws cloudformation execute-change-set --change-set-name c'
+  'gcloud sql instances patch x'
+  'az vm deallocate -n x'
+  'X=1 aws $X'
+  'psql -c "\! rm -rf /"'
+  'psql -f migrate.sql'
+  'psql -c "COPY t TO PROGRAM '"'"'id'"'"'"'
+  'terraform fmt'
+  'wrangler d1 execute db --command "select 1"'
+  'railway variables --set A=b'
+  'a=aw; ${a}s ec2 terminate-instances --instance-ids i-1'
+  "$'aws' ec2 terminate-instances --instance-ids i-1"
+  '"a"ws ec2 terminate-instances --instance-ids i-1'
+  '$(echo aws) ec2 terminate-instances --instance-ids i-1'
+  'kubectl --request-timeout 5 delete pod x'
+  'kubectl -l app=x delete pods'
+  'wrangler --env prod deploy'
+  'wrangler tail --x deploy'
+  'gcloud compute instances delete list'
+  'az vm delete --name show'
+  'psql -c "\\! id"'
+  'psql -c "\\\\! id"'
+  'sqlite3 db ".system id"'
+  'cat x.sql | psql'
+  'redis-cli < cmds.txt'
+  'redis-cli -x set k'
+  'printf FLUSHALL | redis-cli'
+  'redis-cli --tls -h h flushall'
+  'grep -r terraform docs' # known false positive: mentions a monitored CLI
+  'set -- aw; "$1"s ec2 terminate-instances --instance-ids i-1'
+  '$(printf aw; printf s) ec2 terminate-instances --instance-ids i-1'
+  'a[w]s ec2 terminate-instances --instance-ids i-1'
+  '/usr/local/bin/a?s ec2 terminate-instances --instance-ids i-1'
+  'aw* ec2 terminate-instances --instance-ids i-1'
+  'env a[w]s ec2 terminate-instances --instance-ids i-1'
+  'ps{q,}l -c "drop table users"'
+  '~/bin/aws ec2 terminate-instances --instance-ids i-1'
+  'gcloud compute instances suspend list'
+  'gcloud pubsub topics publish list --message x'
+  'gcloud functions call list'
+  'gcloud compute instances detach-disk list'
+  'psql -c "select 1" -o "|id"'
+  'sqlite3 db ".sh id"'
+  'sqlite3 -init evil.sql db'
+  'sqlite3 db ".restore x"'
+  'sqlcmd -i f.sql'
+  'mongosh h evil.js'
+  'psql -c "select setval('"'"'s'"'"', 1)"'
+  'mysql -e "/*!50000 drop table t */"'
+  'psql -c "select * into t2 from t"'
+  'usql pg://x -c "drop table users"'
+  'python3 -m awscli ec2 terminate-instances --instance-ids i-1'
+  'terragrunt apply'
+  'helm install x y'
+  'oc delete pod x'
+  'LD_PRELOAD=/tmp/x.so aws s3 ls'
+  'AWS_PAGER=sh aws s3 ls'
+  'aws s3 ls | sort --compress-program=./x'
+  'aws s3 ls | sort -o out'
+  'aws s3 ls | head file.txt'
+  # Fix round 4
+  'psql -c "drop table users" -c "select 1"'
+  'mysql -e "drop table t" -e "select 1"'
+  'psql --command="select 1" -c "drop table t"'
+  "mongosh h --eval \"db.x.find(require('child_process').execSync('id'))\""
+  'mongosh h --eval "db.x.find(), db.y.remove({})"'
+  'cqlsh -e "select * from t"'
+  'clickhouse-client -q "select 1"'
+  'snowsql -q "select 1"'
+  'sqlcmd -Q "select 1"'
+  'bq query "select 1"'
+  'bq ls'
+  'a[!x]s ec2 terminate-instances --instance-ids i-1'
+  '/usr/bin/sqlite[!x] db "drop table t"'
+  '/opt/homebrew/bin/aw(s|x) ec2 terminate-instances --instance-ids i-1'
+  'ls *.md' # intentional: unquoted glob characters deny everywhere (R13)
+  "psql -c \"select pg_drop_replication_slot('s')\""
+  'psql -c "select pg_promote()"'
+  "sqlite3 db \"select writefile('/tmp/x','x')\""
+  'sqlite3 db "pragma user_version=5"'
+  'sqlite3 db "pragma user_version(5)"'
+  'psql -c "select pg_catalog.pg_promote()"'
+  "psql -c 'select \"pg_promote\"()'"
+  'mysql -e "select sleep(100)"'
+  'psql -c "select * from (values (1)) v"'
+  "aws s3 ls | uniq 'in' 'out'"
+  'aws s3 ls | grep x secret.txt'
+  'aws s3 ls | jq . secret.json'
+  'aws s3 ls | tail -f'
+  'aws s3 ls | SORT -o out'
+  'AWS ec2 terminate-instances --instance-ids i-1'
+  'KUBECONFIG=x kubectl get pods'
+  'kubectl --kubeconfig x get pods'
+  'helm --kubeconfig x list'
+  'psql -L log.txt -c "select 1"'
+  # Fix round 5
+  'mysql -U -e "drop table t"'
+  'mariadb -U -e "drop table t"'
+  'mycli -U -e "drop table t"'
+  '/usr/bin/sqlite<3-3> db "drop table t"'
+  'echo x > out.txt' # intentional: unquoted < > deny everywhere (round 5)
+  'kubectl get pods --kubeconfig ./evil'
+  'kubectl get pods --kubeconfig=./evil'
+  'helm list --kubeconfig ./evil'
+  'helm template x ./c --post-renderer ./evil'
+  'terragrunt plan --terragrunt-tfpath ./evil'
+  'terragrunt plan --tf-path ./evil'
+  'kubectl get pods --token t'
+  "aws s3 ls | jq -n 'env'"
+  "aws s3 ls | jq '.x, env.HOME'"
+  # Final fix wave: flag bypasses (single- and double-dash)
+  'terraform init -migrate-state -force-copy'
+  'terraform init -backend=false --migrate-state'
+  'terraform init -backend=false -force-copy'
+  'terraform init'
+  'terraform init -backend=false -backend=true'
+  'terraform plan'
+  'terraform plan -lock=false -lock=true'
+  'terraform plan -plugin-dir=./x'
+  'terraform plan -lock=false --plugin-dir=./x'
+  'terragrunt plan -terragrunt-tfpath ./evil'
+  'terragrunt plan -lock=false -tf-path=./evil'
+  'oc get pods --config=./k'
+  'oc get pods -config=./k'
+  'kubectl get pods -kubeconfig=./k'
+  'kubectl get pods -token=t'
+  'kubectl get pods -exec x'
+  'helm template x ./c -post-renderer ./evil'
+  'tofu plan'
+  # Final fix wave: unmonitored mutating CLIs
+  'pulumi up'
+  'pulumi stack ls'
+  'cdk deploy'
+  'npx cdk deploy'
+  'sam deploy'
+  'serverless remove'
+  'sls deploy'
+  'eksctl delete cluster x'
+  'flyctl deploy'
+  'fly apps destroy x'
+  'doctl compute droplet delete x'
+  'heroku apps:destroy x'
+  'vercel --prod'
+  'netlify deploy'
+  'supabase db reset'
+  'dropdb prod'
+  'createdb x'
+  'mysqladmin drop db'
+  # Final fix wave: secret-printing forms
+  'aws secretsmanager get-secret-value --secret-id x'
+  'aws secretsmanager batch-get-secret-value --secret-id-list x'
+  'aws ssm get-parameter --name x --with-decryption'
+  'aws ssm get-parameters --names x --with-decryption'
+  'aws ssm get-parameters-by-path --path p --with-decryption'
+  'kubectl get secret x -o yaml'
+  'kubectl get secrets'
+  'kubectl -n x get secrets -o json'
+  'kubectl get secret/x'
+  'kubectl get configmaps,secrets'
+  'oc get secret x'
+  'kubectl config view --raw'
+  'terraform output'
+  'terraform output -json db_password'
+  'az keyvault secret show --name x --vault-name v'
+  'gcloud secrets versions access latest --secret x'
+  'railway variables'
+  'railway variables --kv'
+  'railway variables --json'
+  'railway variables --json | jq .'
+  "railway variables --json | jq '.'"
+  "railway variables --json | jq 'keys, .'"
+  'docker compose config'
+  'docker-compose config'
+  'docker compose -f x.yml config'
+  'docker compose config --services --environment'
+  'docker compose convert'
+)
+ALLOW=(
+  'aws ec2 describe-instances'
+  'aws ce get-cost-and-usage --time-period Start=a,End=b'
+  'aws iam get-account-authorization-details'
+  'aws s3 ls'
+  'aws cloudwatch get-metric-statistics --namespace x'
+  'gcloud compute instances list'
+  'terraform plan -lock=false'
+  'terraform show'
+  'kubectl get pods'
+  'psql -c "EXPLAIN ANALYZE SELECT 1"'
+  'psql -c "select * from pg_stat_statements"'
+  'redis-cli INFO memory'
+  'git status'
+  'aws logs start-query --log-group-name g'
+  'aws logs get-query-results --query-id q'
+  'aws logs stop-query --query-id q'
+  'aws athena get-query-execution --query-execution-id q'
+  'aws resourcegroupstaggingapi get-resources --tag-filters Key=a'
+  'gcloud compute instances describe stop-me'
+  'az vm show -n delete-me'
+  'gcloud run services list'
+  'az tag list'
+  'aws dynamodb query --table-name t'
+  'aws sts get-caller-identity'
+  'kubectl get pods -n x'
+  'terraform state list'
+  'redis-cli --tls INFO memory'
+  'wrangler whoami'
+  'aws ec2 describe-instances --region us-east-1 --output json | jq '"'"'.Reservations | length'"'"
+  'aws ce get-cost-and-usage --time-period Start=2026-01-01,End=2026-02-01 --granularity MONTHLY --metrics UnblendedCost'
+  'psql -c "select * from pg_stat_statements limit 5"'
+  'PGOPTIONS=-cdefault_transaction_read_only=on psql -c "select 1"'
+  'redis-cli --tls -h h INFO memory'
+  'kubectl -n x get pods'
+  'gcloud sql instances describe x'
+  'az vm list'
+  'helm list -n x'
+  'oc get pods'
+  'terragrunt plan -lock=false'
+  'AWS_PROFILE=p aws s3 ls'
+  'aws s3 ls | sort -r | uniq -c | head -5'
+  'psql -h h -d db -c "select 1"'
+  'sqlite3 -readonly db "select 1"'
+  'mysql -u root -e "show databases"'
+  'aws ec2 describe-instances | jq -r --raw-output '"'"'.x'"'"
+  # Fix round 4
+  'psql -c "select count(*) from t"'
+  "aws ec2 describe-instances | jq '.[] | .x'"
+  "psql -c \"select pg_size_pretty(pg_database_size('db'))\""
+  'psql -c "select a from t where id in (1, 2) and exists (select 1 from u)"'
+  'psql -c "with x as (select 1) select * from x"'
+  'psql -X -c "select now()"'
+  'sqlite3 db "pragma table_info(t)"'
+  'sqlite3 db "pragma user_version"'
+  'aws ec2 describe-instances | jq -S .'
+  'aws s3 ls | grep -c x | tail -n 5'
+  "aws s3 ls | cut -d ' ' -f 1 | column -t"
+  'aws s3 ls | tr -s x y | wc -l'
+  'AWS s3 ls'
+  'REDIS-CLI -h h INFO memory'
+  # Fix round 5
+  'mysql -U -u root -e "select 1"'
+  'mysql --safe-updates -h h -P 3306 -D db -e "select 1"'
+  'psql -U u -h h -p 5432 -d db -c "select 1"'
+  "aws s3 ls | jq '.environment'"
+  # Final fix wave
+  'terraform init -backend=false'
+  'tofu plan -lock=false'
+  'terraform plan --lock=false -refresh-only'
+  'kubectl config view'
+  'kubectl get configmaps'
+  'aws ssm describe-parameters'
+  'aws secretsmanager list-secrets'
+  'az keyvault secret list --vault-name v'
+  'gcloud secrets list'
+  "railway variables --json | jq 'keys'"
+  'docker compose config --services'
+  'docker compose config --volumes'
+  'docker compose ps'
+  'pg_dump --schema-only db'
+  'ls fly.toml serverless.yml cdk.json'
+)
+
+for c in "${BLOCK[@]}"; do
+  if guard_check "$c" 2>/dev/null; then fail "should block: $c"; else pass "blocks: $c"; fi
+done
+for c in "${ALLOW[@]}"; do
+  if guard_check "$c" 2>/dev/null; then pass "allows: $c"; else fail "should allow: $c (${GUARD_REASON:-})"; fi
+done
+
+# End-to-end through stdin JSON
+err=$(printf '%s' '{"tool_name":"Bash","tool_input":{"command":"terraform destroy"}}' | bash "$GUARD" 2>&1 >/dev/null); rc=$?
+assert_eq "$rc" 2 "json block exits 2"
+case "$err" in "RayStack review is read-only: "*) pass "json block stderr prefix" ;; *) fail "stderr prefix (got '$err')" ;; esac
+printf '%s' '{"tool_name":"Bash","tool_input":{"command":"git status"}}' | bash "$GUARD" >/dev/null 2>&1
+assert_eq "$?" 0 "json allow exits 0"
+printf '%s' '{"toolName":"run_terminal_command","toolInput":{"command":"aws ec2 terminate-instances --instance-ids i-0"}}' | bash "$GUARD" >/dev/null 2>&1
+assert_eq "$?" 2 "grok camelCase json blocks"
+printf '%s' '{"toolName":"run_terminal_command","toolInput":{"command":"git status"}}' | bash "$GUARD" >/dev/null 2>&1
+assert_eq "$?" 0 "grok camelCase json allows"
+printf '%s' '{"tool_name":"Read","tool_input":{"file_path":"x"}}' | bash "$GUARD" >/dev/null 2>&1
+assert_eq "$?" 0 "missing command exits 0"
+err=$(printf '%s' 'not json{' | bash "$GUARD" 2>&1 >/dev/null); rc=$?
+assert_eq "$rc" 2 "malformed json blocks (fail closed)"
+case "$err" in "RayStack review is read-only: "*) pass "malformed json stderr prefix" ;; *) fail "malformed stderr (got '$err')" ;; esac
+tmp=$(mktemp -d); ln -s "$(command -v cat)" "$tmp/cat"
+err=$(printf '%s' '{"tool_input":{"command":"git status"}}' | PATH="$tmp" "$BASH" "$GUARD" 2>&1 >/dev/null); rc=$?
+rm -rf "$tmp"
+assert_eq "$rc" 2 "missing jq blocks (fail closed)"
+case "$err" in *"jq not installed"*) pass "missing jq reason" ;; *) fail "missing jq reason (got '$err')" ;; esac
+
+exit "$FAILED"

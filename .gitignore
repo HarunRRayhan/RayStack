@@ -1,0 +1,5 @@
+.mining/
+.denylist
+reviews/
+*.pdf
+.superpowers/

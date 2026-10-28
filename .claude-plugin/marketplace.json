@@ -1,0 +1,17 @@
+{
+  "name": "raystack",
+  "owner": {
+    "name": "Harun R. Rayhan",
+    "url": "https://harun.dev"
+  },
+  "description": "RayStack: read-only infrastructure review skills by Harun R. Rayhan.",
+  "plugins": [
+    {
+      "name": "raystack",
+      "source": "./",
+      "version": "0.1.0",
+      "description": "Read-only infrastructure review skills by Harun R. Rayhan: AWS billing, AWS security, AWS bottlenecks, infra/deploys, scaling and databases. Each review ends in a ranked findings report.",
+      "category": "devops"
+    }
+  ]
+}

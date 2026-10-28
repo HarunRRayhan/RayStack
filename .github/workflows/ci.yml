@@ -1,0 +1,17 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools present
+        run: command -v shellcheck && command -v jq
+      - name: Tests
+        run: bash tests/run.sh
+      - name: Shellcheck
+        run: git ls-files -z '*.sh' | xargs -0 shellcheck
+      - name: Leak check
+        env:
+          RAYSTACK_DENYLIST: ${{ secrets.RAYSTACK_DENYLIST }}
+        run: bash scripts/leak-check.sh
