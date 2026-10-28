@@ -119,11 +119,13 @@ such as `pulumi`, `cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked o
 `pg_dump` and `pg_restore`, and commands that print secret values or credentials (for example
 `terraform show`, `helm get values`, `aws ecr get-login-password`). A name counts even inside a
 hyphenated or slashed word (`aws-cdk`, `amazon/aws-cli`). Package runners (`npx`, `bunx`, `uvx`),
-shells (`bash`, `sh -c`, `env`), `ssh` and most `npm`, `yarn` and `docker` subcommands are blocked during
-a review; only a short list of reads such as `docker ps`, `docker logs --tail 200` and `npm ls`
-gets through. Dependency audits are the one package-manager exception: `npm audit`, `composer
-audit`, `bundle audit`, `bundle-audit check` and `pip-audit`, with read flags only and no `fix`. Reads that return env vars or user data (Lambda configs, ECS task definitions,
-launch templates) are left for you to run.
+shells (`bash`, `sh -c`, `env`), `ssh` and most `npm`, `yarn` and `docker` subcommands are
+blocked during a review; only a short list of reads such as `docker ps`, `docker logs --tail
+200` and `npm ls` gets through. Dependency audits are the one package-manager exception, in
+forms that run no repo code: `npm audit`, `composer audit --no-plugins --no-scripts`,
+`bundle-audit check`, and `pip-audit` (with `-r`, also `--disable-pip` and `--no-deps` or
+`--require-hashes`), with read flags only and no `fix`. Reads that return env vars or user data
+(Lambda configs, ECS task definitions, launch templates) are left for you to run.
 
 Everything else is not checked: other tools, the agent's own file Read tool, and scripts in
 the repo (a `make` target can do anything). The guard is a seatbelt, not a

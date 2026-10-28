@@ -13,7 +13,8 @@
 #   deploy tools and pg_dump/pg_restore always deny. Names match on `-`/`/` boundaries too (aws-cdk, amazon/aws-cli).
 # Any word that is a shell, env, ssh/scp/sftp/mosh, or a package runner (npx pnpx bunx uvx) denies.
 # Allow-lists, checked on every word: npm ls/list/view/outdated/audit (no fix)/why/explain; yarn/pnpm/bun --version;
-#   composer audit, bundle audit [check], bundle-audit check, pip-audit, each with listed flags only. Any audit
+#   composer audit --no-plugins --no-scripts, bundle-audit check, pip-audit (-r needs --disable-pip plus --no-deps or
+#   --require-hashes), each with listed flags only (no repo plugins, scripts or package builds). Any audit
 #   (npm audit too) takes the cloud-CLI shape below: one call, only filters after a pipe, no ; && || or redirects.
 #   docker/podman/nerdctl ps, images, image ls, version, info, system df, stats --no-stream,
 #   logs --tail N<=200, compose ps|ls|images|logs|config --services/--volumes (no flags before the subcommand,
@@ -460,15 +461,14 @@ guard_check() {
         _deny "$name ${TOK[i + 1]:-} is not on the read allow-list"; return 1 ;;
       composer|bundle|bundle-audit|pip-audit)
         # Dependency audits only: the audit verb first, then listed flags; every other verb runs code or writes.
+        # No `bundle audit`: Bundler loads the repo-local plugin index for it.
         j=$((i + 1))
         case "$name $(_lc "${TOK[j]:-}")" in
           "composer audit") j=$((j + 1))
             vf='-f --format --abandoned --ignore-severity'
             bf='--locked --no-dev --ignore-unreachable --no-plugins --no-scripts -n --no-interaction --no-ansi --ansi -q --quiet -v -vv -vvv' ;;
           # update/download and --update pull the advisory DB; -o writes a file.
-          "bundle audit"|"bundle-audit check")
-            j=$((j + 1))
-            [ "$name" = bundle ] && [ "$(_lc "${TOK[j]:-}")" = check ] && j=$((j + 1))
+          "bundle-audit check") j=$((j + 1))
             vf='-F --format -i --ignore --gemfile-lock'
             bf='-q --quiet -v --verbose' ;;
           # No --fix, -o (writes a file), --cache-dir or a project path (builds it).
@@ -483,6 +483,14 @@ guard_check() {
           ARGS+=("${TOK[j]}")
         done
         _flags_ok "$vf" "$bf" "${ARGS[@]}" || { _deny "$name audit flag not on the read allow-list"; return 1; }
+        # Composer plugins/scripts and pip-installed requirements are repo-controlled code.
+        w=" ${ARGS[*]} "
+        if [ "$name" = composer ] && { [[ "$w" != *" --no-plugins "* ]] || [[ "$w" != *" --no-scripts "* ]]; }; then
+          _deny "composer audit only with --no-plugins --no-scripts"; return 1
+        fi
+        if [ "$name" = pip-audit ] && [[ "$w" =~ \ (-r|--requirement)[\ =] ]] && { [[ "$w" != *" --disable-pip "* ]] || [[ "$w" != *" --no-deps "* && "$w" != *" --require-hashes "* ]]; }; then
+          _deny "pip-audit -r only with --disable-pip and --no-deps or --require-hashes"; return 1
+        fi
         audit=1; continue ;;
       pipx|uv) f=' run ' ;;
       # A shell (or env) runs a string or a command these checks never see.

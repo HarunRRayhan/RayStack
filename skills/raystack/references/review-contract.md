@@ -56,18 +56,24 @@ Use what is available, in this order:
   - `mongosh`, `cqlsh`, `clickhouse-client`, `snowsql`, `sqlcmd` and `bq` are always denied.
 - Do not run repo scripts, Makefile targets, package scripts (`npm run`, `composer`, etc.) or
   test suites during a review. The guard does not check what they do.
-- One exception: dependency audits. The guard allows only the `audit` verb: `npm audit`,
-  `composer audit`, `bundle audit` (or `bundle audit check`), `bundle-audit check` and
-  `pip-audit`, each with read flags only (no `fix`, `--fix`, `--update` or `-o`). Each must be a
-  single command, optionally piped into the filters above. Every other `composer` and `bundle`
-  verb stays blocked.
+- One exception: dependency audits, only in forms that run no repo code. The guard allows:
+  - `npm audit`
+  - `composer audit --no-plugins --no-scripts` (both flags required)
+  - `bundle-audit check` (not `bundle audit`: Bundler loads the repo's plugin index)
+  - `pip-audit`; with `-r`/`--requirement` it also needs `--disable-pip` and either
+    `--no-deps` or `--require-hashes`
+
+  Read flags only (no `fix`, `--fix`, `--update` or `-o`). Each must be a single command,
+  optionally piped into the filters above. Every other `composer` and `bundle` verb stays
+  blocked.
+- `bundle-audit check` may download its advisory DB to the user's data dir on first run.
 - The guard also denies any command that mentions a shell, `env`, `ssh` or `scp`, a package
   runner (`npx`, `uv run`, `npm test` or other scripts, `yarn`, `pnpm` and `bun` except
   `--version`), a container lifecycle command (`docker compose up`, `docker run`), a docker flag
   before the subcommand, or a monitored tool's name anywhere (e.g. `grep -n npm Dockerfile`,
   `grep -rn "@aws-sdk" .`).
 - To grep for such a name, write it as a bracket class in single quotes, e.g.
-  `grep -rn '[r]ailway' .`, `'[n]pm'`, `'[a]ws-sdk'`, `'[d]ocker'`.
+  `grep -rn '[r]ailway' .`, `'[n]pm'`, `'[a]ws-sdk'`, `'[d]ocker'`, `'[c]omposer'`, `'[b]undle'`.
 - For a literal dot in a pattern use `[.]`, not a backslash (backslashes are denied).
 - If the guard blocks a read command for its shape, rewrite it once: quote it, split it, drop
   the redirect.
