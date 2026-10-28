@@ -110,7 +110,10 @@ _eval_cli() {
       a="${P[0]:-}"; b="${P[1]:-}"
       [ -z "$b" ] && [ "$a" != configure ] && return 0
       # Reads that print secret values.
-      case "$a $b" in "secretsmanager "*get-secret-value) _deny "aws $a $b prints secret values"; return 1 ;; esac
+      case "$a $b" in
+        "secretsmanager "*get-secret-value|*" get-authorization-token"|ecr*" get-login-password"|"sts get-session-token"|"sts get-federation-token"|"ec2 get-password-data")
+          _deny "aws $a $b prints secret values or credentials"; return 1 ;;
+      esac
       if [ "$a" = ssm ] && [[ "$b" == get-parameter* ]]; then
         case " $* " in *" --with-decryption"*) _deny "aws ssm --with-decryption prints secret values"; return 1 ;; esac
       fi
@@ -130,6 +133,7 @@ _eval_cli() {
           *) w=$(_lc "$1")
              if [[ "$w" =~ $_GC_READ ]] && [ $seen -gt 0 ]; then
                [ "$w" = list ] || case "$b" in *" keyvault secret") _deny "$cli keyvault secret $w prints secret values"; return 1 ;; esac
+               case "$cli$b" in az*" keys") _deny "az$b $w prints access keys"; return 1 ;; esac
                return 0
              elif [ $seen = 0 ] && [[ "$w" =~ ^(version|info)$ ]]; then return 0
              elif _in "$w" "$_GC_GROUPS"; then seen=$((seen + 1)); b="$b $w"
@@ -174,8 +178,13 @@ _eval_cli() {
       _no "$cli $a" ;;
     helm)
       _walk 1 "-n --namespace --kube-context" "--help" "$@" || return 1
-      case "${P[0]:-}" in ''|list|ls|status|history|version|template|search|get|show) return 0 ;; esac
-      _no "helm ${P[0]}" ;;
+      case "${P[0]:-}" in ''|list|ls|status|history|version|template|search) return 0 ;; esac
+      # get values/all/manifest can print secrets.
+      if [ "${P[0]}" = get ]; then
+        _walk 2 "-n --namespace --kube-context --revision" "--help" "$@" || return 1
+        case "${P[1]:-}" in notes|metadata|hooks) return 0 ;; esac
+      fi
+      _no "helm ${P[*]}" ;;
     railway)
       case " $* " in *" --set"*) _deny "railway --set"; return 1 ;; esac
       _walk 1 "" "--help --version" "$@" || return 1
