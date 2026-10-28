@@ -24,7 +24,8 @@ _in() { case " $2 " in *" $1 "*) return 0 ;; esac; return 1; }
 _lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
 _NAMES='aws gcloud az kubectl oc terraform tofu terragrunt helm railway wrangler redis-cli bq psql mysql mariadb sqlite3 sqlcmd mongosh clickhouse-client cqlsh snowsql usql pgcli mycli awscli pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin'
-_MENTION="(^|[^a-z0-9_.-])(${_NAMES// /|})([^a-z0-9_.-]|\$)"
+# `-` and `/` are boundaries, so hyphen/slash-joined names count too (aws-cdk, netlify-cli, amazon/aws-cli).
+_MENTION="(^|[^a-z0-9_.])(${_NAMES// /|})([^a-z0-9_.]|\$)"
 _SQL_CLIS=' psql mysql mariadb sqlite3 usql pgcli mycli '
 _UNSUPPORTED=' mongosh cqlsh clickhouse-client snowsql sqlcmd bq pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin '
 _FILTERS=' jq head tail grep sort uniq wc cut column tr '
@@ -65,6 +66,16 @@ _walk() {
     shift
   done
   return 0
+}
+
+# _docker_sub i: index of the docker/podman subcommand after TOK[i], skipping global flags and their values.
+_docker_sub() {
+  local k=$(($1 + 1))
+  while [[ "${TOK[k]:-}" == -* ]]; do
+    _in "${TOK[k]}" "-c --config --context -H --host -l --log-level --tlscacert --tlscert --tlskey --connection --url --identity" && k=$((k + 1))
+    k=$((k + 1))
+  done
+  echo "$k"
 }
 
 # _tf_only <name=value> args...: every -name/--name flag in args is exactly that value, and one exists.
@@ -320,12 +331,29 @@ guard_check() {
   [ $intok = 1 ] && TOK+=("$tok")
 
   lc=$(_lc "$1"); strip=${lc//[\"\']/}
+  # Package runners and container runs fetch and execute any tool (npx aws-cdk deploy, docker run amazon/aws-cli).
+  n=${#TOK[@]}
+  for ((i = 0; i < n; i++)); do
+    case "$(_lc "${TOK[i]##*/}")" in
+      npx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
+      pnpm|yarn) f=' dlx ' ;;
+      npm) f=' exec x ' ;;
+      bun) f=' x ' ;;
+      pipx|uv|docker|podman) f=' run ' ;;
+      *) continue ;;
+    esac
+    # shortcut: any later word in the pipe segment counts (docker logs run denies), fail closed.
+    for ((j = i + 1; j < n; j++)); do
+      [ "${TOK[j]}" = "$PIPE" ] && break
+      _in "$(_lc "${TOK[j]}")" "$f" && { _deny "package runners are not allowed during a review"; return 1; }
+    done
+  done
   # docker compose config/convert prints interpolated secrets: only --services or --volumes.
-  if [[ "$strip" =~ docker ]]; then
-    n=${#TOK[@]}; f=0
+  if [[ "$strip" =~ docker|podman ]]; then
+    f=0
     for ((i = 0; i < n; i++)); do
       name=$(_lc "${TOK[i]##*/}")
-      if [ "$name" = docker-compose ] || { [ "$name" = docker ] && [ "$(_lc "${TOK[i + 1]:-}")" = compose ]; }; then f=1
+      if [ "$name" = docker-compose ] || [ "$name" = podman-compose ] || { { [ "$name" = docker ] || [ "$name" = podman ]; } && [ "$(_lc "${TOK[i + 1]:-}")" = compose ]; }; then f=1
       elif [ $f = 1 ] && { [ "$name" = config ] || [ "$name" = convert ]; }; then
         f=2
         for ((j = i + 1; j < n; j++)); do
@@ -336,6 +364,8 @@ guard_check() {
       fi
     done
   fi
+  # RayStack's own skill names (report paths like reviews/...-aws-billing-review.md) are not CLI mentions.
+  for name in aws-billing-review aws-security-review aws-bottleneck-review; do strip=${strip//$name/ }; done
   [[ "$strip" =~ $_MENTION ]] || return 0
   if [ -n "$q" ] || [ $ops = 1 ]; then _shape; return 1; fi
   [ $tilde = 0 ] || { _deny "leading ~ in a word during review"; return 1; }

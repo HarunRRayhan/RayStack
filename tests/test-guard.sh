@@ -245,6 +245,23 @@ BLOCK=(
   'psql -c "select pg_promote ()"'
   'psql -c "select pg_promote--x"'
   'mysql -e "select 1 # x"'
+  # v0.1.1: hyphen/slash-joined names and package runners
+  'npx aws-cdk deploy'
+  'npx netlify-cli deploy'
+  'docker run amazon/aws-cli ec2 terminate-instances --instance-ids i-1'
+  'ls && npx aws-cdk deploy'
+  'aws-cdk deploy'
+  'npx marked x.md'
+  'pnpm dlx vercel deploy'
+  'bunx wrangler deploy'
+  'yarn dlx serverless deploy'
+  'uvx awscli ec2 terminate-instances --instance-ids i-1'
+  'pipx run awscli ec2 terminate-instances --instance-ids i-1'
+  'npm exec aws-cdk deploy'
+  'docker run --rm alpine true'
+  'docker --context x run alpine true'
+  'podman run alpine true'
+  'docker compose run app true'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -328,6 +345,10 @@ ALLOW=(
   'docker compose ps'
   'pg_dump --schema-only db'
   'ls fly.toml serverless.yml cdk.json'
+  # v0.1.1
+  'bash skills/raystack/scripts/report-pdf.sh /r/reviews/2026-10-28-aws-billing-review.md'
+  'docker ps'
+  'npm ls'
 )
 
 for c in "${BLOCK[@]}"; do

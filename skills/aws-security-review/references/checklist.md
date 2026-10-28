@@ -131,7 +131,7 @@ with the value masked, for example `AKIA************WXYZ`.
   `sts.amazonaws.com`; no AWS keys in CI secrets.
 - **Evidence:** IaC grep (config form): `token.actions.githubusercontent.com:sub.*[*]`.
   Stored keys (location-only form, the line may hold a literal key):
-  `grep -rnE 'AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|aws-access-key-id|aws-secret-access-key' .github | cut -d: -f1,2`.
+  `grep -rniE 'AWS.ACCESS.KEY.ID|AWS.SECRET.ACCESS.KEY' .github | cut -d: -f1,2`.
   A `secrets.NAME` reference is a stored CI secret; a literal value is also a leaked key. Live:
   `aws iam list-roles --output json | jq -r '.Roles[] | select(.AssumeRolePolicyDocument | tostring | contains("token.actions.githubusercontent.com")) | .RoleName'`;
   `gh secret list` (names only).
