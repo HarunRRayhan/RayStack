@@ -99,5 +99,17 @@ if [ -f "$cover" ]; then
 else
   fail "missing $cover"
 fi
+# local-verify never touches .env, uses throwaway data, and does not fake a browser check.
+lv=skills/local-verify/SKILL.md
+if [ -f "$lv" ]; then
+  check "local-verify never edits .env" grep -qF '.env' "$lv"
+  check "local-verify uses a throwaway database" grep -qF 'throwaway' "$lv"
+  check "local-verify says when there is no browser tool" grep -qF 'no browser tool' "$lv"
+  check "local-verify stops without a browser tool" grep -qF 'stop only' "$lv"
+else
+  fail "missing $lv"
+fi
+check "principle-ship names local-verify" grep -qF 'local-verify' skills/principle-ship/SKILL.md
+
 check "humanize names repo voice path" grep -qF '.raystack/voice.md' skills/humanize/SKILL.md
 exit "$FAILED"
