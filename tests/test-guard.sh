@@ -524,6 +524,15 @@ BLOCK=(
   'bundle audit'
   'bundle audit check'
   'bundle audit check --format json'
+  # v0.4 fix round 2: required flags hidden inside one quoted word
+  'composer audit "--no-plugins --no-scripts"'
+  "composer audit -f 'json --no-plugins --no-scripts'"
+  'composer audit --ignore-severity "low --no-plugins --no-scripts"'
+  "pip-audit -r 'req.txt --disable-pip --no-deps'"
+  "pip-audit -f 'json --disable-pip --no-deps' -r req.txt"
+  $'composer audit --no-plugins --no-scripts -f "json\n--no-dev"'
+  'npm audit "--json --omit=dev"'
+  "bundle-audit check -F 'json -q'"
   'npm audit || rm -rf x'
   'composer audit || rm -rf x'
   'composer audit | xargs rm -rf x'

@@ -401,7 +401,7 @@ _filter_ok() {
 }
 
 guard_check() {
-  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w vf bf audit=0
+  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w vf bf seen audit=0
   local -a TOK ARGS
   GUARD_REASON=""
   case "$1" in
@@ -454,7 +454,8 @@ guard_check() {
           "npm audit "*) audit=1
              for ((j = i + 1; j < n; j++)); do
                [ "${TOK[j]}" = "$PIPE" ] && break
-               case "$(_lc "${TOK[j]}")" in fix|--fix*) _deny "$name audit fix not allowed during review"; return 1 ;; esac
+               case "$(_lc "${TOK[j]}")" in fix|--fix*) _deny "$name audit fix not allowed during review"; return 1 ;;
+                 *[[:space:]]*) _deny "$name audit argument with whitespace"; return 1 ;; esac
              done
              continue ;;
         esac
@@ -484,11 +485,19 @@ guard_check() {
         done
         _flags_ok "$vf" "$bf" "${ARGS[@]}" || { _deny "$name audit flag not on the read allow-list"; return 1; }
         # Composer plugins/scripts and pip-installed requirements are repo-controlled code.
-        w=" ${ARGS[*]} "
-        if [ "$name" = composer ] && { [[ "$w" != *" --no-plugins "* ]] || [[ "$w" != *" --no-scripts "* ]]; }; then
+        # Exact per-word matches: a quoted word could hold several flags ("--no-plugins --no-scripts").
+        seen=' '
+        for w in "${ARGS[@]}"; do
+          case "$w" in
+            *[[:space:]]*) _deny "$name audit argument with whitespace"; return 1 ;;
+            --no-plugins|--no-scripts|--disable-pip|--no-deps|--require-hashes|-r) seen+="$w " ;;
+            --requirement|--requirement=*) seen+="-r " ;;
+          esac
+        done
+        if [ "$name" = composer ] && { ! _in --no-plugins "$seen" || ! _in --no-scripts "$seen"; }; then
           _deny "composer audit only with --no-plugins --no-scripts"; return 1
         fi
-        if [ "$name" = pip-audit ] && [[ "$w" =~ \ (-r|--requirement)[\ =] ]] && { [[ "$w" != *" --disable-pip "* ]] || [[ "$w" != *" --no-deps "* && "$w" != *" --require-hashes "* ]]; }; then
+        if [ "$name" = pip-audit ] && _in -r "$seen" && { ! _in --disable-pip "$seen" || { ! _in --no-deps "$seen" && ! _in --require-hashes "$seen"; }; }; then
           _deny "pip-audit -r only with --disable-pip and --no-deps or --require-hashes"; return 1
         fi
         audit=1; continue ;;
