@@ -76,5 +76,16 @@ if [ -f "$draft" ]; then
 else
   fail "missing $draft"
 fi
+cover=skills/blog-cover/SKILL.md
+if [ -f "$cover" ]; then
+  check "blog-cover uses render-cover.sh" grep -qF 'scripts/render-cover.sh' "$cover"
+  check "blog-cover uses the template" grep -qF 'assets/cover-template.html' "$cover"
+  check "blog-cover HTML-escapes text" grep -qF 'HTML-escape' "$cover"
+  check "blog-cover never uses AI images" grep -qF 'never AI' "$cover"
+  check "blog-cover render script exists" test -f skills/blog-cover/scripts/render-cover.sh
+  check "blog-cover template exists" test -f skills/blog-cover/assets/cover-template.html
+else
+  fail "missing $cover"
+fi
 check "humanize names repo voice path" grep -qF '.raystack/voice.md' skills/humanize/SKILL.md
 exit "$FAILED"
