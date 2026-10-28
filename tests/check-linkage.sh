@@ -32,6 +32,7 @@ if [ -f "$entry" ]; then
   for s in "${REVIEWS[@]}"; do
     check "raystack names $s" grep -qF "$s" "$entry"
   done
+  check "raystack names blog" grep -qF '`blog`' "$entry"
 else
   fail "missing $entry"
 fi

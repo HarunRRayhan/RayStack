@@ -9,16 +9,7 @@
   "homepage": "https://github.com/HarunRRayhan/raystack",
   "repository": "https://github.com/HarunRRayhan/raystack",
   "license": "MIT",
-  "keywords": [
-    "aws",
-    "infrastructure",
-    "review",
-    "security",
-    "cost",
-    "database",
-    "scaling",
-    "blog",
-    "writing"
-  ],
+  "keywords": ["aws", "infrastructure", "review", "security", "cost", "database", "scaling", "blog", "writing"]
+,
   "skills": "./skills/"
 }
