@@ -11,7 +11,7 @@ repo's publish command.
 ## 1. Before writing
 
 - Read the voice file: `.raystack/voice.md` at the repo root, else `~/.raystack/voice.md`. The
-  repo file wins. No voice file: ask once through the question tool to run setup via the
+  repo file wins. If the caller passed a voice file path or "neutral voice", use it and don't ask. No voice file: ask once through the question tool to run setup via the
   `blog` skill or continue in a neutral voice. Never borrow another author's voice.
 - Read 2-3 recent posts for voice, length and structure.
 

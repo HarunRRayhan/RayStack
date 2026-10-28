@@ -12,7 +12,8 @@ By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com
 - `bash` and `jq`. The guard needs `jq` to read each command; without it, it blocks every
   shell command during a review (fails closed).
 - For PDF export: Chrome or Chromium, and `npx` (Node.js).
-- For blog covers: Chrome or Chromium and `node`. `sips` (macOS) or ImageMagick is optional,
+- For blog covers: Chrome or Chromium and `node`, and the `raystack` skill installed beside
+  `blog-cover` (`install.sh` and the plugin always do this). `sips` (macOS) or ImageMagick is optional,
   for a JPG.
 
 ## Install

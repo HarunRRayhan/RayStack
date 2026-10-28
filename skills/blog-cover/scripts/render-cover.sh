@@ -16,6 +16,7 @@ if ! [[ "$size" =~ ^[0-9]+x[0-9]+$ ]]; then
   exit 1
 fi
 
+# Needs the raystack skill installed beside blog-cover (install.sh and the plugin do this).
 # shellcheck source=../../raystack/scripts/find-chrome.sh source-path=SCRIPTDIR
 . "$(dirname "$0")/../../raystack/scripts/find-chrome.sh"
 if [ -z "$chrome" ]; then
@@ -29,9 +30,9 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 # Cover text may be untrusted. The CSP meta is written first, so it applies whatever head the input
-# has. Same approach as report-pdf.sh: node neutralises the tags that can navigate or load files
-# (meta incl. refresh, base, iframe, object, embed, link, script, form, ...) and file:/javascript:
-# URLs. data: URIs in img/font stay. Needs node; fails closed without it.
+# has; the CSP is the real security boundary. The node pass is defense-in-depth: it deletes the void
+# navigation/loading tags (meta incl. refresh, base, link, embed), escapes iframe/object/script/form
+# etc., and rewrites file:/javascript: URLs. data: URIs in img/font stay. Needs node; fails closed.
 csp="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:"
 if ! command -v node >/dev/null 2>&1; then
   echo "render-cover: node is required to sanitise the cover HTML" >&2
@@ -42,6 +43,7 @@ fi
   # shellcheck disable=SC2016  # JavaScript, not shell
   node -e '
     let h = require("fs").readFileSync(0, "utf8");
+    h = h.replace(/<\/?(meta|base|link|embed)\b[^>]*>/gi, "");
     h = h.replace(/<(?=\/?(meta|base|iframe|frame|frameset|object|embed|applet|link|script|form)(?![a-z0-9-])|\?)/gi, "&lt;");
     h = h.replace(/\b(href|src|data|action|srcset|poster)(\s*=\s*["\x27]?\s*)(file|javascript|vbscript):/gi, "$1$2blocked-$3:");
     process.stdout.write(h);

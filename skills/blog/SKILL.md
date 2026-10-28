@@ -38,16 +38,17 @@ only, never a voice to write in.
    openings, sentence length, words they avoid, formatting, closing, cover footer, topics.
    Quote their own lines where it helps. Don't invent rules the posts don't show.
 3. List what the posts couldn't answer (often the cover footer `domain:` and `handle:`, the
-   closing links and the ideas file). Ask all of the gaps in ONE question-tool call, with up to
-   4 questions. Leave any section the user skips marked "not set".
-4. Ask where to save it in the same call: `.raystack/voice.md` in this repo (Recommended) or
+   closing links and the ideas file). Ask in ONE question-tool call, max 4 questions total
+   including the save location below: at most 3 gap questions (combine domain and handle into
+   one). Any further gaps go in a second call. Leave any section the user skips as "not set".
+4. In that same call, ask where to save it: `.raystack/voice.md` in this repo (Recommended) or
    `~/.raystack/voice.md` for every repo. Write it there.
 5. Show [the worked example](references/voice-example.md) so the user can see a filled file,
    and say they can edit theirs any time.
 
 ## 4. Run the flow
 
-Run these in order, one at a time. Pass the voice file path (or "neutral voice") in each call.
+Run these in order, one at a time. Pass the voice file path (or "neutral voice") to every step; each step uses it and doesn't ask again.
 
 1. `blog-topics`. Stop and wait for the user to pick a topic. Don't start drafting on a default.
 2. `blog-draft` with the picked topic.

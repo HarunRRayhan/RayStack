@@ -28,8 +28,8 @@ stock-photo fetching.
   render blocks them, and only `data:` URIs load.
 - Pick gradient colours that differ from the previous post's cover.
 - Footer: read `## Cover footer` (`domain:` and `handle:`) from `.raystack/voice.md` at the
-  repo root, else `~/.raystack/voice.md`. The repo file wins. A value of `not set` or no
-  voice file: ask once through the question tool, and use the answer.
+  repo root, else `~/.raystack/voice.md`. The repo file wins. If the caller passed a voice file path or "neutral voice", use it and don't ask. A value
+  of `not set` or no voice file: ask once through the question tool, and use the answer.
 - Photo background: only from an image the user supplies, inlined as a `data:` URI behind a
   dark overlay so the title stays readable.
 
@@ -41,7 +41,8 @@ stock-photo fetching.
   It needs Chrome and node, prints the written path, and writes PNG with a warning when it
   can't make a JPEG. If it exits 1 for a missing tool, tell the user which one.
 - Save to the repo's cover convention, else beside the draft as `cover.jpg`.
-- If the draft has a cover frontmatter key, set it to the saved path in the repo's format.
+- Use the path the script prints as the saved file: it may be a `.png` when no JPEG tool exists.
+- If the draft has a cover frontmatter key, set it to that printed path in the repo's format.
 
 ## 5. Check
 
@@ -50,7 +51,7 @@ readable, footer is right, nothing is blank. Fix the HTML and render again if no
 
 ## 6. Report
 
-The cover path, the size, and any frontmatter key you changed.
+The printed cover path, the size, and any frontmatter key you changed.
 
 ## Questions
 

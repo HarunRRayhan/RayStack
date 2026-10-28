@@ -10,7 +10,7 @@ Find topics worth a post, score them and let the user pick. This skill never dra
 ## 1. Read the voice file
 
 Look for `.raystack/voice.md` at the repo root, then `~/.raystack/voice.md`. The repo file
-wins. Use its `## Topics and stack` and `## Ideas file` sections. No voice file: ask once
+wins. Use its `## Topics and stack` and `## Ideas file` sections. If the caller passed a voice file path or "neutral voice", use it and don't ask. No voice file: ask once
 through the question tool to run setup via the `blog` skill or continue in a neutral voice.
 Never borrow another author's voice.
 

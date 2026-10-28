@@ -10,7 +10,7 @@ Rewrite the text so a person could have typed it. Keep the meaning.
 ## Steps
 
 1. Look for a voice file: `.raystack/voice.md` at the repo root, else `~/.raystack/voice.md`. The repo file wins. If found, read it. Its rules override the checklist wherever they conflict.
-2. No voice file: use [the checklist](references/checklist.md) alone. Never borrow another author's voice.
+2. If the caller passed a voice file path or "neutral voice", use it and don't ask. No voice file: use [the checklist](references/checklist.md) alone. Never borrow another author's voice.
 3. Rewrite in place. Keep the facts, numbers, code blocks, commands, paths and links exactly as they are. Don't add claims.
 4. Report the number of edits you made, and anything you left alone on purpose.
 

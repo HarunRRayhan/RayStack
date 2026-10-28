@@ -66,6 +66,18 @@ done
 if grep -qiE '(href|src|data)="(file|javascript):' "$H"; then fail "file:/javascript: URLs neutralised"; else pass "file:/javascript: URLs neutralised"; fi
 if grep -qF 'src="data:image/png;base64,AAAA"' "$H"; then pass "data: URI kept"; else fail "data: URI kept"; fi
 
+# Template survives the sanitiser clean: no escaped tags on the image, CSP kept.
+sed -e 's|{{TITLE}}|T|' -e 's|{{BADGES}}||' -e 's|{{FOOTER_LEFT}}|a|' -e 's|{{FOOTER_RIGHT}}|b|' "$T" > "$D/tpl.html"
+CHROME="$D/bin/fake-chrome" bash "$S" "$D/tpl.html" "$D/t.png" >/dev/null 2>&1
+if grep -qF '&lt;' "$D/captured.html"; then fail "template body has no &lt;"; else pass "template body has no &lt;"; fi
+if grep -qF "$CSPSTR" "$D/captured.html"; then pass "CSP present for template"; else fail "CSP present for template"; fi
+printf '<html><head><meta http-equiv="refresh" content="0;url=x"><META HTTP-EQUIV="refresh" content="0"><LINK rel="stylesheet" href="x"><base href="x"></head><body>hi</body></html>\n' > "$D/m.html"
+CHROME="$D/bin/fake-chrome" bash "$S" "$D/m.html" "$D/m.png" >/dev/null 2>&1
+for t in 'http-equiv="refresh"' 'HTTP-EQUIV' '<link' '<base' '&lt;'; do
+  if sed '1d' "$D/captured.html" | grep -qiF -e "$t"; then fail "hostile $t removed"; else pass "hostile $t removed"; fi
+done
+if grep -qF "$CSPSTR" "$D/captured.html"; then pass "CSP present after hostile meta"; else fail "CSP present after hostile meta"; fi
+
 for bad in 1x 9xfoo 1x2x3 x5 abc; do
   code=$(CHROME="$D/bin/fake-chrome" bash "$S" "$D/c.html" "$D/b.png" "$bad" 2>/dev/null >/dev/null; echo $?)
   assert_eq "$code" 1 "bad size '$bad' exits 1"
