@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0 (2026-10-28)
+
+Five content skills: write a blog post in your own voice, from topic to draft and cover. The flow
+stops at a draft and a cover. It never publishes.
+
+- `blog`: entry skill. Sets up your voice file, then runs the flow below.
+- `blog-topics`: scores ideas from repo lessons, current news and your ideas file, shows the top
+  10 and waits for your pick.
+- `blog-draft`: writes the post as a draft in your voice, in the repo's own post format.
+- `humanize`: rewrites AI-sounding prose. Adapted from Harun's own humanizer skill.
+- `blog-cover`: renders a cover image from an HTML card with headless Chrome and node
+  (`sips` or ImageMagick for a JPG).
+- Voice file: `.raystack/voice.md` at the repo root, else `~/.raystack/voice.md`. The repo wins.
+  Harun's worked example is in `skills/blog/references/voice-example.md` and is never used as
+  your voice.
+- `install.sh` installs and uninstalls sixteen skills. The router points blog requests at `blog`.
+
 ## 0.2.0 (2026-10-28)
 
 Four principle skills. The agent loads them by itself when a task fits; they aren't reviews.

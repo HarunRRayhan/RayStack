@@ -1,6 +1,6 @@
 ---
 name: raystack
-description: Entry point for RayStack read-only infrastructure reviews. Use for "/raystack", "review my AWS", "review my database", "audit my stack", "which review should I run", or any request to audit cloud cost, security, bottlenecks, deploys, scaling or databases when the right review is unclear.
+description: Entry point for RayStack read-only infrastructure reviews. Use for "/raystack", "review my AWS", "review my database", "audit my stack", "which review should I run", or any request to audit cloud cost, security, bottlenecks, deploys, scaling or databases when the right review is unclear. Also routes blog writing ("write a post", "what should I blog about").
 ---
 
 # RayStack
@@ -21,6 +21,12 @@ the right reviews for the repo and runs them in turn.
 
 Four short principle skills load on their own when a task matches; this router never runs them:
 `principle-ship`, `principle-smallest-change`, `principle-ask-with-question-tool`, `principle-secrets-layout`.
+
+## Content
+
+Blog writing is not a review. For "write a post", "what should I blog about" or "set up my
+voice", hand off to the `blog` skill (it runs `blog-topics`, `blog-draft`, `humanize` and
+`blog-cover`). Do not run it as part of the review flow.
 
 ## 1. Detect signals
 

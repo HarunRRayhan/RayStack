@@ -4,14 +4,15 @@
     "name": "Harun R. Rayhan",
     "url": "https://harun.dev"
   },
-  "description": "RayStack: read-only infrastructure review skills by Harun R. Rayhan.",
+  "description": "Skills by Harun R. Rayhan: read-only infrastructure reviews (AWS billing, security, bottlenecks, infra, scaling, databases), working principles, and blog writing in your own voice.",
   "plugins": [
     {
       "name": "raystack",
       "source": "./",
-      "version": "0.2.0",
-      "description": "Read-only infrastructure review skills by Harun R. Rayhan: AWS billing, AWS security, AWS bottlenecks, infra/deploys, scaling and databases. Each review ends in a ranked findings report.",
+      "version": "0.3.0",
+      "description": "Skills by Harun R. Rayhan: read-only infrastructure reviews (AWS billing, security, bottlenecks, infra, scaling, databases), working principles, and blog writing in your own voice.",
       "category": "devops"
     }
-  ]
+  ],
+  "version": null
 }
