@@ -109,6 +109,18 @@ _aws_leaky() {
   return 0
 }
 
+# _tail_ok args...: a --tail N with N <= 200 is present (bounded log reads).
+_tail_ok() {
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --tail) [[ "${2:-}" =~ ^[0-9]{1,3}$ ]] && [ "$2" -le 200 ] && return 0 ;;
+      --tail=*) [[ "${1#*=}" =~ ^[0-9]{1,3}$ ]] && [ "${1#*=}" -le 200 ] && return 0 ;;
+    esac
+    shift
+  done
+  return 1
+}
+
 # _docker_ok <docker|podman|nerdctl|*-compose> words...: 0 when the call is a listed read subcommand.
 # No flag may come before the subcommand (global flags pick other daemons or configs).
 _docker_ok() {
@@ -116,7 +128,10 @@ _docker_ok() {
   case "$base" in *-compose) set -- compose "$@" ;; esac
   case "${1:-}" in -*) _deny "$base flag before subcommand: $1"; return 1 ;; esac
   case "$(_lc "${1:-} ${2:-}")" in
-    " "|"ps "*|"logs "*|"images "*|"inspect "*|"version "*|"info "*|"image ls"|"system df"|"compose ps"|"compose ls"|"compose logs"|"compose images") return 0 ;;
+    # No container inspect: Config.Env can hold secrets.
+    " "|"ps "*|"images "*|"version "*|"info "*|"image ls"|"image inspect"|"system df"|"compose ps"|"compose ls"|"compose images") return 0 ;;
+    "logs "*|"compose logs") _tail_ok "$@" && return 0
+      _deny "$base logs only with --tail N (N at most 200)"; return 1 ;;
     "stats "*) case " $* " in *" --no-stream "*) return 0 ;; esac ;;
     # config prints interpolated secrets: only the service or volume names.
     "compose config")
@@ -193,13 +208,25 @@ _eval_cli() {
       a="${P[0]:-}"
       if [ "$a" = get ]; then
         # Flag allow-list: no --raw (any API path), -f/-k/-R (files), -w (watch loops).
-        for w in "$@"; do
+        set -- "$@" ""
+        while [ $# -gt 1 ]; do
+          w=$1; nm=""
           case "$w" in
-            -o?*|-n?*|-l?*|-A|--all-namespaces|--show-labels|--no-headers) ;;
+            -o|--output) nm=$2; shift ;;
+            -o=*|--output=*) nm=${w#*=} ;;
+            -o?*) nm=${w#-o} ;;
+          esac
+          case "$w:$nm" in
+            -o*:?*|--output*:?*) case "$nm" in json|yaml|wide|name|jsonpath=*|custom-columns=*) ;; *) _deny "$cli get -o $nm not allowed during review"; return 1 ;; esac
+                                 shift; continue ;;
+          esac
+          case "$w" in
+            -n?*|-l?*|-A|--all-namespaces|--show-labels|--no-headers) ;;
             -*) nm=${w%%=*}
-                _in "$nm" "-o --output -l --selector --field-selector --sort-by $_KUBE_VF $_KUBE_BF" || { _deny "$cli get flag $nm not allowed during review"; return 1; } ;;
+                _in "$nm" "-l --selector --field-selector --sort-by $_KUBE_VF $_KUBE_BF" || { _deny "$cli get flag $nm not allowed during review"; return 1; } ;;
           esac
           [[ "$(_lc "$w")" =~ (^|[,/])secrets?([/,.?]|$) ]] && { _deny "$cli get secret prints secret values"; return 1; }
+          shift
         done
       fi
       [ -z "$a" ] || [[ "$a" =~ $_KUBE_READ ]] && return 0
@@ -228,9 +255,12 @@ _eval_cli() {
     helm)
       _walk 1 "-n --namespace --kube-context" "--help" "$@" || return 1
       case "${P[0]:-}" in
-        ''|version|template|search) return 0 ;;
+        # No template: --validate and --dry-run=server reach the cluster.
+        ''|version|search) return 0 ;;
         # Table output only: -o json/yaml includes release values.
         list|ls|status|history) case " $* " in *" -o"*|*" --output"*) _deny "helm ${P[0]} -o not allowed during review"; return 1 ;; esac
+                                # status prints release notes, which can hold secrets.
+                                [ "${P[0]}" != status ] || case " $* " in *" --hide-notes "*) ;; *) _deny "helm status only with --hide-notes"; return 1 ;; esac
                                 return 0 ;;
         # get values/all/manifest/notes/hooks can print secrets.
         get) _walk 2 "-n --namespace --kube-context --revision" "--help" "$@" || return 1
@@ -403,7 +433,18 @@ guard_check() {
     name=$(_lc "${TOK[i]##*/}")
     case "$name" in
       npx|pnpx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
-      npm|pnpm|yarn|bun) f=' init create exec dlx x ' ;;
+      npm|pnpm|yarn|bun)
+        # Read allow-list; npm accepts prefixes and aliases (exe, innit, c), so nothing else passes.
+        case "$(_lc "${TOK[i + 1]:-}") $(_lc "${TOK[i + 2]:-}")" in
+          "--version "|"-v "|"ls "*|"list "*|"view "*|"info "*|"outdated "*|"why "*|"explain "*) continue ;;
+          "audit "*) f=' fix '
+             for ((j = i + 1; j < n; j++)); do
+               [ "${TOK[j]}" = "$PIPE" ] && break
+               _in "$(_lc "${TOK[j]}")" "$f" && { _deny "$name audit fix not allowed during review"; return 1; }
+             done
+             continue ;;
+        esac
+        _deny "$name ${TOK[i + 1]:-} is not on the read allow-list"; return 1 ;;
       pipx|uv) f=' run ' ;;
       # A shell -c string hides its command from these checks.
       sh|bash|zsh|dash|ksh)
@@ -411,7 +452,10 @@ guard_check() {
           case "${TOK[j]}" in -*c*) [[ "${TOK[j]}" =~ ^-[a-zA-Z]*c ]] && { _deny "$name -c not allowed during review"; return 1; } ;; -*) ;; *) break ;; esac
         done
         continue ;;
-      docker|podman|nerdctl|docker-compose|podman-compose) f='' ;;
+      docker|podman|nerdctl|docker-compose|podman-compose)
+        # DOCKER_HOST, COMPOSE_FILE and friends point the read at another daemon or file.
+        [ "$i" -gt 0 ] && [[ "${TOK[i - 1]}" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] && { _deny "env prefix before $name not allowed during review"; return 1; }
+        f='' ;;
       *) continue ;;
     esac
     ARGS=()

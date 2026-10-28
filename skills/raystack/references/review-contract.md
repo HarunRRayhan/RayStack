@@ -118,3 +118,5 @@ Use what is available, in this order:
     or `cat` any other `.env*` file, `*.tfstate*`, kubeconfigs or credential files. Report the
     path and that it exists.
   - If a value slips into output anyway, redact it before quoting it in the report.
+  - Logs can hold secrets. The guard only allows bounded reads (`docker logs --tail 200` or
+    fewer); redact them the same way before quoting.

@@ -399,6 +399,37 @@ BLOCK=(
   'bash -lc "echo hi"'
   'zsh -c ls'
   'dash -ec ls'
+  # v0.1.1 round 2: package managers are a read allow-list
+  'npm exe x'
+  'npm innit'
+  'npm c set x'
+  'npm test'
+  'npm run build'
+  'npm audit fix'
+  'pnpm install'
+  'yarn add x'
+  'bun run x'
+  # v0.1.1 round 2: no env prefix before a container CLI
+  'DOCKER_HOST=tcp://h docker ps'
+  'COMPOSE_FILE=x docker compose config --services'
+  'FOO=1 podman ps'
+  # v0.1.1 round 2: container inspect and unbounded logs
+  'docker inspect app'
+  'docker container inspect app'
+  'docker logs app'
+  'docker logs app --tail 500'
+  'docker logs app --tail=all'
+  'docker compose logs app'
+  'docker compose logs --tail 201'
+  # v0.1.1 round 2: kubectl get -o values
+  "kubectl get pods -o go-template='{{.}}'"
+  'kubectl get pods -o jsonpath-file=x'
+  'kubectl get pods --output=template'
+  'kubectl get pods -otemplate'
+  'kubectl get pods -o custom-columns-file=x'
+  # v0.1.1 round 2: helm status needs --hide-notes; no helm template
+  'helm template x ./c'
+  'helm template x ./c --validate'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -485,7 +516,6 @@ ALLOW=(
   'docker ps'
   'npm ls'
   'helm get metadata x'
-  'helm status x'
   'helm history x'
   'helm search repo x'
   'aws ecr describe-repositories'
@@ -506,21 +536,17 @@ ALLOW=(
   'aws iam get-account-password-policy'
   # v0.1.1 round 2 (B)
   'docker ps -a'
-  'docker logs app --tail 50'
   'docker images'
   'docker image ls'
-  'docker inspect app'
   'docker version'
   'docker info'
   'docker stats --no-stream'
   'docker system df'
   'docker compose ls'
-  'docker compose logs app'
   'docker compose images'
   'docker-compose ps'
   'podman ps'
   'nerdctl ps'
-  'npm test'
   # v0.1.1 round 2 (C)
   'kubectl get pods -o wide'
   'kubectl get pods -ojson'
@@ -543,6 +569,27 @@ ALLOW=(
   'aws glue get-connections --hide-password'
   'aws ec2 describe-instance-attribute --instance-id i-1 --attribute instanceType'
   'bash skills/raystack/scripts/report-pdf.sh r.md'
+  # v0.1.1 round 2: reads that stay allowed
+  'npm ls'
+  'npm list --depth 0'
+  'npm view x version'
+  'npm info x'
+  'npm outdated'
+  'npm audit'
+  'pnpm why x'
+  'yarn why x'
+  'npm explain x'
+  'npm --version'
+  'bun --version'
+  'docker image inspect alpine'
+  'docker logs app --tail 50'
+  'docker logs --tail=200 app'
+  'docker compose logs --tail 100 app'
+  'kubectl get pods -o=json'
+  'kubectl get pods --output yaml'
+  'kubectl get pods -oname'
+  "kubectl get pods -o custom-columns=NAME:.metadata.name"
+  'helm status x --hide-notes'
 )
 
 for c in "${BLOCK[@]}"; do
