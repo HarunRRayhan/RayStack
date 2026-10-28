@@ -353,7 +353,7 @@ guard_check() {
     f=0
     for ((i = 0; i < n; i++)); do
       name=$(_lc "${TOK[i]##*/}")
-      if [ "$name" = docker-compose ] || [ "$name" = podman-compose ] || { { [ "$name" = docker ] || [ "$name" = podman ]; } && [ "$(_lc "${TOK[i + 1]:-}")" = compose ]; }; then f=1
+      if [ "$name" = docker-compose ] || [ "$name" = podman-compose ] || { { [ "$name" = docker ] || [ "$name" = podman ]; } && [ "$(_lc "${TOK[$(_docker_sub "$i")]:-}")" = compose ]; }; then f=1
       elif [ $f = 1 ] && { [ "$name" = config ] || [ "$name" = convert ]; }; then
         f=2
         for ((j = i + 1; j < n; j++)); do

@@ -262,6 +262,11 @@ BLOCK=(
   'docker --context x run alpine true'
   'podman run alpine true'
   'docker compose run app true'
+  # v0.1.1: docker global flags before compose
+  'docker --context x compose config'
+  'docker -H tcp://h compose config'
+  'docker --context=x --debug compose config'
+  'podman compose config'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -349,6 +354,7 @@ ALLOW=(
   'bash skills/raystack/scripts/report-pdf.sh /r/reviews/2026-10-28-aws-billing-review.md'
   'docker ps'
   'npm ls'
+  'docker --context x compose config --services'
 )
 
 for c in "${BLOCK[@]}"; do
