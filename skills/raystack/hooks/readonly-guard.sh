@@ -22,6 +22,12 @@ PIPE=$'\001'
 _deny() { GUARD_REASON="$1"; return 1; }
 _shape() { _deny "unsupported command shape during review"; }
 _no() { _deny "$1 is not on the read allow-list"; }
+# _secret_op "<cli path verb>": 0 (and GUARD_REASON set) when the op may print secrets and is not allow-listed.
+_secret_op() {
+  case "$_SECRET_OK" in *"|$1|"*) return 1 ;; esac
+  [[ "$1" =~ $_SECRET_OP ]] || return 1
+  _deny "$1 may print secrets or credentials"; return 0
+}
 _in() { case " $2 " in *" $1 "*) return 0 ;; esac; return 1; }
 # Lower-case only names/verbs/SQL; flags keep their case (-S vs -s, -X vs -x).
 _lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
@@ -45,6 +51,9 @@ _REDIS_VF='-h -p -a -n -u --user --pass --sni --cacert --cert --key -r -i -d -t 
 _REDIS_BF='-c --tls --raw --no-raw -e --no-auth-warning --insecure'
 _AWS_READ='^(describe|list|get|head|search|lookup|filter|batch-get|validate|simulate|estimate|scan|query|select|tail|wait)(-|$)'
 _GC_READ='^(list|describe|show|get|get-iam-policy|read)$'
+# Ops that look like they print secrets or credentials deny unless on the metadata-only list below.
+_SECRET_OP='(secret|password|passwd|token|credential|login|keys? list|list-keys|access-details|connection-string|decrypt|api-key|private-key|print-|ssh-public-key)'
+_SECRET_OK='|aws kms list-keys|aws kms describe-key|aws kms list-aliases|aws kms get-key-rotation-status|aws kms get-key-policy|aws iam list-access-keys|aws iam get-access-key-last-used|aws secretsmanager list-secrets|aws secretsmanager describe-secret|aws ssm describe-parameters|aws iam get-credential-report|aws iam get-login-profile|aws iam get-account-password-policy|gcloud secrets list|gcloud secrets describe|az keyvault secret list|az keyvault list|'
 _GC_GROUPS=' compute instances disks images snapshots networks subnets firewall-rules routers addresses instance-templates instance-groups forwarding-rules backend-services url-maps zones regions machine-types operations projects project iam service-accounts roles keys sql databases backups users flags run services revisions jobs executions functions pubsub topics subscriptions storage buckets objects container clusters node-pools logging logs sinks metrics config configurations auth accounts dns managed-zones record-sets kms keyrings secrets versions artifacts repositories builds triggers app deployments monitoring policies organizations folders billing scheduler tasks queues redis memcache spanner bigtable firestore dataflow dataproc composer eventarc vm group resource account tag network vnet subnet nsg rule public-ip nic lb container blob queue table file webapp functionapp appservice plan aks nodepool acr repository keyvault secret key certificate role assignment definition ad user sp app monitor activity-log log-analytics workspace server db elastic-pool postgres mysql flexible-server cosmosdb lock policy provider feature deployment sub disk image snapshot vmss extension identity zone record-set eventhubs servicebus namespace topic apim cdn front-door '
 _KUBE_READ='^(get|describe|logs|top|explain|version|api-resources|api-versions|cluster-info|events)$'
 _REDIS_READ='^(info|get|mget|scan|ttl|pttl|type|exists|strlen|llen|scard|zcard|hlen|hget|hgetall|smembers|lrange|zrange|memory|slowlog|latency|dbsize|ping|keys|object|xinfo|xlen)$'
@@ -112,14 +121,8 @@ _eval_cli() {
       _walk 2 "$_AWS_VF" "$_AWS_BF" "$@" || return 1
       a="${P[0]:-}"; b="${P[1]:-}"
       [ -z "$b" ] && [ "$a" != configure ] && return 0
-      # Reads that print secret values.
-      case "$a $b" in
-        "secretsmanager "*get-secret-value|*" get-authorization-token"|ecr*" get-login-password"|"sts get-session-token"|"sts get-federation-token"|"ec2 get-password-data")
-          _deny "aws $a $b prints secret values or credentials"; return 1 ;;
-      esac
-      if [ "$a" = ssm ] && [[ "$b" == get-parameter* ]]; then
-        case " $* " in *" --with-decryption"*) _deny "aws ssm --with-decryption prints secret values"; return 1 ;; esac
-      fi
+      _secret_op "aws $a $b" && return 1
+      [ "$a $b" = "configure get" ] && [[ "$(_lc "$*")" =~ $_SECRET_OP ]] && { _deny "aws configure get prints credentials"; return 1; }
       case "$a $b" in
         "s3 ls"|"logs start-query"|"logs stop-query"|"logs get-query-results"|"configure list"|"configure get"|"configure list-profiles") return 0 ;;
       esac
@@ -135,8 +138,7 @@ _eval_cli() {
               elif ! _in "$nm" "$_GC_BF"; then _deny "unknown flag before verb: $1"; return 1; fi ;;
           *) w=$(_lc "$1")
              if [[ "$w" =~ $_GC_READ ]] && [ $seen -gt 0 ]; then
-               [ "$w" = list ] || case "$b" in *" keyvault secret") _deny "$cli keyvault secret $w prints secret values"; return 1 ;; esac
-               case "$cli$b" in az*" keys") _deny "az$b $w prints access keys"; return 1 ;; esac
+               _secret_op "$cli$b $w" && return 1
                return 0
              elif [ $seen = 0 ] && [[ "$w" =~ ^(version|info)$ ]]; then return 0
              elif _in "$w" "$_GC_GROUPS"; then seen=$((seen + 1)); b="$b $w"
@@ -349,6 +351,7 @@ guard_check() {
   # Package runners and container runs fetch and execute any tool (npx aws-cdk deploy, docker run amazon/aws-cli).
   n=${#TOK[@]}
   for ((i = 0; i < n; i++)); do
+    case "${TOK[i]}" in --with-decryption*|--include-value*) _deny "${TOK[i]%%=*} prints secret values"; return 1 ;; esac
     case "$(_lc "${TOK[i]##*/}")" in
       npx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
       pnpm|yarn) f=' dlx ' ;;

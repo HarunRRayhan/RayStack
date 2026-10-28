@@ -319,6 +319,20 @@ BLOCK=(
   'amplify push'
   'copilot svc delete'
   'serverless deploy'
+  # v0.1.1 round 2 (A): secret-ish aws/az/gcloud ops deny unless allow-listed
+  'aws apigateway get-api-keys --include-values'
+  'aws apigateway get-api-keys'
+  'aws apigateway get-rest-apis --include-values'
+  'aws lightsail get-instance-access-details --instance-name x'
+  'aws iam list-ssh-public-keys'
+  'aws iam list-service-specific-credentials'
+  'aws codecommit get-git-credential'
+  'aws configure get aws_secret_access_key'
+  'aws secretsmanager get-resource-policy --secret-id x'
+  'aws ec2 describe-instances --with-decryption'
+  'gcloud iam service-accounts keys list --iam-account a'
+  'gcloud secrets versions list x'
+  'az keyvault key list --vault-name v'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -411,8 +425,22 @@ ALLOW=(
   'helm status x'
   'helm history x'
   'helm search repo x'
-  'gcloud iam service-accounts keys list --iam-account a'
   'aws ecr describe-repositories'
+  # v0.1.1 round 2 (A): metadata-only reads on the secret allow-list
+  'aws kms list-keys'
+  'aws kms describe-key --key-id k'
+  'aws kms list-aliases'
+  'aws kms get-key-rotation-status --key-id k'
+  'aws kms get-key-policy --key-id k --policy-name default'
+  'aws iam list-access-keys --user-name u'
+  'aws iam get-access-key-last-used --access-key-id a'
+  'aws secretsmanager describe-secret --secret-id x'
+  'aws iam get-credential-report'
+  'gcloud secrets describe x'
+  'az keyvault list'
+  'aws configure get region'
+  'aws iam get-login-profile --user-name u'
+  'aws iam get-account-password-policy'
 )
 
 for c in "${BLOCK[@]}"; do
