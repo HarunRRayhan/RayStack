@@ -371,6 +371,34 @@ BLOCK=(
   'helm list --output=yaml'
   'helm history x -oyaml'
   'helm ls -o json'
+  # v0.1.1 round 2 (E): ops that print env vars, user data or passwords need a safe --query
+  'aws lambda get-function-configuration --function-name f'
+  'aws lambda get-function --function-name f'
+  "aws lambda get-function-configuration --function-name f --query 'keys(Environment.Variables)'"
+  "aws lambda list-functions --query 'Functions[].Environment'"
+  'aws lambda list-functions'
+  'aws ecs describe-task-definition --task-definition t'
+  "aws ecs describe-task-definition --task-definition t --query 'taskDefinition.containerDefinitions[].secrets'"
+  "aws ecs describe-task-definition --task-definition t --query=taskDefinition.containerDefinitions[0].Environment"
+  'aws glue get-connection --name c'
+  'aws glue get-connections'
+  'aws cognito-idp describe-user-pool-client --user-pool-id p --client-id c'
+  'aws ec2 describe-instance-attribute --instance-id i-1 --attribute userData'
+  'aws ec2 get-launch-template-data --instance-id i-1'
+  'aws ec2 describe-launch-template-versions --launch-template-id lt'
+  "aws ec2 describe-launch-template-versions --launch-template-id lt --query 'LaunchTemplateVersions[].LaunchTemplateData.UserData'"
+  'aws ssm get-parameter --name x'
+  'aws ssm get-parameters --names x'
+  'aws ssm get-parameters-by-path --path p'
+  'aws ssm get-parameter --name x --with-d'
+  'aws apigateway get-rest-apis --include-v'
+  'aws ssm describe-parameters --cli-input-json file://x.json'
+  'aws ssm describe-parameters --cli-input-yaml=x'
+  'aws ssm describe-parameters --generate-cli-skeleton'
+  'sh -c "npx x"'
+  'bash -lc "echo hi"'
+  'zsh -c ls'
+  'dash -ec ls'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -507,6 +535,14 @@ ALLOW=(
   'kubectl get pods --sort-by .metadata.name'
   'kubectl get pods --context c'
   'kubectl get pods -nx'
+  # v0.1.1 round 2 (E)
+  "aws lambda get-function-configuration --function-name f --query '[MemorySize,Timeout]'"
+  "aws lambda list-functions --query 'Functions[].[FunctionName,Runtime]' --output table"
+  "aws ecs describe-task-definition --task-definition t --query 'taskDefinition.cpu'"
+  "aws ec2 describe-launch-template-versions --launch-template-id lt --query 'LaunchTemplateVersions[].VersionNumber'"
+  'aws glue get-connections --hide-password'
+  'aws ec2 describe-instance-attribute --instance-id i-1 --attribute instanceType'
+  'bash skills/raystack/scripts/report-pdf.sh r.md'
 )
 
 for c in "${BLOCK[@]}"; do

@@ -80,6 +80,35 @@ _walk() {
   return 0
 }
 
+# _aws_leaky "<svc op>" args...: 1 (GUARD_REASON set) when the op prints env vars, user data or passwords.
+# Some are allowed with a --query that names none of those fields.
+_aws_leaky() {
+  local op=$1 q="" bad="" all; shift
+  all=" $(_lc "$*") "
+  while [ $# -gt 0 ]; do
+    case "$1" in --query) q=${2:-}; shift ;; --query=*) q=${1#*=} ;; esac
+    shift
+  done
+  q=$(_lc "$q")
+  case "$op" in
+    "ssm get-parameter"*|"cognito-idp describe-user-pool-client"|"ec2 get-launch-template-data") _deny "aws $op prints secret values"; return 1 ;;
+    "glue get-connection"|"glue get-connections") case "$all" in *" --hide-password "*) return 0 ;; esac
+      _deny "aws $op only with --hide-password"; return 1 ;;
+    "ec2 describe-instance-attribute") [[ "$all" == *userdata* ]] || return 0
+      _deny "aws $op userData can hold secrets"; return 1 ;;
+    "lambda get-function"|"lambda get-function-configuration"|"lambda list-functions"|"lambda list-versions-by-function") bad=environment ;;
+    "ecs describe-task-definition") bad="environment secret" ;;
+    "ec2 describe-launch-template-versions") bad=userdata ;;
+    *) return 0 ;;
+  esac
+  # shortcut: a --query that projects whole objects (Functions[]) still leaks; reviews use field lists.
+  [ -n "$q" ] || { _deny "aws $op only with a --query that avoids $bad"; return 1; }
+  for w in $bad; do
+    [[ "$q" == *"$w"* ]] && { _deny "aws $op --query must not include $w"; return 1; }
+  done
+  return 0
+}
+
 # _docker_ok <docker|podman|nerdctl|*-compose> words...: 0 when the call is a listed read subcommand.
 # No flag may come before the subcommand (global flags pick other daemons or configs).
 _docker_ok() {
@@ -132,6 +161,7 @@ _eval_cli() {
       a="${P[0]:-}"; b="${P[1]:-}"
       [ -z "$b" ] && [ "$a" != configure ] && return 0
       _secret_op "aws $a $b" && return 1
+      _aws_leaky "$a $b" "$@" || return 1
       [ "$a $b" = "configure get" ] && [[ "$(_lc "$*")" =~ $_SECRET_OP ]] && { _deny "aws configure get prints credentials"; return 1; }
       case "$a $b" in
         "s3 ls"|"logs start-query"|"logs stop-query"|"logs get-query-results"|"configure list"|"configure get"|"configure list-profiles") return 0 ;;
@@ -368,12 +398,19 @@ guard_check() {
   # Package runners fetch and execute any tool (npx aws-cdk deploy); container CLIs are a read allow-list.
   n=${#TOK[@]}
   for ((i = 0; i < n; i++)); do
-    case "${TOK[i]}" in --with-decryption*|--include-value*) _deny "${TOK[i]%%=*} prints secret values"; return 1 ;; esac
+    # Prefixes catch CLI abbreviations; --cli-input-* and skeletons can smuggle the same options.
+    case "${TOK[i]}" in --with-d*|--include-v*|--cli-in*|--generate-cli*) _deny "${TOK[i]%%=*} not allowed during review"; return 1 ;; esac
     name=$(_lc "${TOK[i]##*/}")
     case "$name" in
       npx|pnpx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
       npm|pnpm|yarn|bun) f=' init create exec dlx x ' ;;
       pipx|uv) f=' run ' ;;
+      # A shell -c string hides its command from these checks.
+      sh|bash|zsh|dash|ksh)
+        for ((j = i + 1; j < n; j++)); do
+          case "${TOK[j]}" in -*c*) [[ "${TOK[j]}" =~ ^-[a-zA-Z]*c ]] && { _deny "$name -c not allowed during review"; return 1; } ;; -*) ;; *) break ;; esac
+        done
+        continue ;;
       docker|podman|nerdctl|docker-compose|podman-compose) f='' ;;
       *) continue ;;
     esac

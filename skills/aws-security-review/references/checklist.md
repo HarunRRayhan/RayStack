@@ -286,7 +286,8 @@ with the value masked, for example `AKIA************WXYZ`.
   `grep -rnE --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.terraform --exclude='*.tfstate*' 'AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}' . | cut -d: -f1,2`;
   `grep -rnE --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.terraform --exclude='*.tfstate*' 'user_data.*(password|secret|token)|(PASSWORD|SECRET|TOKEN|API_KEY) *[:=] *[A-Za-z0-9/+]{12,}' . | cut -d: -f1,2`.
   Committed state or env files, by name only (never open them): `git ls-files | grep -iE 'tfstate|[.]env'`.
-  Live, names only: `aws lambda get-function-configuration --function-name FUNCTION_NAME --query 'keys(Environment.Variables)'`
+  The guard blocks env-var reads, so ask the human to run these names-only reads (Commands for you to run):
+  `aws lambda get-function-configuration --function-name FUNCTION_NAME --query 'keys(Environment.Variables)'`
   (an error on a function with no env vars means none; move on);
   `aws ecs describe-task-definition --task-definition TASK_DEF --query 'taskDefinition.containerDefinitions[].{name:name,env:environment[].name,secrets:secrets[].name}'`.
   User data is base64; ask the human to decode and check it (Commands for you to run).
