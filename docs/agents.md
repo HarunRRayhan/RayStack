@@ -49,18 +49,16 @@ hooks:
     - matcher: Bash
       hooks:
         - type: command
-          command: 'f="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/skills/raystack/hooks/readonly-guard.sh"; [ -x "$f" ] || { echo "RayStack review is read-only: guard missing at $f" >&2; exit 2; }; exec "$f"'
+          command: 'for f in "${CLAUDE_PLUGIN_ROOT}/skills/raystack/hooks/readonly-guard.sh" "${CLAUDE_PLUGIN_ROOT}/../raystack/hooks/readonly-guard.sh" "$HOME/.claude/skills/raystack/hooks/readonly-guard.sh"; do [ -x "$f" ] && exec "$f"; done; echo "RayStack review is read-only: guard missing" >&2; exit 2'
 ```
 
-`${CLAUDE_PLUGIN_ROOT}` resolves in skill frontmatter hooks of a plugin (confirmed with
-`claude --plugin-dir`). Personal skills get no `CLAUDE_PLUGIN_ROOT`, so the
-path falls back to `$HOME/.claude`, which covers a global install in `~/.claude/skills/` (for
-example `npx skills add HarunRRayhan/raystack -g`). For any other directory, `install.sh`
-rewrites the path to the installed guard when it copies the skills. The command
-fails closed: a hook that exits with anything other than 2 does not block, so a missing guard
-exits 2 on purpose and every shell command is blocked until the install is fixed. A `--link`
-install can't be rewritten and hits that case; `install.sh` warns about it. The path is quoted
-because it may hold spaces. The hook gets `.tool_input.command` on stdin; exit 2 blocks and
+In a plugin, `${CLAUDE_PLUGIN_ROOT}` is the plugin root (confirmed with `claude --plugin-dir`).
+For an installed skill (`~/.claude/skills/`, a project's `.claude/skills/`, `install.sh`, or
+`npx skills add`), Claude Code sets it to the skill's own folder (confirmed in Claude Code
+2.1.312), so the guard is found in the sibling `raystack` skill. `~/.claude/skills/raystack` is
+the last fallback. The command fails closed: a hook that exits with anything other than 2 does
+not block, so a missing guard exits 2 on purpose and every shell command is blocked until the
+install is fixed. The paths are quoted because they may hold spaces. The hook gets `.tool_input.command` on stdin; exit 2 blocks and
 stderr is the reason.
 
 The hook stays on after the review turn, for the rest of the session. It keeps checking every

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.2 (2026-10-28)
+
+- Fix: in Claude Code, reviews from an installed skill (`npx skills add`, `install.sh`, or a
+  project's `.claude/skills/`) blocked every shell command. Claude Code points
+  `CLAUDE_PLUGIN_ROOT` at the skill's own folder, so the hook now finds the guard in the sibling
+  `raystack` skill. Confirmed live in Claude Code for a project install and a plugin install.
+- `install.sh` no longer rewrites the hook, and `--link` installs now keep the guard working.
+
 ## 0.3.1 (2026-10-28)
 
 - One-command install for any agent: `npx skills add HarunRRayhan/raystack -g -a claude-code`.
