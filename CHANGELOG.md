@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 (2026-10-28)
+
+- One-command install for any agent: `npx skills add HarunRRayhan/raystack -g`.
+- The review guard hook now falls back to `~/.claude/skills/` when `CLAUDE_PLUGIN_ROOT` is unset,
+  so a global install keeps the guard working instead of blocking every shell command.
+
 ## 0.3.0 (2026-10-28)
 
 Five content skills: write a blog post in your own voice, from topic to draft and cover. The flow

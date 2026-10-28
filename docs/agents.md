@@ -49,12 +49,14 @@ hooks:
     - matcher: Bash
       hooks:
         - type: command
-          command: 'f="${CLAUDE_PLUGIN_ROOT}/skills/raystack/hooks/readonly-guard.sh"; [ -x "$f" ] || { echo "RayStack review is read-only: guard missing at $f" >&2; exit 2; }; exec "$f"'
+          command: 'f="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/skills/raystack/hooks/readonly-guard.sh"; [ -x "$f" ] || { echo "RayStack review is read-only: guard missing at $f" >&2; exit 2; }; exec "$f"'
 ```
 
 `${CLAUDE_PLUGIN_ROOT}` resolves in skill frontmatter hooks of a plugin (confirmed with
-`claude --plugin-dir`). Personal skills in `~/.claude/skills/` get no `CLAUDE_PLUGIN_ROOT`, so
-`install.sh` rewrites the path to the installed guard when it copies the skills. The command
+`claude --plugin-dir`). Personal skills get no `CLAUDE_PLUGIN_ROOT`, so the
+path falls back to `$HOME/.claude`, which covers a global install in `~/.claude/skills/` (for
+example `npx skills add HarunRRayhan/raystack -g`). For any other directory, `install.sh`
+rewrites the path to the installed guard when it copies the skills. The command
 fails closed: a hook that exits with anything other than 2 does not block, so a missing guard
 exits 2 on purpose and every shell command is blocked until the install is fixed. A `--link`
 install can't be rewritten and hits that case; `install.sh` warns about it. The path is quoted
