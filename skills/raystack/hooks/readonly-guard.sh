@@ -3,7 +3,7 @@
 # stdin: PreToolUse JSON (Claude/Codex/Cursor `.tool_input.command`, Grok `.toolInput.command`). Exit 0 = allow, exit 2 = block (reason on stderr).
 # Source this file to call guard_check "<cmd>" directly (0 = allow, 1 = block, reason in GUARD_REASON).
 # shortcut: token heuristics, not a sandbox; aliases/functions/scripts can evade; pair with read-only credentials
-# Accepted out-of-scope evasions: scripts run by path, functions/aliases, other-language SDKs, ssh remote commands.
+# Accepted out-of-scope evasions: scripts run by path, functions/aliases, other-language SDKs.
 # This guard is a seatbelt, not a boundary: always run reviews with read-only credentials.
 # Design: a command that mentions a monitored CLI must be exactly
 #   [NAME=literal ...] <cli> args... [| <filter> args ...]...
@@ -11,13 +11,14 @@
 # SQL: one statement per command, no comments (--, /*, and # for MySQL/usql); every `name(` must be on a read-only function list.
 # Unquoted glob/redirect chars ([ ] ( ) * ? ! < >) and braces deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq,
 #   deploy tools and pg_dump/pg_restore always deny. Names match on `-`/`/` boundaries too (aws-cdk, amazon/aws-cli).
-# Any word that is a shell or env (sh bash zsh fish busybox env ...) or a package runner (npx pnpx bunx uvx) denies.
+# Any word that is a shell, env, ssh/scp/sftp/mosh, or a package runner (npx pnpx bunx uvx) denies.
 # Allow-lists, checked on every word: npm ls/list/view/outdated/audit (no fix)/why/explain; yarn/pnpm/bun --version;
-#   docker/podman/nerdctl ps, images, image ls|inspect, version, info, system df, stats --no-stream,
+#   docker/podman/nerdctl ps, images, image ls, version, info, system df, stats --no-stream,
 #   logs --tail N<=200, compose ps|ls|images|logs|config --services/--volumes (no flags before the subcommand,
 #   no NAME=value, export or set anywhere in the command).
 # Secret-ish cloud ops (secret, password, token, credential, keys list, ...) deny unless on a metadata list;
 #   ops that return env vars, user data or passwords (lambda config, ecs task defs, launch templates) deny outright.
+# kubectl/oc describe only for nodes, services, ingress, events and namespaces (workloads print env values).
 
 GUARD_REASON=""
 KEYS_ONLY=0
@@ -104,8 +105,8 @@ _docker_ok() {
   case "$base" in *-compose) set -- compose "$@" ;; esac
   case "${1:-}" in -*) _deny "$base flag before subcommand: $1"; return 1 ;; esac
   case "$(_lc "${1:-} ${2:-}")" in
-    # No container inspect: Config.Env can hold secrets.
-    " "|"ps "*|"images "*|"version "*|"info "*|"image ls"|"image inspect"|"system df"|"compose ps"|"compose ls"|"compose images") return 0 ;;
+    # No container or image inspect: Config.Env can hold secrets.
+    " "|"ps "*|"images "*|"version "*|"info "*|"image ls"|"system df"|"compose ps"|"compose ls"|"compose images") return 0 ;;
     "logs "*|"compose logs") _tail_ok "$@" && return 0
       _deny "$base logs only with --tail N (N at most 200)"; return 1 ;;
     "stats "*) case " $* " in *" --no-stream "*) return 0 ;; esac ;;
@@ -152,6 +153,14 @@ _eval_cli() {
       a="${P[0]:-}"; b="${P[1]:-}"
       [ -z "$b" ] && [ "$a" != configure ] && return 0
       _secret_op "aws $a $b" && return 1
+      # The CLI accepts unique prefixes of long flags (--w for --with-decryption).
+      for w in "$@"; do
+        w=${w%%=*}
+        case "$w" in --?*) ;; *) continue ;; esac
+        for nm in --with-decryption --include-value --include-values --cli-input-json --cli-input-yaml --generate-cli-skeleton; do
+          [ "$w" != "$nm" ] && [[ "$nm" == "$w"* ]] && { _deny "aws flag $w is an abbreviation of $nm"; return 1; }
+        done
+      done
       # Env vars, user data and passwords: no --query or flag filters them reliably, so deny outright.
       case "$a $b" in
         "ssm get-parameter"*|"cognito-idp describe-user-pool-client"|"lambda get-function"|"lambda get-function-configuration"|"lambda list-functions"|"lambda list-versions-by-function"|"ecs describe-task-definition"|"ec2 describe-launch-template-versions"|"ec2 get-launch-template-data"|"glue get-connection"|"glue get-connections")
@@ -209,6 +218,13 @@ _eval_cli() {
           [[ "$(_lc "$w")" =~ (^|[,/])secrets?([/,.?]|$) ]] && { _deny "$cli get secret prints secret values"; return 1; }
           shift
         done
+      fi
+      # describe prints literal env values for workloads: only kinds without pod templates.
+      if [ "$a" = describe ]; then
+        _walk 2 "$_KUBE_VF" "$_KUBE_BF" "$@" || return 1
+        w=${P[1]:-}; w=${w%%/*}; w=${w%%.*}
+        _in "$w" "node nodes no service services svc ingress ingresses ing event events ev namespace namespaces ns" && return 0
+        _deny "$cli describe ${P[1]:-} not allowed during review (env values)"; return 1
       fi
       [ -z "$a" ] || [[ "$a" =~ $_KUBE_READ ]] && return 0
       if [ "$a" = auth ] || [ "$a" = config ]; then
@@ -430,7 +446,7 @@ guard_check() {
         _deny "$name ${TOK[i + 1]:-} is not on the read allow-list"; return 1 ;;
       pipx|uv) f=' run ' ;;
       # A shell (or env) runs a string or a command these checks never see.
-      sh|bash|zsh|dash|ksh|mksh|fish|csh|tcsh|busybox|env) _deny "$name not allowed during review"; return 1 ;;
+      sh|bash|zsh|dash|ksh|mksh|fish|csh|tcsh|busybox|env|ssh|scp|sftp|mosh) _deny "$name not allowed during review"; return 1 ;;
       docker|podman|nerdctl|docker-compose|podman-compose)
         # DOCKER_HOST, COMPOSE_FILE and friends point the read at another daemon or file.
         for w in "${TOK[@]}"; do

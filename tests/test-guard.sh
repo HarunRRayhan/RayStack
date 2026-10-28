@@ -460,6 +460,28 @@ BLOCK=(
   'export DOCKER_HOST=x && docker ps'
   'declare -x DOCKER_HOST=x && docker ps'
   'set -a && docker ps'
+  # v0.1.1 round 3
+  'docker image inspect alpine'
+  'kubectl describe pod x'
+  'kubectl describe pods/x'
+  'kubectl -n x describe deploy x'
+  'kubectl describe deployments.apps x'
+  'oc describe sts x'
+  'kubectl describe ds x'
+  'kubectl describe job x'
+  'kubectl describe cronjob x'
+  'kubectl describe rs x'
+  'kubectl describe'
+  'ssh bastion uptime'
+  'scp a host:b'
+  'sftp host'
+  'mosh host'
+  'ls && ssh h'
+  'aws ssm describe-parameters --w'
+  'aws ssm describe-parameters --wi'
+  'aws apigateway get-rest-apis --inc'
+  'aws ssm describe-parameters --cli'
+  'aws ssm describe-parameters --ge'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -601,7 +623,6 @@ ALLOW=(
   'npm explain x'
   'npm --version'
   'bun --version'
-  'docker image inspect alpine'
   'docker logs app --tail 50'
   'docker logs --tail=200 app'
   'docker compose logs --tail 100 app'
@@ -614,6 +635,13 @@ ALLOW=(
   'skills/raystack/scripts/report-pdf.sh r.md'
   'yarn --version'
   'pnpm --version'
+  # v0.1.1 round 3
+  'kubectl describe node n1'
+  'kubectl describe nodes'
+  'kubectl describe svc x'
+  'kubectl -n x describe ingress x'
+  'oc describe events'
+  'aws ec2 describe-instances --region us-east-1'
 )
 
 for c in "${BLOCK[@]}"; do

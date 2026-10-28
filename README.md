@@ -107,7 +107,7 @@ such as `pulumi`, `cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked o
 `pg_dump` and `pg_restore`, and commands that print secret values or credentials (for example
 `terraform show`, `helm get values`, `aws ecr get-login-password`). A name counts even inside a
 hyphenated or slashed word (`aws-cdk`, `amazon/aws-cli`). Package runners (`npx`, `bunx`, `uvx`),
-shells (`bash`, `sh -c`, `env`) and most `npm`, `yarn` and `docker` subcommands are blocked during
+shells (`bash`, `sh -c`, `env`), `ssh` and most `npm`, `yarn` and `docker` subcommands are blocked during
 a review; only a short list of reads such as `docker ps`, `docker logs --tail 200` and `npm ls`
 gets through. Reads that return env vars or user data (Lambda configs, ECS task definitions,
 launch templates) are left for you to run.

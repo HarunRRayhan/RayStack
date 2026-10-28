@@ -18,10 +18,13 @@ Read-only guard fixes.
 - More tools are blocked outright: `vc`, `ntl`, `cdktf`, `sst`, `amplify`, `copilot`, `dropuser`,
   `createuser`, `pg_dump`, `pg_dumpall` and `pg_restore`.
 - Container CLIs (`docker`, `podman`, `nerdctl`, compose) are a read allow-list: `ps`, `images`,
-  `image ls|inspect`, `version`, `info`, `system df`, `stats --no-stream`, `logs --tail N` (N at
+  `image ls`, `version`, `info`, `system df`, `stats --no-stream`, `logs --tail N` (N at
   most 200) and `compose ps|ls|images|logs|config --services`. No flags before the subcommand, and
-  no `NAME=value`, `export` or `set` in the same command. `docker inspect` is blocked (env vars).
-- Shells and `env` are blocked as any word in a command, so `sh -c "..."` can't hide a command.
+  no `NAME=value`, `export` or `set` in the same command. `docker inspect` and `docker image inspect` are blocked (env vars).
+- Shells, `env`, `ssh`, `scp`, `sftp` and `mosh` are blocked as any word in a command, so
+  `sh -c "..."` or a remote command can't hide what runs.
+- `kubectl describe`/`oc describe` only for nodes, services, ingress, events and namespaces
+  (workload kinds print literal env values).
 - `npm` allows only `ls`, `list`, `view`, `outdated`, `audit` (no `fix`), `why`, `explain` and
   `--version`. `yarn`, `pnpm` and `bun` allow only `--version` (they run package.json scripts for
   unknown verbs).
@@ -29,7 +32,7 @@ Read-only guard fixes.
   connection string, decrypt, ...) are blocked unless on a short metadata-only list (`kms
   list-keys`, `secretsmanager list-secrets`, `iam list-access-keys`, `gcloud secrets list`, ...).
   `--with-decryption`, `--include-value`, `--cli-input-*` and `--generate-cli-skeleton` are blocked
-  by prefix, so abbreviations count.
+  by prefix, and on aws any `--` flag of 3+ characters that abbreviates them is blocked.
 - Reads that return env vars, user data or passwords are blocked outright: `ssm get-parameter*`,
   Lambda function configs and lists, `ecs describe-task-definition`, launch template data and
   versions, `glue get-connection(s)`, `cognito-idp describe-user-pool-client` and userData
