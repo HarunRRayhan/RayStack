@@ -57,4 +57,24 @@ for v in voice-template voice-example; do
     check "$v has $h" grep -qxF "$h" "$f"
   done
 done
+# The topic and draft skills carry their safety rules.
+topics=skills/blog-topics/SKILL.md
+draft=skills/blog-draft/SKILL.md
+if [ -f "$topics" ]; then
+  check "blog-topics shows the top 10" grep -qF 'top 10' "$topics"
+  check "blog-topics waits for a pick" grep -qF 'Never draft in the same turn' "$topics"
+else
+  fail "missing $topics"
+fi
+if [ -f "$draft" ]; then
+  check "blog-draft links the humanize checklist" grep -qF '../humanize/references/checklist.md' "$draft"
+  check "blog-draft humanize checklist resolves" test -f "skills/blog-draft/../humanize/references/checklist.md"
+  check "blog-draft asks on several posts folders" grep -qF 'ask which folder' "$draft"
+  check "blog-draft keeps a future date" grep -qF 'future date' "$draft"
+  check "blog-draft never invents" grep -qF 'Never invent' "$draft"
+  check "blog-draft names repo voice path" grep -qF '.raystack/voice.md' "$draft"
+else
+  fail "missing $draft"
+fi
+check "humanize names repo voice path" grep -qF '.raystack/voice.md' skills/humanize/SKILL.md
 exit "$FAILED"
