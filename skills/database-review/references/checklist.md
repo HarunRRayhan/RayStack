@@ -96,7 +96,7 @@ objects the user can access.
 ### PG11. Backups and PITR (self-hosted or platform)
 - **Check:** WAL archiving really works; a logical dump exists off-platform; a restore was tested.
 - **Evidence:** `psql -X -c "show archive_mode"`. `psql -X -c "select archived_count, failed_count, last_archived_time, last_failed_time from pg_stat_archiver"`.
-  Grep: `grep -rnE 'pg_dump|pg_basebackup|wal-g|pgbackrest|barman|backup' --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git .`
+  Grep: `grep -rnE 'pg_(dump|basebackup)|wal-g|pgbackrest|barman|backup' --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git .`
   On managed platforms, read the backup list and schedule back, do not trust the toggle.
 - **Why:** "PITR on" with `archive_mode=off`, or zero backups and zero schedules, is common. PITR starts at the first base backup, not before. Daily snapshots cannot meet a 15-minute RPO.
 - **Fix:** platform PITR plus a nightly `pg_dump` to an external bucket with a 30-day lifecycle, and a monthly restore drill into a scratch instance that compares table counts, columns and constraints. State RPO/RTO from the drill, not from docs.

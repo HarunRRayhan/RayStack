@@ -305,6 +305,20 @@ BLOCK=(
   'helm get manifest x'
   'helm show values ./c'
   'helm get'
+  # v0.1.1: more mutating CLIs and data dumps
+  'vc deploy --prod'
+  'ntl deploy'
+  'cdktf deploy'
+  'dropuser x'
+  'createuser x'
+  'pg_restore -d db dump.sql'
+  'pg_dump db'
+  'pg_dump --schema-only db'
+  'pg_dumpall'
+  'sst deploy'
+  'amplify push'
+  'copilot svc delete'
+  'serverless deploy'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -385,7 +399,6 @@ ALLOW=(
   'docker compose config --services'
   'docker compose config --volumes'
   'docker compose ps'
-  'pg_dump --schema-only db'
   'ls fly.toml serverless.yml cdk.json'
   # v0.1.1
   'bash skills/raystack/scripts/report-pdf.sh /r/reviews/2026-10-28-aws-billing-review.md'
