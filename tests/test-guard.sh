@@ -533,6 +533,12 @@ BLOCK=(
   $'composer audit --no-plugins --no-scripts -f "json\n--no-dev"'
   'npm audit "--json --omit=dev"'
   "bundle-audit check -F 'json -q'"
+  # v0.4 fix round 3: every -r spelling counts as a requirement file
+  'pip-audit -r=req.txt'
+  'pip-audit -l -r=req.txt'
+  'pip-audit -s=pypi -r=req.txt'
+  'pip-audit -rreq.txt --disable-pip --no-deps'
+  'pip-audit --req=req.txt --disable-pip --no-deps'
   'npm audit || rm -rf x'
   'composer audit || rm -rf x'
   'composer audit | xargs rm -rf x'
@@ -716,6 +722,7 @@ ALLOW=(
   'pip-audit -l'
   'pip-audit -r requirements.txt --disable-pip --no-deps'
   'pip-audit --requirement=requirements.txt --disable-pip --require-hashes'
+  'pip-audit -r=req.txt --disable-pip --no-deps'
   'bundle-audit check'
   'bundle-audit check --format json'
   'composer audit --no-plugins --no-scripts --format=json | jq length'

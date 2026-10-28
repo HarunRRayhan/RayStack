@@ -490,8 +490,9 @@ guard_check() {
         for w in "${ARGS[@]}"; do
           case "$w" in
             *[[:space:]]*) _deny "$name audit argument with whitespace"; return 1 ;;
-            --no-plugins|--no-scripts|--disable-pip|--no-deps|--require-hashes|-r) seen+="$w " ;;
-            --requirement|--requirement=*) seen+="-r " ;;
+            --no-plugins|--no-scripts|--disable-pip|--no-deps|--require-hashes) seen+="$w " ;;
+            # Every spelling _flags_ok lets through; -rX and --req abbreviations are denied there.
+            -r|-r=*|--requirement|--requirement=*) seen+="-r " ;;
           esac
         done
         if [ "$name" = composer ] && { ! _in --no-plugins "$seen" || ! _in --no-scripts "$seen"; }; then
