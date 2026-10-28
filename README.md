@@ -18,6 +18,19 @@ By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com
 
 ## Install
 
+### Any agent (one command)
+
+```bash
+npx skills add HarunRRayhan/raystack -g
+```
+
+The [skills CLI](https://skills.sh) finds the coding agents you have (Claude Code, Codex,
+Cursor and others) and installs all sixteen skills globally for them. Add `-a claude-code` to pick
+one agent. In Claude Code, the read-only guard works from `~/.claude/skills/`. A project-level
+install (without `-g`) can't find it, so its reviews block every shell command.
+
+The per-agent options below do the same thing in each agent's own way.
+
 ### Claude Code
 
 ```text

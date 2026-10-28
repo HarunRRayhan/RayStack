@@ -95,11 +95,18 @@ for s in aws-billing-review database-review; do
 done
 # source frontmatter fails closed when the guard is not where it points
 c=$(hook_cmd skills/aws-billing-review/SKILL.md)
-err=$(printf '%s' '{"tool_input":{"command":"git status"}}' | env -u CLAUDE_PLUGIN_ROOT sh -c "$c" 2>&1 >/dev/null); rc=$?
+E="$T/empty-home"; mkdir -p "$E"
+err=$(printf '%s' '{"tool_input":{"command":"git status"}}' | env -u CLAUDE_PLUGIN_ROOT HOME="$E" sh -c "$c" 2>&1 >/dev/null); rc=$?
 assert_eq "$rc" 2 "unresolved guard path blocks (fail closed)"
 case "$err" in *"guard missing"*) pass "missing guard reason" ;; *) fail "missing guard reason (got '$err')" ;; esac
 printf '%s' '{"tool_input":{"command":"terraform destroy"}}' | CLAUDE_PLUGIN_ROOT="$PWD" sh -c "$c" >/dev/null 2>&1
 assert_eq "$?" 2 "plugin-root hook still runs the guard"
+# a global install in ~/.claude/skills (e.g. npx skills add -g) finds the guard via HOME
+GH="$T/global-home"; mkdir -p "$GH/.claude/skills"; cp -R skills/raystack "$GH/.claude/skills/raystack"
+printf '%s' '{"tool_input":{"command":"terraform destroy"}}' | env -u CLAUDE_PLUGIN_ROOT HOME="$GH" sh -c "$c" >/dev/null 2>&1
+assert_eq "$?" 2 "global install hook blocks a write"
+printf '%s' '{"tool_input":{"command":"git status"}}' | env -u CLAUDE_PLUGIN_ROOT HOME="$GH" sh -c "$c" >/dev/null 2>&1
+assert_eq "$?" 0 "global install hook allows a read"
 # --link cannot rewrite the hook: warn loudly
 err=$(bash "$INSTALL" --dir "$T/lw" --link 2>&1 >/dev/null)
 case "$err" in *WARNING*"block every Bash"*) pass "--link warns about the guard path" ;; *) fail "--link warning missing: $err" ;; esac

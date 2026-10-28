@@ -103,9 +103,9 @@ if [ "$link" = 0 ]; then
 fi
 run mkdir -p "$dir"
 [ "$dry" = 1 ] || dir=$(cd "$dir" && pwd -P)
-# Personal skills get no CLAUDE_PLUGIN_ROOT, so point the hook at the installed guard.
+# Personal skills get no CLAUDE_PLUGIN_ROOT and may not live in ~/.claude, so point the hook at the installed guard.
 # shellcheck disable=SC2016  # literal text in the frontmatter
-hook_from='${CLAUDE_PLUGIN_ROOT}/skills/raystack/hooks/'
+hook_from='${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/skills/raystack/hooks/'
 hook_to="$dir/raystack/hooks/"
 for s in $SKILLS; do
   dest="$dir/$s"
