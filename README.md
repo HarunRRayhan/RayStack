@@ -121,7 +121,8 @@ such as `pulumi`, `cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked o
 hyphenated or slashed word (`aws-cdk`, `amazon/aws-cli`). Package runners (`npx`, `bunx`, `uvx`),
 shells (`bash`, `sh -c`, `env`), `ssh` and most `npm`, `yarn` and `docker` subcommands are blocked during
 a review; only a short list of reads such as `docker ps`, `docker logs --tail 200` and `npm ls`
-gets through. Reads that return env vars or user data (Lambda configs, ECS task definitions,
+gets through. Dependency audits are the one package-manager exception: `npm audit`, `composer
+audit`, `bundle audit`, `bundle-audit check` and `pip-audit`, with read flags only and no `fix`. Reads that return env vars or user data (Lambda configs, ECS task definitions,
 launch templates) are left for you to run.
 
 Everything else is not checked: other tools, the agent's own file Read tool, and scripts in

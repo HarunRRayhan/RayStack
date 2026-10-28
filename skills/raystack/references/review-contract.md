@@ -56,6 +56,11 @@ Use what is available, in this order:
   - `mongosh`, `cqlsh`, `clickhouse-client`, `snowsql`, `sqlcmd` and `bq` are always denied.
 - Do not run repo scripts, Makefile targets, package scripts (`npm run`, `composer`, etc.) or
   test suites during a review. The guard does not check what they do.
+- One exception: dependency audits. The guard allows only the `audit` verb: `npm audit`,
+  `composer audit`, `bundle audit` (or `bundle audit check`), `bundle-audit check` and
+  `pip-audit`, each with read flags only (no `fix`, `--fix`, `--update` or `-o`). Each must be a
+  single command, optionally piped into the filters above. Every other `composer` and `bundle`
+  verb stays blocked.
 - The guard also denies any command that mentions a shell, `env`, `ssh` or `scp`, a package
   runner (`npx`, `uv run`, `npm test` or other scripts, `yarn`, `pnpm` and `bun` except
   `--version`), a container lifecycle command (`docker compose up`, `docker run`), a docker flag
