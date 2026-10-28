@@ -8,7 +8,7 @@
 # Design: a command that mentions a monitored CLI must be exactly
 #   [NAME=literal ...] <cli> args... [| <filter> args ...]...
 # and the CLI's verb must be on that CLI's read allow-list. Everything else is denied.
-# SQL: one statement per command; every `name(` must be on a read-only function list.
+# SQL: one statement per command, no comments (--, /*, and # for MySQL/usql); every `name(` must be on a read-only function list.
 # Unquoted glob/redirect chars ([ ] ( ) * ? ! < >) and braces deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq always deny.
 
 GUARD_REASON=""
@@ -237,7 +237,9 @@ _sql_stmt() {
   local s rest pre
   s=$(_lc "$2"); s="${s#"${s%%[![:space:]]*}"}"
   s="${s%"${s##*[![:space:]]}"}"; s="${s%;}"
-  case "$s" in *\;*|*/\**) _deny "$1 statement has multiple statements or comments"; return 1 ;; esac
+  # Comments can hide the gap between a function name and `(` (name--<newline>()); MySQL also uses #.
+  case "$s" in *\;*|*/\**|*--*) _deny "$1 statement has multiple statements or comments"; return 1 ;; esac
+  case "$1:$s" in mysql:*\#*|mariadb:*\#*|mycli:*\#*|usql:*\#*) _deny "$1 statement has a # comment"; return 1 ;; esac
   if [[ "$s" =~ ^pragma ]]; then
     [[ "$s" =~ $_PRAGMA_RO ]] && return 0
     _deny "sqlite pragma is not on the read allow-list"; return 1

@@ -237,6 +237,14 @@ BLOCK=(
   'docker compose -f x.yml config'
   'docker compose config --services --environment'
   'docker compose convert'
+  # v0.1.1: SQL comments hide the gap between a function name and `(`
+  $'psql -c "select pg_promote--\n()"'
+  $'sqlite3 db "select writefile--\n(\'/tmp/x\',\'x\')"'
+  $'mysql -e "select sleep#-\n(5)"'
+  $'usql my://x -c "select sleep#-\n(5)"'
+  'psql -c "select pg_promote ()"'
+  'psql -c "select pg_promote--x"'
+  'mysql -e "select 1 # x"'
 )
 ALLOW=(
   'aws ec2 describe-instances'
