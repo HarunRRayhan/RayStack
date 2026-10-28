@@ -355,6 +355,15 @@ BLOCK=(
   'bun create x'
   'pnpm exec x'
   'pnpm --dir y dlx x'
+  # v0.1.1 round 2 (C): kubectl get flag allow-list
+  'kubectl get -f x.yaml'
+  'kubectl get --filename=x.yaml'
+  'kubectl get -k ./dir'
+  'kubectl get pods -R'
+  'kubectl get pods -w'
+  'kubectl get pods --watch'
+  'oc get pods --template x'
+  'kubectl get pods --unknown-flag'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -479,6 +488,20 @@ ALLOW=(
   'podman ps'
   'nerdctl ps'
   'npm test'
+  # v0.1.1 round 2 (C)
+  'kubectl get pods -o wide'
+  'kubectl get pods -ojson'
+  'kubectl get pods --output=yaml'
+  "kubectl get pods -o 'jsonpath={.items[*].metadata.name}'"
+  'kubectl get pods -l app=x'
+  'kubectl get pods --selector=app=x'
+  'kubectl get pods -A'
+  'kubectl get pods --all-namespaces'
+  'kubectl get pods --field-selector status.phase=Running'
+  'kubectl get pods --show-labels --no-headers'
+  'kubectl get pods --sort-by .metadata.name'
+  'kubectl get pods --context c'
+  'kubectl get pods -nx'
 )
 
 for c in "${BLOCK[@]}"; do

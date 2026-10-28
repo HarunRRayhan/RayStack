@@ -162,9 +162,13 @@ _eval_cli() {
       _walk 1 "$_KUBE_VF" "$_KUBE_BF" "$@" || return 1
       a="${P[0]:-}"
       if [ "$a" = get ]; then
+        # Flag allow-list: no --raw (any API path), -f/-k/-R (files), -w (watch loops).
         for w in "$@"; do
-          # --raw reaches any API path, secrets included.
-          case "$w" in --raw|--raw=*|-raw|-raw=*) _deny "$cli get --raw not allowed during review"; return 1 ;; esac
+          case "$w" in
+            -o?*|-n?*|-l?*|-A|--all-namespaces|--show-labels|--no-headers) ;;
+            -*) nm=${w%%=*}
+                _in "$nm" "-o --output -l --selector --field-selector --sort-by $_KUBE_VF $_KUBE_BF" || { _deny "$cli get flag $nm not allowed during review"; return 1; } ;;
+          esac
           [[ "$(_lc "$w")" =~ (^|[,/])secrets?([/,.?]|$) ]] && { _deny "$cli get secret prints secret values"; return 1; }
         done
       fi
