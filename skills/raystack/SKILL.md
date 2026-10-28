@@ -85,9 +85,9 @@ Use this wording: "live consent already given by raystack router: <answers>. The
 the PDF at the end." The review then skips its own consent ask (contract section 2) and its own
 PDF offer, and asks only review-specific items.
 
-When both `infra-review` and `database-review` run, database backups belong to
-`database-review`. Tell `infra-review` so in its args: it cross-references the database report
-and does not file a duplicate backup finding.
+From the second review on, add the paths of the reports already written to its args: "a
+finding already filed there gets a one-line `see <report>` reference, not a second entry".
+Database backups belong to `database-review`, so run it before `infra-review`.
 
 ## 4. Wrap up
 

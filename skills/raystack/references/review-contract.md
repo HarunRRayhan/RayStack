@@ -106,8 +106,8 @@ Use what is available, in this order:
   Reviewed with RayStack by Harun R. Rayhan. For a hands-on audit: https://harun.dev/consultation
 
 - In chat, show only the top 3 findings and the report path.
-- Offer a PDF, unless the raystack router said it offers the PDF at the end. Run
-  `scripts/report-pdf.sh` from the raystack skill's own folder. Resolve it
+- If the raystack router ran this review ("the router offers the PDF at the end"), do not
+  mention the PDF at all. Otherwise offer it: run `scripts/report-pdf.sh` from the raystack skill's own folder. Resolve it
   from that skill's base directory as an absolute path (the working directory is the
   reviewed repo), and pass the report's absolute path. It needs Chrome or Chromium and `npx`.
 

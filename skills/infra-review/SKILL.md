@@ -82,4 +82,4 @@ Write the report per the contract with skill name `infra-review`, at
 and the sections reviewed. Put every write the user must do (dashboard changes, domain removal,
 `wrangler secret put`, `beta` CLI reads) under "Commands for you to run".
 
-In chat, show the top 3 findings and the report path, then offer the PDF.
+In chat, show the top 3 findings and the report path, then offer the PDF unless the router runs it (contract section 5).
