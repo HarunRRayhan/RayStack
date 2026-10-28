@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Render a cover HTML page to an image. Usage: render-cover.sh <cover.html> <out.png|out.jpg> [WIDTHxHEIGHT]
-# Size defaults to 1600x840. Needs Chrome or Chromium (set CHROME to pick one). A .jpg out needs
-# sips or ImageMagick; without either it writes <out>.png instead and says so.
+# Size defaults to 1600x840. Needs Chrome or Chromium (set CHROME to pick one) and node. A .jpg out
+# needs sips or ImageMagick; without either it writes <out>.png instead and says so.
 set -eu
 
 if [ $# -lt 2 ] || [ ! -f "$1" ]; then
@@ -11,10 +11,10 @@ fi
 in="$1"
 out="$2"
 size="${3:-1600x840}"
-case "$size" in
-  [0-9]*x[0-9]*) ;;
-  *) echo "render-cover: size must look like 1600x840" >&2; exit 1 ;;
-esac
+if ! [[ "$size" =~ ^[0-9]+x[0-9]+$ ]]; then
+  echo "render-cover: size must look like 1600x840" >&2
+  exit 1
+fi
 
 # shellcheck source=../../raystack/scripts/find-chrome.sh source-path=SCRIPTDIR
 . "$(dirname "$0")/../../raystack/scripts/find-chrome.sh"
@@ -28,9 +28,29 @@ case "$out" in /*) ;; *) out="$PWD/$out" ;; esac
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-# Cover text may be untrusted: the CSP blocks scripts and any remote or file:// load.
+# Cover text may be untrusted. The CSP meta is written first, so it applies whatever head the input
+# has. Same approach as report-pdf.sh: node neutralises the tags that can navigate or load files
+# (meta incl. refresh, base, iframe, object, embed, link, script, form, ...) and file:/javascript:
+# URLs. data: URIs in img/font stay. Needs node; fails closed without it.
 csp="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:"
-sed "s|<head>|<head><meta http-equiv=\"Content-Security-Policy\" content=\"$csp\">|" "$in" > "$tmp/cover.html"
+if ! command -v node >/dev/null 2>&1; then
+  echo "render-cover: node is required to sanitise the cover HTML" >&2
+  exit 1
+fi
+{
+  printf '<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="%s">\n' "$csp"
+  # shellcheck disable=SC2016  # JavaScript, not shell
+  node -e '
+    let h = require("fs").readFileSync(0, "utf8");
+    h = h.replace(/<(?=\/?(meta|base|iframe|frame|frameset|object|embed|applet|link|script|form)(?![a-z0-9-])|\?)/gi, "&lt;");
+    h = h.replace(/\b(href|src|data|action|srcset|poster)(\s*=\s*["\x27]?\s*)(file|javascript|vbscript):/gi, "$1$2blocked-$3:");
+    process.stdout.write(h);
+  ' < "$in"
+} > "$tmp/cover.html"
+if ! grep -qF "$csp" "$tmp/cover.html"; then
+  echo "render-cover: CSP injection failed" >&2
+  exit 1
+fi
 
 png="$tmp/cover.png"
 rc=0
@@ -42,7 +62,7 @@ if [ "$rc" -ne 0 ] || [ ! -s "$png" ]; then
 fi
 
 case "$out" in
-  *.jpg|*.jpeg)
+  *.[jJ][pP][gG]|*.[jJ][pP][eE][gG])
     if command -v sips >/dev/null 2>&1; then
       sips -s format jpeg "$png" --out "$out" >/dev/null
     elif command -v magick >/dev/null 2>&1; then
