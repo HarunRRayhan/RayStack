@@ -3,13 +3,16 @@
 # stdin: PreToolUse JSON (Claude/Codex/Cursor `.tool_input.command`, Grok `.toolInput.command`). Exit 0 = allow, exit 2 = block (reason on stderr).
 # Source this file to call guard_check "<cmd>" directly (0 = allow, 1 = block, reason in GUARD_REASON).
 # shortcut: token heuristics, not a sandbox; aliases/functions/scripts can evade; pair with read-only credentials
-# Accepted out-of-scope evasions: `echo <b64> | base64 -d | sh`, scripts/functions/aliases, other-language SDKs.
+# Accepted out-of-scope evasions: `echo <b64> | base64 -d | sh`, scripts/functions/aliases, other-language SDKs,
+#   and a package runner hidden inside one quoted word (`sh -c "npx x"`) that names no monitored CLI.
 # This guard is a seatbelt, not a boundary: always run reviews with read-only credentials.
 # Design: a command that mentions a monitored CLI must be exactly
 #   [NAME=literal ...] <cli> args... [| <filter> args ...]...
 # and the CLI's verb must be on that CLI's read allow-list. Everything else is denied.
 # SQL: one statement per command, no comments (--, /*, and # for MySQL/usql); every `name(` must be on a read-only function list.
-# Unquoted glob/redirect chars ([ ] ( ) * ? ! < >) and braces deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq always deny.
+# Unquoted glob/redirect chars ([ ] ( ) * ? ! < >) and braces deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq,
+#   deploy tools and pg_dump/pg_restore always deny. Names match on `-`/`/` boundaries too (aws-cdk, amazon/aws-cli).
+# Package runners (npx, bunx, uvx, pnpm/yarn dlx, npm exec, pipx run) and docker/podman run deny anywhere.
 
 GUARD_REASON=""
 KEYS_ONLY=0

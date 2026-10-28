@@ -1,7 +1,7 @@
 {
   "name": "raystack",
   "displayName": "RayStack",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read-only infrastructure review skills by Harun R. Rayhan: AWS billing, AWS security, AWS bottlenecks, infra/deploys, scaling and databases. Each review ends in a ranked findings report.",
   "author": {
     "name": "Harun R. Rayhan"

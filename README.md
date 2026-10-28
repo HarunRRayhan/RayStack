@@ -102,9 +102,12 @@ No review changes anything live. Fixes come back as diffs or as commands for you
 Each review turns on a guard hook (`skills/raystack/hooks/readonly-guard.sh`) that checks every
 shell command before it runs. Only the CLIs it lists are checked: `aws`, `gcloud`, `az`,
 `kubectl`, `oc`, `terraform`, `tofu`, `terragrunt`, `helm`, `railway`, `wrangler`, `redis-cli`
-and the SQL clients get read verbs only, one SQL read per call. Deploy tools such as `pulumi`,
-`cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked outright, as are commands that
-print secret values.
+and the SQL clients get read verbs only, one SQL read per call with no SQL comments. Deploy tools
+such as `pulumi`, `cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked outright, as are
+`pg_dump` and `pg_restore`, and commands that print secret values or credentials (for example
+`terraform show`, `helm get values`, `aws ecr get-login-password`). A name counts even inside a
+hyphenated or slashed word (`aws-cdk`, `amazon/aws-cli`), and package runners (`npx`, `bunx`,
+`uvx`, `pnpm dlx`, `pipx run`) and `docker run` are blocked during a review.
 
 Everything else is not checked: other tools, the agent's own file Read tool, and scripts in
 the repo (a `make` target or `npm run` script can do anything). The guard is a seatbelt, not a
