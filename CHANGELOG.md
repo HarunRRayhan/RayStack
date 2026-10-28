@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.3 (2026-10-28)
+
+From the first real run (five reviews on a Terraform repo):
+
+- A review run by the router no longer mentions the PDF; the router offers it once at the end.
+- The router passes earlier reports to each later review, so a finding already filed gets a
+  one-line `see <report>` reference instead of a duplicate entry. `database-review` runs before
+  `infra-review`.
+
 ## 0.3.2 (2026-10-28)
 
 - Fix: in Claude Code, reviews from an installed skill (`npx skills add`, `install.sh`, or a
