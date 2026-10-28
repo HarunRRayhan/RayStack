@@ -17,6 +17,11 @@ the right reviews for the repo and runs them in turn.
 | `scaling-review` | What breaks first at 10x and 100x load |
 | `database-review` | Queries, indexes, migrations, backups, connections, bloat |
 
+## Principles
+
+Four short principle skills load on their own when a task matches; this router never runs them:
+`principle-ship`, `principle-smallest-change`, `principle-ask-with-question-tool`, `principle-secrets-layout`.
+
 ## 1. Detect signals
 
 Look at file names only. Never open `.env*` files (`.env.example`, `.env.sample` and `.env.dist`

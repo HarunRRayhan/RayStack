@@ -67,7 +67,7 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ./install.sh --agent custom --dir /path/to/skills
 ```
 
-`--dry-run` shows what it would do and `--uninstall` removes exactly the seven RayStack skills.
+`--dry-run` shows what it would do and `--uninstall` removes exactly the eleven RayStack skills.
 A copy install points each review's guard hook at the installed guard. A `--link` install
 can't, so in Claude Code its reviews block every shell command; use a copy install or
 `claude --plugin-dir` there.
@@ -138,15 +138,40 @@ Want a PDF for a client or your boss? The review offers one at the end, via
 `skills/raystack/scripts/report-pdf.sh` (needs Chrome or Chromium and `npx`). Raw HTML in a
 report is shown as text, not rendered.
 
+## Principles
+
+RayStack also ships four principle skills. They aren't reviews. Each one is a short rule your
+agent picks up by itself when the task fits, and `/raystack` never runs them.
+
+| Skill | The rule |
+| --- | --- |
+| `principle-ship` | Done means live: PR, self-review, green CI, merge, deploy confirmed |
+| `principle-smallest-change` | The smallest change that solves the whole task, finished everywhere it reaches |
+| `principle-ask-with-question-tool` | Ask through the agent's question tool, batched, recommended option first |
+| `principle-secrets-layout` | Real values in gitignored `.secrets/<service>.env`, committed `.example` templates, never print a value |
+
+`principle-ship` reads `.raystack.json` at the repo root, or `~/.raystack.json` if the repo has
+none:
+
+```json
+{ "ship": { "autoMerge": false, "deployCheck": "Deploy workflow on main, then GET /health" } }
+```
+
+With `autoMerge` off (the default), the agent stops at green CI and asks before it merges. Turn
+it on and it merges on green, then waits for the deploy. `deployCheck` tells it how to confirm
+the deploy is live: a workflow name, a URL or a health check.
+
 ## Credits
 
-RayStack borrows ideas from three skill packs:
+RayStack borrows ideas from four skill packs:
 
 - [pstack](https://github.com/cursor/plugins/tree/main/pstack): short principle skills and
   step-by-step playbooks.
 - [mattpocock/skills](https://github.com/mattpocock/skills): plain, composable skills.
 - [gstack](https://github.com/garrytan/gstack): multi-agent installs, review skills and safety
   hooks that only switch on while their skill runs.
+- [Ponytail](https://github.com/DietrichGebert/ponytail): the smallest complete change, and
+  `shortcut:` comments for known limits.
 
 ## License
 

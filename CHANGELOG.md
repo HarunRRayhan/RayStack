@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.0 (2026-10-28)
+
+Four principle skills. The agent loads them by itself when a task fits; they aren't reviews.
+
+- `principle-ship`: done means PR, self-reviewed diff, green CI, merge, and a deploy confirmed
+  live. `.raystack.json` (repo root, else `~/.raystack.json`) sets `ship.autoMerge` (default
+  `false`: ask before merging) and `ship.deployCheck`.
+- `principle-smallest-change`: reuse first, no speculative code, finish every caller and test,
+  `shortcut: <limit>, <when to upgrade>` comments for known limits.
+- `principle-ask-with-question-tool`: ask through the native question tool, at most 4 batched
+  questions, recommended option first.
+- `principle-secrets-layout`: `.secrets/<service>.env` with committed `.example` templates, a
+  seed script, never print a value.
+- `install.sh` installs and uninstalls eleven skills. The router lists the principles.
+- `check-skills.sh` keeps each principle under 40 lines with an "Apply when" description.
+
 ## 0.1.1 (2026-10-28)
 
 Read-only guard fixes.
