@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 (2026-10-28)
+
+- New `app-security-review`: the seventh read-only review. It reads app code for authorization, injection, secrets and session bugs. It never sends requests to a running app. Dependency audits run only with your live consent.
+- New `local-verify`: a playbook for checking a user-facing change in a real local browser. `principle-ship` calls it. It never edits `.env`, never touches production or shared databases, and says so when no browser tool is available.
+- The review guard allows the `audit` verb of `npm`, `composer`, `pip-audit` and `bundle-audit`, only in forms that run no repo code.
+- `install.sh` installs and uninstalls eighteen skills.
+
 ## 0.3.3 (2026-10-28)
 
 From the first real run (five reviews on a Terraform repo):

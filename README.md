@@ -24,7 +24,7 @@ By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com
 npx skills add HarunRRayhan/raystack -g -a claude-code
 ```
 
-The [skills CLI](https://skills.sh) installs all sixteen skills globally. Swap `claude-code` for
+The [skills CLI](https://skills.sh) installs all eighteen skills globally. Swap `claude-code` for
 `codex` or `cursor`, list several (`-a claude-code codex`), or drop `-a` to pick from a list of
 agents.
 
@@ -82,7 +82,7 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ./install.sh --agent custom --dir /path/to/skills
 ```
 
-`--dry-run` shows what it would do and `--uninstall` removes exactly the sixteen RayStack skills.
+`--dry-run` shows what it would do and `--uninstall` removes exactly the eighteen RayStack skills.
 Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 
 ## Run a review
@@ -103,6 +103,7 @@ Or skip the router and name a review: "run database-review", `/raystack:aws-bill
 | `infra-review` | Deploys, rollback, backups, monitoring and exposure on any platform |
 | `scaling-review` | What breaks first at 10x and 100x load |
 | `database-review` | Queries, indexes, migrations, backups, connections and bloat |
+| `app-security-review` | App code: authz, injection, secrets, sessions, dependency risk. Code only, never calls a running app |
 
 With no live access, a review still works from your IaC and code. It marks those findings
 `(unconfirmed)` and lists the exports or commands it needs from you.
@@ -155,7 +156,7 @@ report is shown as text, not rendered.
 
 ## Principles
 
-RayStack also ships four principle skills. They aren't reviews. Each one is a short rule your
+RayStack also ships four principle skills and `local-verify`. They aren't reviews. Each one is a short rule your
 agent picks up by itself when the task fits, and `/raystack` never runs them.
 
 | Skill | The rule |
@@ -164,6 +165,7 @@ agent picks up by itself when the task fits, and `/raystack` never runs them.
 | `principle-smallest-change` | The smallest change that solves the whole task, finished everywhere it reaches |
 | `principle-ask-with-question-tool` | Ask through the agent's question tool, batched, recommended option first |
 | `principle-secrets-layout` | Real values in gitignored `.secrets/<service>.env`, committed `.example` templates, never print a value |
+| `local-verify` | Check a user-facing change in a real local browser. `principle-ship` calls it. Never touches `.env`, production data, live payments or real email |
 
 `principle-ship` reads `.raystack.json` at the repo root, or `~/.raystack.json` if the repo has
 none:
