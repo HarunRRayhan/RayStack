@@ -41,6 +41,9 @@ one: the review's guard blocks writes on purpose.
 
 ## 3. Create the role
 
+Pass `--profile <setup profile> --region <region>` on every command here. IAM is global, but the
+CLI still errors with `NoRegion` when the profile has none.
+
 - The trust principal is the identity from `get-caller-identity` on the profile used for the
   write. Map it like this:
   - An IAM user ARN: use it as it is.
@@ -77,8 +80,8 @@ region = <region>
 
 - `aws sts get-caller-identity --profile raystack-readonly` must show the `raystack-readonly`
   role. New roles can take a few seconds to work, so retry up to 5 times, 5 seconds apart.
-- `aws iam simulate-principal-policy --profile raystack-readonly --policy-source-arn <role ARN> --action-names ec2:RunInstances s3:PutObject iam:CreateUser iam:CreateAccessKey s3:GetObject secretsmanager:GetSecretValue ssm:GetParameter`
-  must give `implicitDeny` for the writes and `explicitDeny` for the three data reads. Any `allowed`: stop, report it, and run no review
+- `aws iam simulate-principal-policy --profile raystack-readonly --policy-source-arn <role ARN> --action-names ec2:RunInstances s3:PutObject iam:CreateUser iam:CreateAccessKey s3:GetObject secretsmanager:GetSecretValue ssm:GetParameter kms:Decrypt dynamodb:PartiQLSelect`
+  must give `implicitDeny` for the writes and `explicitDeny` for the five data reads. Any `allowed`: stop, report it, and run no review
   with this profile.
 - One read: `aws ec2 describe-regions --profile raystack-readonly --query 'length(Regions)'`.
 
