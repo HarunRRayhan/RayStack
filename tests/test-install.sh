@@ -75,6 +75,21 @@ assert_eq "$(find "$F" -mindepth 1 -maxdepth 1 | wc -l | tr -d " ")" 1 "uninstal
 bash "$INSTALL" --dir "$F" --force >/dev/null 2>&1; assert_eq "$?" 0 "--force exits 0"
 [ ! -e "$F/infra-review/notes.txt" ] && [ -f "$F/infra-review/SKILL.md" ] && pass "--force replaces foreign dir" || fail "--force did not replace"
 
+# retired skills: ours are removed on install and uninstall, foreign ones never
+R="$T/r"; mkdir -p "$R/blog" "$R/humanize" "$R/blog-cover"; R=$(cd "$R" && pwd -P)
+echo 0.5.0 > "$R/blog/.raystack-installed"; echo 0.5.0 > "$R/humanize/.raystack-installed"
+echo mine > "$R/blog-cover/notes.txt"
+out=$(bash "$INSTALL" --dir "$R" 2>&1)
+[ ! -e "$R/blog" ] && [ ! -e "$R/humanize" ] && pass "install removes retired skills it installed" || fail "retired skills left"
+assert_eq "$(cat "$R/blog-cover/notes.txt")" mine "foreign retired-name dir kept"
+case "$out" in *"remove retired $R/blog"*) pass "reports retired removal";; *) fail "no retired removal line: $out";; esac
+mkdir -p "$R/blog-draft"; echo 0.5.0 > "$R/blog-draft/.raystack-installed"
+bash "$INSTALL" --dir "$R" --uninstall --dry-run >/dev/null 2>&1
+[ -e "$R/blog-draft" ] && pass "--dry-run keeps retired skill" || fail "--dry-run removed retired skill"
+bash "$INSTALL" --dir "$R" --uninstall >/dev/null 2>&1
+[ ! -e "$R/blog-draft" ] && pass "uninstall removes retired skills it installed" || fail "uninstall left retired skill"
+assert_eq "$(cat "$R/blog-cover/notes.txt")" mine "uninstall keeps foreign retired-name dir"
+
 # path with spaces
 bash "$INSTALL" --dir "$T/with space/skills" >/dev/null; assert_eq "$(count "$T/with space/skills")" 21 "dir with spaces"
 

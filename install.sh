@@ -9,6 +9,8 @@ while [ -L "$self" ]; do
   case "$link" in /*) self=$link ;; *) self=$(dirname "$self")/$link ;; esac
 done
 ROOT=$(cd "$(dirname "$self")" && pwd -P)
+# Skills earlier versions shipped; removed from the target only when RayStack installed them.
+RETIRED="blog blog-topics blog-draft humanize blog-cover"
 SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build"
 
 usage() {
@@ -83,8 +85,18 @@ skip_foreign() {
 }
 
 run() { if [ "$dry" = 1 ]; then echo "[dry-run] $*"; else "$@"; fi; }
+# remove_retired: delete retired skills this tool installed; never touch foreign ones.
+remove_retired() {
+  for s in $RETIRED; do
+    if { [ -e "$dir/$s" ] || [ -L "$dir/$s" ]; } && ours "$dir/$s" "$s"; then
+      echo "remove retired $dir/$s"
+      run rm -rf "${dir:?}/${s:?}"
+    fi
+  done
+}
 
 if [ "$uninstall" = 1 ]; then
+  remove_retired
   for s in $SKILLS; do
     if [ -e "$dir/$s" ] || [ -L "$dir/$s" ]; then
       ! skip_foreign "$dir/$s" "$s" || continue
@@ -124,6 +136,7 @@ for s in $SKILLS; do
   mv "$tmp" "$dest"
 done
 
+remove_retired
 [ -z "$hint" ] || echo "Tip: $agent also has a native plugin install: $hint"
 echo "Note: the read-only guard hook is enforced automatically only in Claude Code."
 echo "On other agents, pair reviews with read-only credentials. See docs/agents.md."
