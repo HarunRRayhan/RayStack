@@ -1,3 +1,5 @@
+<img src="assets/logo.svg" alt="RayStack logo" width="72" height="72">
+
 # RayStack
 
 RayStack is a pack of read-only infrastructure reviews for coding agents. Point your agent at a
