@@ -65,7 +65,8 @@ Use what is available, in this order:
 
   Read flags only (no `fix`, `--fix`, `--update` or `-o`). Each must be a single command,
   optionally piped into the filters above. Every other `composer` and `bundle` verb stays
-  blocked.
+  blocked. Use the bare command name: a path such as `./vendor/bin/composer` is denied. The
+  guard watches only these names, so `python -m pip_audit` is not checked; don't use it.
 - `bundle-audit check` may download its advisory DB to the user's data dir on first run.
 - The guard also denies any command that mentions a shell, `env`, `ssh` or `scp`, a package
   runner (`npx`, `uv run`, `npm test` or other scripts, `yarn`, `pnpm` and `bun` except
