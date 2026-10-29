@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2 (2026-10-29)
+
+- `install.sh` now removes skills that earlier versions installed but RayStack no longer ships
+  (the old blog skills), on install and on `--uninstall`. It only removes folders it installed
+  itself (marker or link into the checkout); same-named folders of your own are left alone.
+
 ## 0.6.1 (2026-10-29)
 
 - Quick track: the separate review is now mandatory, even for a one-line fix. The behaviour
