@@ -19,15 +19,17 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 
 ## Install
 
-### Any agent (one command)
+### Global install (one command)
 
 ```bash
-npx skills add HarunRRayhan/RayStack -g -a claude-code
+git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack && ~/.raystack/install.sh
 ```
 
-The [skills CLI](https://skills.sh) installs all twenty-one skills globally. Swap `claude-code` for
-`codex` or `cursor`, list several (`-a claude-code codex`), or drop `-a` to pick from a list of
-agents.
+This clones RayStack to `~/.raystack` and copies all twenty-one skills into `~/.claude/skills`.
+For another agent add `--agent codex`, `--agent cursor` or `--agent grok`. To update, run
+`git -C ~/.raystack pull && ~/.raystack/install.sh`. `--uninstall` removes them again.
+
+Or use the [skills CLI](https://skills.sh): `npx skills add HarunRRayhan/RayStack -g -a claude-code`.
 
 The per-agent options below do the same thing in each agent's own way.
 
