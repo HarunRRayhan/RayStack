@@ -113,4 +113,12 @@ fi
 check "principle-ship names local-verify" grep -qF 'local-verify' skills/principle-ship/SKILL.md
 
 check "humanize names repo voice path" grep -qF '.raystack/voice.md' skills/humanize/SKILL.md
+# aws-readonly-setup: deny-data policy exists, parses, and denies the data reads the skill proves
+ars=skills/aws-readonly-setup
+check "aws-readonly-setup links its deny policy" grep -qF 'deny-data-policy.json' "$ars/SKILL.md"
+check "deny-data policy is valid JSON" jq -e '.Statement[0].Effect == "Deny"' "$ars/deny-data-policy.json"
+for a in 's3:GetObject*' secretsmanager:GetSecretValue 'ssm:GetParameter*' kms:Decrypt 'rds-data:*'; do
+  # shellcheck disable=SC2016  # $a is a jq variable
+  check "deny-data policy denies $a" jq -e --arg a "$a" '.Statement[0].Action | index($a)' "$ars/deny-data-policy.json"
+done
 exit "$FAILED"

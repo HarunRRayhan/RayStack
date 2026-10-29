@@ -1,0 +1,43 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RayStackReadConfigNotData",
+      "Effect": "Deny",
+      "Action": [
+        "s3:GetObject*",
+        "s3-object-lambda:*",
+        "glacier:GetJobOutput",
+        "ssm:GetParameter*",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:BatchGetSecretValue",
+        "kms:Decrypt",
+        "lambda:GetFunction",
+        "lambda:GetLayerVersion*",
+        "dynamodb:GetItem",
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:PartiQLSelect",
+        "dynamodb:ExecuteStatement",
+        "dynamodb:BatchExecuteStatement",
+        "dynamodb:GetRecords",
+        "rds-data:*",
+        "redshift-data:GetStatementResult",
+        "athena:GetQueryResults",
+        "kinesis:GetRecords",
+        "kinesis:GetShardIterator",
+        "sqs:ReceiveMessage",
+        "ec2:GetPasswordData",
+        "ec2:GetConsoleOutput",
+        "ec2:GetConsoleScreenshot",
+        "cloudformation:GetTemplate",
+        "codecommit:GitPull",
+        "ecr:GetAuthorizationToken",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

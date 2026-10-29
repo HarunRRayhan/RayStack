@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "raystack",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Skills by Harun R. Rayhan: read-only infrastructure and app security reviews (AWS billing, security, bottlenecks, infra, scaling, databases, app security), working principles, local browser verification, and blog writing in your own voice.",
   "author": {
     "name": "Harun R. Rayhan",

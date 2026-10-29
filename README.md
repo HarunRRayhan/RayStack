@@ -27,7 +27,7 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 npx skills add HarunRRayhan/RayStack -g -a claude-code
 ```
 
-The [skills CLI](https://skills.sh) installs all eighteen skills globally. Swap `claude-code` for
+The [skills CLI](https://skills.sh) installs all nineteen skills globally. Swap `claude-code` for
 `codex` or `cursor`, list several (`-a claude-code codex`), or drop `-a` to pick from a list of
 agents.
 
@@ -85,7 +85,7 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ./install.sh --agent custom --dir /path/to/skills
 ```
 
-`--dry-run` shows what it would do and `--uninstall` removes exactly the eighteen RayStack skills.
+`--dry-run` shows what it would do and `--uninstall` removes exactly the nineteen RayStack skills.
 Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 
 ## Run a review
@@ -137,7 +137,11 @@ the repo (a `make` target can do anything). The guard is a seatbelt, not a
 sandbox, and it only switches on by itself in Claude Code. In Cursor, Codex and Grok the
 reviews follow the same rules but nothing enforces them. Either way, run reviews with read-only
 credentials (AWS `ReadOnlyAccess` or `ViewOnlyAccess`, a read-only DB role). Those are the real
-boundary. The full rules are in [the review contract](skills/raystack/references/review-contract.md).
+boundary. No read-only AWS profile yet? The `aws-readonly-setup` skill makes one for you: it
+signs you in through the browser with `aws login`, creates a `raystack-readonly` role with
+`ReadOnlyAccess` minus data reads (S3 objects, secrets, SSM parameters), and proves it can
+read config but not data or writes. It asks before that one IAM change and
+creates no access keys. The full rules are in [the review contract](skills/raystack/references/review-contract.md).
 
 In Claude Code, once a review starts the guard stays on for the rest of the session. It then
 also blocks `$`, backslashes, unquoted globs (`*`, `?`, `[ ]`) and redirects (`>`, `<`) in any
