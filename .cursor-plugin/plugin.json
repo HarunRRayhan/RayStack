@@ -1,8 +1,8 @@
 {
   "name": "raystack",
   "displayName": "RayStack",
-  "version": "0.4.1",
-  "description": "Skills by Harun R. Rayhan: read-only infrastructure and app security reviews (AWS billing, security, bottlenecks, infra, scaling, databases, app security), working principles, local browser verification, and blog writing in your own voice.",
+  "version": "0.5.0",
+  "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only infrastructure and app security reviews, working principles, local browser verification, and blog writing in your own voice.",
   "author": {
     "name": "Harun R. Rayhan"
   },

@@ -23,11 +23,12 @@ the right reviews for the repo and runs them in turn.
 Four short principle skills load on their own when a task matches; this router never runs them:
 `principle-ship`, `principle-smallest-change`, `principle-ask-with-question-tool`, `principle-secrets-layout`.
 
-## Content
+## Content and development
 
 Blog writing is not a review. For "write a post", "what should I blog about" or "set up my
 voice", hand off to the `blog` skill (it runs `blog-topics`, `blog-draft`, `humanize` and
-`blog-cover`). Do not run it as part of the review flow.
+`blog-cover`). For "start a project", "write a PRD", "plan this" or "build this", hand off to
+the `dev` skill. Do not run either as part of the review flow.
 
 ## 1. Detect signals
 

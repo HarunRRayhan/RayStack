@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 (2026-10-29)
+
+- New development flow, seven skills: `dev` (entry point), `dev-hub`, `dev-research`, `dev-prd`,
+  `dev-spec`, `dev-plan` and `dev-build`. Three tracks by size: Quick (a bug or small change),
+  Standard (one slice) and Full (a new product). Decisions go in `DECISIONS.md` and are never
+  asked twice. The build uses a fresh implementer and reviewer per task, a ledger so a stopped
+  run resumes, and a final review.
+- The `raystack` router hands development requests to `dev`.
+- `principle-ship` also checks that the docs still match the code.
+- `install.sh` installs and uninstalls twenty-six skills.
+
 ## 0.4.1 (2026-10-29)
 
 - New `aws-readonly-setup`: when no read-only AWS profile works, the agent signs you in with
