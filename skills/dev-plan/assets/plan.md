@@ -26,6 +26,8 @@
 
 **Covers:** B-001, B-004
 
+**Tests:** `<test file>`: `<test names>`
+
 **Interfaces:**
 - **Produces:** `<exact name and signature>`
 - **Consumes:** <exact name from an earlier task, or "nothing">

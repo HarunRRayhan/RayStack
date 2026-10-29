@@ -202,10 +202,10 @@ done
 for t in 'Serves:' '## Complexity' 'docs/principles.md'; do
   check "dev-spec contains: $t" grep -qF -- "$t" skills/dev-spec/SKILL.md
 done
-for t in analyze 'NEEDS CLARIFICATION' 'every task' 'vertical slice'; do
+for t in analyze 'NEEDS CLARIFICATION' 'Every task covers' 'vertical slice'; do
   check "dev-plan contains: $t" grep -qF -- "$t" skills/dev-plan/SKILL.md
 done
-for t in 'Covers:' '## Analyze'; do
+for t in 'Covers:' 'Tests:' '## Analyze'; do
   check "plan template contains: $t" grep -qF -- "$t" skills/dev-plan/assets/plan.md
 done
 exit "$FAILED"

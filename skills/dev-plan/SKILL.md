@@ -43,8 +43,9 @@ End the plan with `## Analyze` and run it. The plan is not ready until every lin
 2. Every task covers at least one B-ID. A task with none is cut or the B-ID is missing.
 3. No open `[NEEDS CLARIFICATION]` in the plan, the specs or the PRD, and no `Open` row
    in `DECISIONS.md` that the slice depends on.
-4. No unjustified gate breach: each simplicity or anti-abstraction breach has a
-   `## Complexity` row in its spec.
+4. No unjustified gate breach: compare each spec and task against the simplicity and
+   anti-abstraction gates in `docs/principles.md`. A breach without a `## Complexity` row
+   in the spec fails.
 5. Produce and consume match: every name, signature, path or file one task consumes is
    produced by an earlier task, spelled the same.
 
