@@ -188,4 +188,24 @@ prd=skills/dev-prd/assets/PRD.md
 for t in '## Goals' '## Non-goals' '## Anti-goals' '## Behaviour contract' 'THE SYSTEM SHALL' 'B-001'; do
   check "PRD template contains: $t" grep -qF -- "$t" "$prd"
 done
+# dev-spec and dev-plan
+for sk in dev-spec dev-plan; do
+  f=skills/$sk/SKILL.md
+  if [ -f "$f" ]; then
+    check "$sk is 120 lines or fewer" test "$(wc -l < "$f")" -le 120
+    check "$sk contract path resolves" test -f "skills/$sk/../dev/references/dev-contract.md"
+    check "$sk links the contract" grep -qF '../dev/references/dev-contract.md' "$f"
+  else
+    fail "missing $f"
+  fi
+done
+for t in 'Serves:' '## Complexity' 'docs/principles.md'; do
+  check "dev-spec contains: $t" grep -qF -- "$t" skills/dev-spec/SKILL.md
+done
+for t in analyze 'NEEDS CLARIFICATION' 'every task' 'vertical slice'; do
+  check "dev-plan contains: $t" grep -qF -- "$t" skills/dev-plan/SKILL.md
+done
+for t in 'Covers:' '## Analyze'; do
+  check "plan template contains: $t" grep -qF -- "$t" skills/dev-plan/assets/plan.md
+done
 exit "$FAILED"
