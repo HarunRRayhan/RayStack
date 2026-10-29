@@ -118,6 +118,7 @@ ars=skills/aws-readonly-setup
 check "aws-readonly-setup links its deny policy" grep -qF 'deny-data-policy.json' "$ars/SKILL.md"
 check "deny-data policy is valid JSON" jq -e '.Statement[0].Effect == "Deny"' "$ars/deny-data-policy.json"
 for a in s3:GetObject secretsmanager:GetSecretValue ssm:GetParameter; do
+  # shellcheck disable=SC2016  # $a is a jq variable
   check "deny-data policy denies $a" jq -e --arg a "$a" '.Statement[0].Action | index($a)' "$ars/deny-data-policy.json"
 done
 exit "$FAILED"
