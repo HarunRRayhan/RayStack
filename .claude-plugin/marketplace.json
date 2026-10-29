@@ -4,13 +4,13 @@
     "name": "Harun R. Rayhan",
     "url": "https://harun.dev"
   },
-  "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only infrastructure and app security reviews, working principles, local browser verification, and blog writing in your own voice.",
+  "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only infrastructure and app security reviews, working principles and local browser verification.",
   "plugins": [
     {
       "name": "raystack",
       "source": "./",
-      "version": "0.5.0",
-      "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only infrastructure and app security reviews, working principles, local browser verification, and blog writing in your own voice.",
+      "version": "0.6.0",
+      "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only infrastructure and app security reviews, working principles and local browser verification.",
       "category": "devops"
     }
   ]

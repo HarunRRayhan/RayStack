@@ -2,10 +2,11 @@
 
 # RayStack
 
-RayStack is a pack of read-only infrastructure reviews for coding agents. Point your agent at a
-repo, type `/raystack`, and you get a ranked findings report on cost, security, bottlenecks,
-deploys, scaling or the database, with evidence for every finding and a fix you apply yourself.
-It's what I check when I audit someone's stack, written down as agent skills.
+RayStack is a skill pack for coding agents that builds and reviews software. Type `/raystack`
+in a repo and it works out what you want: take a product from idea to shipped code with
+reviewed builds, or get a ranked findings report on cost, security, bottlenecks, deploys,
+scaling or the database, with evidence for every finding and a fix you apply yourself. It's how
+I build and what I check when I audit someone's stack, written down as agent skills.
 
 By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com/harundotdev)).
 Product page: [harun.dev/raystack](https://harun.dev/raystack).
@@ -15,9 +16,6 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 - `bash` and `jq`. The guard needs `jq` to read each command; without it, it blocks every
   shell command during a review (fails closed).
 - For PDF export: Chrome or Chromium, and `npx` (Node.js).
-- For blog covers: Chrome or Chromium and `node`, and the `raystack` skill installed beside
-  `blog-cover` (`install.sh` and the plugin always do this). `sips` (macOS) or ImageMagick is optional,
-  for a JPG.
 
 ## Install
 
@@ -27,7 +25,7 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 npx skills add HarunRRayhan/RayStack -g -a claude-code
 ```
 
-The [skills CLI](https://skills.sh) installs all twenty-six skills globally. Swap `claude-code` for
+The [skills CLI](https://skills.sh) installs all twenty-one skills globally. Swap `claude-code` for
 `codex` or `cursor`, list several (`-a claude-code codex`), or drop `-a` to pick from a list of
 agents.
 
@@ -85,7 +83,7 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ./install.sh --agent custom --dir /path/to/skills
 ```
 
-`--dry-run` shows what it would do and `--uninstall` removes exactly the twenty-six RayStack skills.
+`--dry-run` shows what it would do and `--uninstall` removes exactly the twenty-one RayStack skills.
 Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 
 ## Run a review
@@ -189,8 +187,8 @@ the deploy is live: a workflow name, a URL or a health check.
 
 ## Development
 
-RayStack also carries a development flow, from research to a shipped build. Type `/dev`, or say
-"start a new project" or "build this". It picks a track by size:
+RayStack also carries a development flow, from research to a shipped build. Type `/raystack` and pick
+"Build something", say "start a new project" or "build this", or call `/dev` directly. It picks a track by size:
 
 - **Quick**: a bug or small change. No PRD. Fix it, test it, ship it.
 - **Standard**: one slice of work. Spec if missing, then a plan, then a reviewed build.
@@ -209,32 +207,6 @@ stopped run can resume.
 | `dev-plan` | A plan for one slice, checked for gaps before the build starts |
 | `dev-build` | Builds the plan task by task with a fresh implementer and reviewer for each |
 
-## Content
-
-RayStack also writes blog posts in your voice. Type `/blog`, or say "write a blog post". The flow
-picks a topic, drafts the post, humanizes it and renders a cover. It stops at a draft and a
-cover. It never publishes.
-
-| Skill | What it does |
-| --- | --- |
-| `blog` | Entry point. Sets up your voice, then runs the flow. |
-| `blog-topics` | Scores ideas from repo lessons, news and your ideas file. Shows the top 10, waits for your pick. |
-| `blog-draft` | Writes the post as a draft in your voice, in the repo's post format |
-| `humanize` | Rewrites AI-sounding prose so it reads like a person wrote it |
-| `blog-cover` | Renders a cover image from an HTML card with headless Chrome. No AI images. |
-
-### Your voice file
-
-The first time you run `blog`, it sets up your voice: it reads 3 to 5 of your own posts and
-writes a short style file. It looks for that file here, in order:
-
-1. `.raystack/voice.md` at the repo root
-2. `~/.raystack/voice.md`
-
-The repo file wins. [skills/blog/references/voice-example.md](skills/blog/references/voice-example.md)
-shows Harun's voice file as a worked example. It's there to show the shape. It is never used as
-your voice.
-
 ## Credits
 
 RayStack borrows ideas from four skill packs:
@@ -246,8 +218,6 @@ RayStack borrows ideas from four skill packs:
   hooks that only switch on while their skill runs.
 - [Ponytail](https://github.com/DietrichGebert/ponytail): the smallest complete change, and
   `shortcut:` comments for known limits.
-
-`humanize` adapts Harun's own humanizer skill.
 
 ## License
 

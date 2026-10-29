@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 (2026-10-29)
+
+- Removed the blog writing skills: `blog`, `blog-topics`, `blog-draft`, `humanize` and
+  `blog-cover`. RayStack now focuses on development and read-only reviews.
+- `/raystack` is now the entry point for everything: it hands build work to `dev`, runs the
+  review flow for audits, and asks which one when the request is unclear.
+- `install.sh` installs and uninstalls twenty-one skills. It leaves the old blog skills in place;
+  remove them by hand: `rm -rf ~/.claude/skills/{blog,blog-topics,blog-draft,humanize,blog-cover}`
+  (use your agent's skills folder).
+
 ## 0.5.0 (2026-10-29)
 
 - New development flow, seven skills: `dev` (entry point), `dev-hub`, `dev-research`, `dev-prd`,

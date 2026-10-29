@@ -1,8 +1,8 @@
 {
   "name": "raystack",
   "displayName": "RayStack",
-  "version": "0.5.0",
-  "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only infrastructure and app security reviews, working principles, local browser verification, and blog writing in your own voice.",
+  "version": "0.6.0",
+  "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only infrastructure and app security reviews, working principles and local browser verification.",
   "author": {
     "name": "Harun R. Rayhan"
   },
@@ -10,6 +10,6 @@
   "repository": "https://github.com/HarunRRayhan/RayStack",
   "license": "MIT",
   "logo": "assets/logo.png",
-  "keywords": ["aws", "infrastructure", "review", "security", "cost", "database", "scaling", "blog", "writing"],
+  "keywords": ["aws", "infrastructure", "review", "security", "cost", "database", "scaling", "development", "planning"],
   "skills": "./skills/"
 }
