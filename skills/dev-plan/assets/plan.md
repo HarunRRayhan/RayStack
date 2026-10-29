@@ -4,7 +4,7 @@
 
 **Spec:** `docs/tech-spec/<area>.md`. Read all of it, including any Complexity rows.
 
-**Behaviours in scope:** <B-001, B-004, B-007. For a slice with no PRD, write them here as EARS lines.>
+**Behaviours in scope:** <B-001, B-004, B-007. With no PRD, they are in the spec's `## Behaviours` section.>
 
 ## Global Constraints
 

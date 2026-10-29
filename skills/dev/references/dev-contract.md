@@ -36,12 +36,13 @@ B-001: WHEN a signed-in user submits an empty title, THE SYSTEM SHALL reject it 
 
 The plan `docs/plans/YYYY-MM-DD-<slice>.md` has a ledger beside it,
 `docs/plans/YYYY-MM-DD-<slice>-ledger.md`. The top is a strict status table. Only status
-updates touch it.
+updates touch it, plus a short pointer in Notes for `done-with-concerns` (`see log`); the
+concern itself goes in the log.
 
 ```
 | Task | Status | Commit | Notes |
 | --- | --- | --- | --- |
-| T-01 | done | a1b2c3d | |
+| T-01 | done-with-concerns | a1b2c3d | see log |
 | T-02 | in-progress | | |
 | T-03 | todo | | |
 ```
@@ -49,7 +50,8 @@ updates touch it.
 Statuses: `todo`, `in-progress`, `done`, `done-with-concerns`, `needs-context`, `blocked`.
 
 Below the table is an append-only running log. It holds fix rounds with commit ranges,
-rulings with their cost if wrong, parked minors and final-review notes:
+rulings with their cost if wrong, concerns, parked minors, final-review notes and, last,
+`Shipped: <PR or commit>` (one line per repo in hub mode):
 
 ```
 ### 2026-10-29 T-02 review round 1
@@ -67,16 +69,10 @@ Parked minor: rename `tmp` in `parse.ts`.
   final review.
 - Group small tasks into one dispatch to keep the agent count down.
 - **Hosts with no subagent tool:** implement the task, then review it in a separate pass
-  against the checklist below. Record `inline review` in the ledger log.
+  against the reviewer checklist. Record `inline review` in the ledger log.
 
-Reviewer prompt checklist:
-
-1. Read the task and its B-IDs. Check each B-ID against the diff and the tests.
-2. Report correctness problems only, with file:line. No style notes.
-3. Flag any test that was weakened, skipped or loosened to pass.
-4. Flag any raised timeout or new lint, type or test suppression.
-5. Check `docs/principles.md`. A violation is Important unless the plan mandates it.
-6. Say which B-IDs are covered and which are not. End with: approved, or the list to fix.
+The reviewer checklist (B-IDs against diff and tests, correctness only, weakened tests and
+suppressions, principles) is `../../dev-build/references/reviewer.md`.
 
 ## Questions
 
@@ -86,7 +82,9 @@ only when the host has no question tool. Each answer becomes a `D-` row in `DECI
 
 ## Session start
 
-A new session reads `AGENTS.md`, then the ledger, then runs the project's smoke check if
-one exists, then continues from the first ledger row that is not `done` or
-`done-with-concerns` (both count as finished). This is how a
-long build survives a context reset.
+A new session reads `AGENTS.md` (and, if it points to a hub, the hub's), then the newest
+ledger in `docs/plans/` whose log has no `Shipped:` line (in hub mode, until every repo
+has one), then runs the project's smoke check if one exists, then continues from the
+first ledger row that is not `done` or `done-with-concerns` (both count as finished). If
+every row is finished, it continues from the last converge, final review or ship step in
+the log. This is how a long build survives a context reset.

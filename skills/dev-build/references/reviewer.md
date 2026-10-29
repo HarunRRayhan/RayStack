@@ -11,11 +11,13 @@ Range: git diff {base}..{head}
 
 ## What it must do
 {The task text from the plan, verbatim. Final review mode: the spec path, every in-scope
-B-ID line, the parked minors and the open rulings from the ledger log.}
+B-ID line, the parked minors and the open rulings from the ledger log. Quick track: the
+note's current, expected and unchanged behaviour.}
 
 ## Check
-1. For each B-ID (B-001 style), find the code and a test that proves it. Run the tests.
-   Do not trust the implementer's report.
+1. For each B-ID (B-001 style), find the code and a test that proves it. With no B-IDs
+   (Quick track), do the same for the note's expected and unchanged behaviour. Run the
+   tests. Do not trust the implementer's report.
 2. Report correctness problems only, with file:line. No style notes.
 3. Flag any test that was weakened, skipped, loosened or made to assert less, and any
    raised timeout or new lint, type or test suppression.

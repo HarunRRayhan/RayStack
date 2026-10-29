@@ -30,8 +30,8 @@ Failure even if it works:
 
 ## Behaviour contract
 
-One EARS line per behaviour. IDs are never reused. Forms are in
-`skills/dev/references/dev-contract.md`.
+One EARS line per behaviour. IDs are never reused. Decisions: see `DECISIONS.md`. ID and
+EARS forms: the IDs rule in the RayStack dev contract.
 
 B-001: WHEN <trigger>, THE SYSTEM SHALL <observable result>.
 

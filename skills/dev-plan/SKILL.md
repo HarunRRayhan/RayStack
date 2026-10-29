@@ -16,8 +16,9 @@ shown working on its own. Not one plan per layer. If the work is bigger, plan th
 slice and say what the next ones are.
 
 Read `AGENTS.md`, `DECISIONS.md`, `docs/principles.md`, the PRD and the tech specs that
-list the slice's B-IDs under `Serves:`. A Standard slice may have no PRD. Then write the
-B-IDs it needs at the top of the plan, as EARS lines, and number them as the contract says.
+list the slice's B-IDs under `Serves:`. A Standard slice may have no PRD: its B-IDs are
+in the area spec's `## Behaviours` section, written by `dev-spec`. Cite them; do not add
+new ones here. A missing behaviour goes back to `dev-spec`.
 
 ## 2. Write the plan
 
@@ -39,7 +40,7 @@ Cover the unhappy paths the B-IDs name. Tests assert behaviour, not internals.
 
 End the plan with `## Analyze` and run it. The plan is not ready until every line is clean.
 
-1. Every in-scope B-ID maps to at least one task.
+1. Every in-scope B-ID (from the PRD, or the spec's `## Behaviours`) maps to a task.
 2. Every task covers at least one B-ID. A task with none is cut or the B-ID is missing.
 3. No open `[NEEDS CLARIFICATION]` in the plan, the specs or the PRD, and no `Open` row
    in `DECISIONS.md` that the slice depends on.

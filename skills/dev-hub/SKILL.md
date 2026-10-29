@@ -52,8 +52,8 @@ This skill never overwrites. Check each target before writing.
 - `DECISIONS.md` or a `docs/` file exists: keep it and skip that step. If it uses other
   columns, keep them and tell the user, do not rewrite its rows.
 - A pointer target exists: append the pointer as a section, do not replace the file.
-- When a template goes into an existing file as a section, demote its H1 to `##` so the
-  file keeps one H1.
+- When a template goes into an existing file as a section, demote every heading one
+  level (`#` to `##`, `##` to `###`) so the file keeps one H1.
 
 ## 5. Finish
 

@@ -44,7 +44,7 @@ Follow the contract's session start, and read `DECISIONS.md` and the plan too.
 5. Check the reviewer's claims against the code before acting on them. A wrong finding gets
    a ruling, not a fix.
 6. Clean review: set the row to `done` with the commit range. Open rulings left: set it to
-   `done-with-concerns` and put the concern in Notes.
+   `done-with-concerns`, log the concern and put `see log` in Notes.
 
 ## 3. Fix rounds
 
@@ -59,7 +59,7 @@ format, `### <date> T-NN review round N`, with the findings and the fix commit r
   `Ruling: <what and why>, cost if wrong: <what breaks and who notices>`.
 - Minor findings are parked, not fixed now: `Parked minor: <finding> (<file>)`. The final
   review sees them.
-- Only status updates touch the table. Everything else is appended to the log.
+- Only status updates and a `see log` pointer touch the table. The rest goes in the log.
 
 ## 4. No subagent tool
 
@@ -86,10 +86,10 @@ next slice) and continue.
 ## 6. Final review
 
 Dispatch one reviewer on the strongest model over the whole branch, `base..HEAD` (once
-per repo in hub mode), with
-`references/reviewer.md` in final review mode: the spec, every B-ID in scope, the parked
-minors and the open rulings. It looks for what per-task reviews miss: cross-task bugs,
-duplicate helpers, wiring and missing error paths.
+per repo in hub mode), with `references/reviewer.md` in final review mode: the spec, every
+B-ID in scope, the parked minors and the open rulings. It looks for what per-task reviews
+miss: cross-task bugs, duplicate helpers, wiring and missing error paths. No subagent
+tool: do it as an inline whole-branch pass, per section 4, logged as `inline review`.
 
 Then one fix wave: one implementer fixes the Critical and Important findings, and you
 rule on each minor (fix now or park with a ruling). A fresh reviewer checks the fix
@@ -103,8 +103,8 @@ findings count, the fix wave range and the outcome.
    spec, the PRD's behaviour lines and each `How to confirm` in `DECISIONS.md` that this
    slice touched. Run those confirm commands. Fix drift in its own commit and log it.
 2. Run the full suite and the project checks once more.
-3. Hand off to `principle-ship`. In hub mode, run it once per code repo, each with its own
-   PR, and record each PR in the hub ledger.
+3. Hand off to `principle-ship` (once per code repo in hub mode, each with its own PR).
+   Then always append `Shipped: <PR or commit>` to the ledger log, one line per repo.
 
 ## Report
 

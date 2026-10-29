@@ -4,10 +4,10 @@ Copied into the project as `docs/principles.md`. Edit it there. Each principle i
 not a slogan. Reviewers treat a violation as an Important finding unless the plan mandates
 it.
 
-1. **Smallest change** that fully works. Finish every caller, test and config it touches.
+1. **Smallest change** that fully works. Finish every caller, test and config it touches. See the `principle-smallest-change` skill.
 2. **No abstraction before a third real use.** Duplication is cheaper than the wrong abstraction. This replaces bare DRY.
 3. **Ports and adapters only at real I/O boundaries:** database, network, external services. Call the framework directly inside them.
-4. **One reason to change per unit.** Depend on an interface only when a second implementation or a test needs it.
+4. **One reason to change per unit.** Depend on an interface only when a second implementation or a test needs it. This replaces SOLID as a checklist.
 5. **Thin edges.** Controllers, workers and tools parse input, call one use case and map the result. Rules and queries live in the use case or the repository.
 6. **Explicit, loud errors.** No silent fallbacks. Validate at trust boundaries.
 7. **Test behaviour against real dependencies where practical.** Write contract tests per port. Never weaken a test to make it pass.

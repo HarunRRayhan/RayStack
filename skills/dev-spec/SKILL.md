@@ -9,6 +9,10 @@ This skill turns an approved PRD into `docs/architecture/` and `docs/tech-spec/<
 IDs, EARS forms, the `DECISIONS.md` format and question rules are in
 `../dev/references/dev-contract.md`.
 
+**Standard track with no PRD:** write the slice's behaviours as EARS lines, numbered as
+the contract says, in a `## Behaviours` section at the top of the slice's area spec. That
+section stands in for the PRD's behaviour contract for `dev-plan` and its analyze.
+
 ## 1. Read before writing
 
 Read `AGENTS.md`, `DECISIONS.md`, the PRD (especially its `## Behaviour contract`),
