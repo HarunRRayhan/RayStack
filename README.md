@@ -1,6 +1,4 @@
-<img src="assets/logo.svg" alt="RayStack logo" width="72" height="72">
-
-# RayStack
+<h1><img src="assets/logo.svg" alt="" width="40" height="40" align="center"> RayStack</h1>
 
 RayStack is a skill pack for coding agents that builds and reviews software. Type `/raystack`
 in a repo and it works out what you want: take a product from idea to shipped code with
