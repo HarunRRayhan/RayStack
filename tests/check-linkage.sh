@@ -44,6 +44,8 @@ if [ -f "$entry" ]; then
   check "raystack is 105 lines or fewer" test "$(wc -l < "$entry")" -le 105
     # shellcheck disable=SC2016  # literal backticks, not a command substitution
   check "raystack names blog" grep -qF '`blog`' "$entry"
+  # shellcheck disable=SC2016  # literal backticks, not a command substitution
+  check "raystack names dev" grep -qF '`dev`' "$entry"
 else
   fail "missing $entry"
 fi
@@ -111,6 +113,7 @@ else
   fail "missing $lv"
 fi
 check "principle-ship names local-verify" grep -qF 'local-verify' skills/principle-ship/SKILL.md
+check "principle-ship checks docs still match" grep -qF 'docs still match' skills/principle-ship/SKILL.md
 
 check "humanize names repo voice path" grep -qF '.raystack/voice.md' skills/humanize/SKILL.md
 # aws-readonly-setup: deny-data policy exists, parses, and denies the data reads the skill proves

@@ -27,7 +27,7 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 npx skills add HarunRRayhan/RayStack -g -a claude-code
 ```
 
-The [skills CLI](https://skills.sh) installs all nineteen skills globally. Swap `claude-code` for
+The [skills CLI](https://skills.sh) installs all twenty-six skills globally. Swap `claude-code` for
 `codex` or `cursor`, list several (`-a claude-code codex`), or drop `-a` to pick from a list of
 agents.
 
@@ -85,7 +85,7 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ./install.sh --agent custom --dir /path/to/skills
 ```
 
-`--dry-run` shows what it would do and `--uninstall` removes exactly the nineteen RayStack skills.
+`--dry-run` shows what it would do and `--uninstall` removes exactly the twenty-six RayStack skills.
 Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 
 ## Run a review
@@ -186,6 +186,28 @@ none:
 With `autoMerge` off (the default), the agent stops at green CI and asks before it merges. Turn
 it on and it merges on green, then waits for the deploy. `deployCheck` tells it how to confirm
 the deploy is live: a workflow name, a URL or a health check.
+
+## Development
+
+RayStack also carries a development flow, from research to a shipped build. Type `/dev`, or say
+"start a new project" or "build this". It picks a track by size:
+
+- **Quick**: a bug or small change. No PRD. Fix it, test it, ship it.
+- **Standard**: one slice of work. Spec if missing, then a plan, then a reviewed build.
+- **Full**: a new product. Project layout, research, PRD, specs, plan, build.
+
+Decisions land in `DECISIONS.md` and are never asked twice. The build keeps a ledger, so a
+stopped run can resume.
+
+| Skill | What it does |
+| --- | --- |
+| `dev` | Entry point. Picks Quick, Standard or Full and runs the right skills. |
+| `dev-hub` | Sets up `AGENTS.md`, `DECISIONS.md` and the docs folders, in one repo or a code-free hub |
+| `dev-research` | Dated research notes with a source beside every fact |
+| `dev-prd` | Interviews you, then writes the PRD with goals, non-goals and a behaviour contract |
+| `dev-spec` | Architecture and per-area tech specs from the PRD, plus the default principles |
+| `dev-plan` | A plan for one slice, checked for gaps before the build starts |
+| `dev-build` | Builds the plan task by task with a fresh implementer and reviewer for each |
 
 ## Content
 
