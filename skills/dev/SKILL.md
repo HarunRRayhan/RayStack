@@ -31,9 +31,9 @@ Look for these, in this order, and say what you found:
 
 Resume `dev-build` on the newest ledger in `docs/plans/` whose log has no `Shipped:` line
 (the contract's session start). Never restart the plan. Read `DECISIONS.md` first so
-settled questions are not asked again. If it is missing on the Standard or Full track,
-run `dev-hub`'s single-repo steps first. Quick adds only `DECISIONS.md`, from
-`../dev-hub/assets/DECISIONS.md`, and only when a decision needs logging.
+settled questions are not asked again. If it is missing, see section 2: Standard runs
+`dev-hub`'s single-repo steps first, Full starts with `dev-hub`, and Quick adds only
+`DECISIONS.md`, from `../dev-hub/assets/DECISIONS.md`, when a decision needs logging.
 
 ## 2. Pick the track
 

@@ -205,7 +205,7 @@ stopped run can resume.
 | `dev-hub` | Sets up `AGENTS.md`, `DECISIONS.md` and the docs folders, in one repo or a code-free hub |
 | `dev-research` | Dated research notes with a source beside every fact |
 | `dev-prd` | Interviews you, then writes the PRD with goals, non-goals and a behaviour contract |
-| `dev-spec` | Architecture and per-area tech specs from the PRD, plus the default principles |
+| `dev-spec` | Architecture and per-area tech specs from the PRD (on Standard with no PRD, it writes the slice's `## Behaviours` B-IDs), plus the default principles |
 | `dev-plan` | A plan for one slice, checked for gaps before the build starts |
 | `dev-build` | Builds the plan task by task with a fresh implementer and reviewer for each |
 

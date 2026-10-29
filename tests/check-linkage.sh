@@ -224,6 +224,7 @@ if [ -f "$bv" ]; then
   for t in ledger converge 'inline review' 'cost if wrong' 'final review' principle-ship 'docs still match' 'fix rounds' done-with-concerns 'Shipped:' 'inline whole-branch'; do
     check "dev-build contains: $t" grep -qF -- "$t" "$bv"
   done
+  check "dev-build writes Shipped only after merge" grep -qF 'Only once it confirms the merge' "$bv"
   check "dev-build is 120 lines or fewer" test "$(wc -l < "$bv")" -le 120
   check "dev-build contract path resolves" test -f "skills/dev-build/../dev/references/dev-contract.md"
   check "dev-build links the contract" grep -qF '../dev/references/dev-contract.md' "$bv"

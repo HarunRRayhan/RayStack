@@ -33,7 +33,7 @@ Each code repo's `AGENTS.md` points back here and holds only how to run that rep
 - New feature or change: research if needed, write or update the PRD and spec, write a plan in `docs/plans/`, then build task by task with a fresh implementer and reviewer per task.
 - Research goes in `docs/research/` as dated markdown.
 - Decisions are asked through the question tool, at most 5 per round; settled ones are logged in `DECISIONS.md`.
-- New session: read this file, then the newest ledger in `docs/plans/` with no `Shipped:` line, then continue from its first unfinished row.
+- New session: read this file, then the newest ledger in `docs/plans/` with no `Shipped:` line, then run the smoke check if there is one, then continue from its first unfinished row. If every row is finished, continue from the last converge, final review or ship step in its log.
 <!-- hub-only -->
 - One plan and one ledger live in the hub. Each code repo gets its own branch, its own reviews and its own PR.
 <!-- /hub-only -->

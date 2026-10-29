@@ -104,13 +104,13 @@ findings count, the fix wave range and the outcome.
    slice touched. Run those confirm commands. Fix drift in its own commit and log it.
 2. Run the full suite and the project checks once more.
 3. Hand off to `principle-ship` (once per code repo in hub mode, each with its own PR).
-   Then always append `Shipped: <PR or commit>` to the ledger log, one line per repo.
+   Only once it confirms the merge (and the deploy, where there is one), append
+   `Shipped: <PR or commit>` to the ledger log, per repo. Else log where it stopped.
 
 ## Report
 
-Tell the user: tasks done and done-with-concerns, fix rounds used, rulings with their cost
-if wrong, parked minors, converge passes, the final review result, which reviews were
-inline, and the ship status per repo.
+Tell the user: tasks done and done-with-concerns, fix rounds, rulings with their cost if
+wrong, parked minors, converge passes, final review result, inline reviews, ship per repo.
 
 ## Never
 

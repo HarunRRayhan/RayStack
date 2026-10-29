@@ -1,13 +1,13 @@
 ---
 name: dev-spec
-description: Write the architecture and per-area tech specs from the PRD, and copy the default principles into the project. Use for "write the tech spec", "design the architecture", "how should we build it", or when dev reaches the spec step.
+description: Write the architecture and per-area tech specs from the PRD (or, on Standard, the slice's own Behaviours), and copy the default principles into the project. Use for "write the tech spec", "design the architecture", "how should we build it", or when dev reaches the spec step.
 ---
 
 # Dev Spec
 
-This skill turns an approved PRD into `docs/architecture/` and `docs/tech-spec/<area>.md`.
-IDs, EARS forms, the `DECISIONS.md` format and question rules are in
-`../dev/references/dev-contract.md`.
+This skill turns an approved PRD, or on Standard the slice's own `## Behaviours`, into
+`docs/architecture/` and `docs/tech-spec/<area>.md`. IDs, EARS forms, the `DECISIONS.md`
+format and question rules are in `../dev/references/dev-contract.md`.
 
 **Standard track with no PRD:** write the slice's behaviours as EARS lines, numbered as
 the contract says, in a `## Behaviours` section at the top of the slice's area spec. That
@@ -15,7 +15,7 @@ section stands in for the PRD's behaviour contract for `dev-plan` and its analyz
 
 ## 1. Read before writing
 
-Read `AGENTS.md`, `DECISIONS.md`, the PRD (especially its `## Behaviour contract`),
+Read `AGENTS.md`, `DECISIONS.md`, the PRD (its `## Behaviour contract`) if there is one,
 `docs/research/` and the code that already exists. Do not ask what these answer.
 
 ## 2. Put the principles in place
@@ -44,6 +44,8 @@ Start from the shape below. Keep it as short as the area allows.
 
 Serves: B-001, B-004, B-007
 Status: draft. Date: YYYY-MM-DD.
+
+## Behaviours   Standard with no PRD only: one EARS line per B-ID
 
 ## Design        how it works, with the data, the interfaces and the failure paths
 ## Boundaries    which I/O it touches and the port for each
