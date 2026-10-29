@@ -150,4 +150,21 @@ if [ -f "$dv" ]; then
 else
   fail "missing $dv"
 fi
+# dev-hub: skill and template assets
+hv=skills/dev-hub/SKILL.md
+if [ -f "$hv" ]; then
+  for t in '## RayStack dev flow' 'never overwrites' '@AGENTS.md' 'git init' 'no remote' 'single-repo' 'hub mode'; do
+    check "dev-hub contains: $t" grep -qF -- "$t" "$hv"
+  done
+  check "dev-hub is 120 lines or fewer" test "$(wc -l < "$hv")" -le 120
+  check "dev-hub contract path resolves" test -f "skills/dev-hub/../dev/references/dev-contract.md"
+  check "dev-hub links the contract" grep -qF '../dev/references/dev-contract.md' "$hv"
+else
+  fail "missing $hv"
+fi
+for a in AGENTS.md DECISIONS.md AGENTS-pointer.md; do
+  [ -f "skills/dev-hub/assets/$a" ] || fail "missing skills/dev-hub/assets/$a"
+done
+check "hub DECISIONS has the columns line" grep -qF '| ID | Date | Decision | Status | Supersedes | How to confirm |' skills/dev-hub/assets/DECISIONS.md
+check "hub AGENTS has reading order" grep -qF 'Read in this order' skills/dev-hub/assets/AGENTS.md
 exit "$FAILED"
