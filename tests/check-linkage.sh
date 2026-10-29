@@ -167,4 +167,25 @@ for a in AGENTS.md DECISIONS.md AGENTS-pointer.md; do
 done
 check "hub DECISIONS has the columns line" grep -qF '| ID | Date | Decision | Status | Supersedes | How to confirm |' skills/dev-hub/assets/DECISIONS.md
 check "hub AGENTS has reading order" grep -qF 'Read in this order' skills/dev-hub/assets/AGENTS.md
+# dev-research and dev-prd
+for sk in dev-research dev-prd; do
+  f=skills/$sk/SKILL.md
+  if [ -f "$f" ]; then
+    check "$sk is 120 lines or fewer" test "$(wc -l < "$f")" -le 120
+    check "$sk contract path resolves" test -f "skills/$sk/../dev/references/dev-contract.md"
+    check "$sk links the contract" grep -qF '../dev/references/dev-contract.md' "$f"
+  else
+    fail "missing $f"
+  fi
+done
+for t in 'source beside every fact' unverified; do
+  check "dev-research contains: $t" grep -qF -- "$t" skills/dev-research/SKILL.md
+done
+for t in 'NEEDS CLARIFICATION' 'at most 5' 'DECISIONS.md'; do
+  check "dev-prd contains: $t" grep -qF -- "$t" skills/dev-prd/SKILL.md
+done
+prd=skills/dev-prd/assets/PRD.md
+for t in '## Goals' '## Non-goals' '## Anti-goals' '## Behaviour contract' 'THE SYSTEM SHALL' 'B-001'; do
+  check "PRD template contains: $t" grep -qF -- "$t" "$prd"
+done
 exit "$FAILED"
