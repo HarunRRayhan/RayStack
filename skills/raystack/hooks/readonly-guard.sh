@@ -442,7 +442,8 @@ guard_check() {
   for ((i = 0; i < n; i++)); do
     # Prefixes catch CLI abbreviations; --cli-input-* and skeletons can smuggle the same options.
     case "${TOK[i]}" in --with-d*|--include-v*|--cli-in*|--generate-cli*) _deny "${TOK[i]%%=*} not allowed during review"; return 1 ;; esac
-    name=$(_lc "${TOK[i]##*/}")
+    # zsh expands a leading `=` (=composer is the path of composer), so it names the same CLI.
+    name=$(_lc "${TOK[i]##*/}"); name=${name#=}
     case "$name" in
       npx|pnpx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
       npm|pnpm|yarn|bun)
@@ -452,6 +453,7 @@ guard_check() {
           *" --version "|"npm -v ") continue ;;
           "npm ls "*|"npm list "*|"npm view "*|"npm outdated "*|"npm why "*|"npm explain "*) continue ;;
           "npm audit "*) audit=1
+             [ "${TOK[i]}" = npm ] || { _deny "npm audit only as the bare command name"; return 1; }
              for ((j = i + 1; j < n; j++)); do
                [ "${TOK[j]}" = "$PIPE" ] && break
                case "$(_lc "${TOK[j]}")" in fix|--fix*) _deny "$name audit fix not allowed during review"; return 1 ;;
@@ -463,6 +465,8 @@ guard_check() {
       composer|bundle|bundle-audit|pip-audit)
         # Dependency audits only: the audit verb first, then listed flags; every other verb runs code or writes.
         # No `bundle audit`: Bundler loads the repo-local plugin index for it.
+        # A path (./vendor/bin/composer, bin/pip-audit) or `=name` runs a repo-local or other binary.
+        [ "${TOK[i]}" = "$name" ] || { _deny "$name only as the bare command name"; return 1; }
         j=$((i + 1))
         case "$name $(_lc "${TOK[j]:-}")" in
           "composer audit") j=$((j + 1))

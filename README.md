@@ -103,7 +103,7 @@ Or skip the router and name a review: "run database-review", `/raystack:aws-bill
 | `infra-review` | Deploys, rollback, backups, monitoring and exposure on any platform |
 | `scaling-review` | What breaks first at 10x and 100x load |
 | `database-review` | Queries, indexes, migrations, backups, connections and bloat |
-| `app-security-review` | App code: authz, injection, secrets, sessions, dependency risk. Code only, never calls a running app |
+| `app-security-review` | App code: authz, injection, secrets, sessions, dependency risk. Code only, never calls a running app. Dependency audits run only with your live consent; without it, the review lists the commands for you to run |
 
 With no live access, a review still works from your IaC and code. It marks those findings
 `(unconfirmed)` and lists the exports or commands it needs from you.
@@ -125,7 +125,8 @@ blocked during a review; only a short list of reads such as `docker ps`, `docker
 200` and `npm ls` gets through. Dependency audits are the one package-manager exception, in
 forms that run no repo code: `npm audit`, `composer audit --no-plugins --no-scripts`,
 `bundle-audit check`, and `pip-audit` (with `-r`, also `--disable-pip` and `--no-deps` or
-`--require-hashes`), with read flags only and no `fix`. Reads that return env vars or user data
+`--require-hashes`), with read flags only and no `fix`. They run only with your live consent;
+without it, the review lists the commands for you to run. Reads that return env vars or user data
 (Lambda configs, ECS task definitions, launch templates) are left for you to run.
 
 Everything else is not checked: other tools, the agent's own file Read tool, and scripts in
@@ -156,8 +157,9 @@ report is shown as text, not rendered.
 
 ## Principles
 
-RayStack also ships four principle skills and `local-verify`. They aren't reviews. Each one is a short rule your
-agent picks up by itself when the task fits, and `/raystack` never runs them.
+RayStack also ships four principle skills and the `local-verify` playbook. They aren't reviews.
+Each principle is a short rule, and `local-verify` is a step-by-step playbook. Your agent picks
+them up by itself when the task fits, and `/raystack` never runs them.
 
 | Skill | The rule |
 | --- | --- |

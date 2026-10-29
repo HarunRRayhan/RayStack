@@ -552,6 +552,18 @@ BLOCK=(
   'pip-audit --timeout --fix'
   'composer audit --locked=0'
   'bundle audit check --ignore CVE-1 CVE-2'
+  # v0.4 final review: zsh =cmd expansion and repo-local audit binaries
+  '=composer install'
+  '=npm run x'
+  '=bundle exec rake'
+  '=composer audit --no-plugins --no-scripts'
+  '=npm audit'
+  './vendor/bin/composer audit --no-plugins --no-scripts'
+  'vendor/bin/composer audit --no-plugins --no-scripts'
+  'bin/pip-audit'
+  'node_modules/.bin/pip-audit'
+  './node_modules/.bin/npm audit'
+  '/usr/local/bin/bundle-audit check'
 )
 ALLOW=(
   'aws ec2 describe-instances'

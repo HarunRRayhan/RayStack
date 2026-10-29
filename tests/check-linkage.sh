@@ -102,10 +102,11 @@ fi
 # local-verify never touches .env, uses throwaway data, and does not fake a browser check.
 lv=skills/local-verify/SKILL.md
 if [ -f "$lv" ]; then
-  check "local-verify never edits .env" grep -qF '.env' "$lv"
+  check "local-verify never edits .env" grep -qF "Never edit, replace, back up or write \`.env\`" "$lv"
   check "local-verify uses a throwaway database" grep -qF 'throwaway' "$lv"
-  check "local-verify says when there is no browser tool" grep -qF 'no browser tool' "$lv"
-  check "local-verify stops without a browser tool" grep -qF 'stop only' "$lv"
+  check "local-verify starts nothing without a browser tool" grep -qF 'no browser tool, say so, start nothing and claim nothing' "$lv"
+  check "local-verify stops only the server it started" grep -qF 'stop only the server you started' "$lv"
+  check "local-verify gives every setup command the overrides" grep -qF 'Every setup command gets the overrides' "$lv"
 else
   fail "missing $lv"
 fi
