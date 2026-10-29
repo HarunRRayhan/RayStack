@@ -28,6 +28,8 @@ Use what is available, in this order:
 - Ask which profile, account, project or database to use, and whether read-only live access
   is OK.
 - If the user declines, do not make live calls. Work from IaC and exports only.
+- AWS with no working read-only profile: offer the `aws-readonly-setup` skill, which makes a
+  `raystack-readonly` profile. Never run it inside a review.
 - If the raystack router invoked this review with consent answers, use them and do not ask
   again; ask only review-specific items (e.g. slow endpoint and window, replica target).
 

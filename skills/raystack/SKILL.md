@@ -67,6 +67,8 @@ options each, so batch:
 3. "Live access": read-only live access yes or no, and which profile, account, project or
    region to use (for `app-security-review`, this covers its dependency audits). Offer the
    options you found (e.g. profile names in `~/.aws/config`) and "No, IaC and exports only".
+   No working read-only AWS profile: offer "Set up read-only access" and run
+   `aws-readonly-setup` before any review.
 4. "Targets": only if `database-review` or `infra-review` is likely. Which database or replica
    to read (`database-review`), and the production URL (optional, for `infra-review`). Offer
    what you found and "None"; the user can type a URL in the free-text option.

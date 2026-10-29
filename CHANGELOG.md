@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1 (2026-10-29)
+
+- New `aws-readonly-setup`: when no read-only AWS profile works, the agent signs you in with
+  `aws login`, creates a `raystack-readonly` role with `ReadOnlyAccess`, adds the profile and
+  proves it can read but not write. One IAM change, asked first, no access keys. The router and
+  the AWS reviews offer it.
+- `install.sh` installs and uninstalls nineteen skills.
+
 ## 0.4.0 (2026-10-28)
 
 - New `app-security-review`: the seventh read-only review. It reads app code for authorization, injection, secrets and session bugs. It never sends requests to a running app. Dependency audits run only with your live consent.

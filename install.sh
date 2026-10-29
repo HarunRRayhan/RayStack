@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install (or remove) the eighteen RayStack skills for any agent that reads SKILL.md folders.
+# Install (or remove) the nineteen RayStack skills for any agent that reads SKILL.md folders.
 set -eu
 
 # Resolve symlinks to this script so ROOT is the real checkout.
@@ -9,17 +9,17 @@ while [ -L "$self" ]; do
   case "$link" in /*) self=$link ;; *) self=$(dirname "$self")/$link ;; esac
 done
 ROOT=$(cd "$(dirname "$self")" && pwd -P)
-SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify blog blog-topics blog-draft humanize blog-cover"
+SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify blog blog-topics blog-draft humanize blog-cover"
 
 usage() {
   cat <<'USAGE'
 Usage: install.sh [--agent claude|cursor|codex|grok|opencode|custom] [--dir <skills-dir>]
                   [--link] [--uninstall] [--dry-run] [--force] [-h|--help]
 
-Copies the eighteen RayStack skills into the agent's skills directory (default agent: claude).
+Copies the nineteen RayStack skills into the agent's skills directory (default agent: claude).
   --dir        skills directory; required with --agent custom, overrides the agent default
   --link       symlink to this checkout instead of copying
-  --uninstall  remove exactly the eighteen RayStack skills from the target
+  --uninstall  remove exactly the nineteen RayStack skills from the target
   --dry-run    print what would happen, change nothing
   --force      also replace/remove same-named folders RayStack did not install
 Same-named folders without the .raystack-installed marker (or a link into this checkout)
