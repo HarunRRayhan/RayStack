@@ -27,14 +27,16 @@ one: the review's guard blocks writes on purpose.
 
 ## 2. Credentials for the one write
 
-- Try the chosen profile: `aws iam get-role --role-name raystack-readonly`. `NoSuchEntity`
-  means it can call IAM; go on.
-- If its keys are invalid or it gets `AccessDenied`, sign in through the browser instead.
+- Try the chosen profile. If its keys are invalid, or any IAM call in steps 2 and 3 gets
+  `AccessDenied`, sign in through the browser instead.
+- First check `raystack-setup` isn't already one of the user's own profiles. If it is, pick an
+  unused name such as `raystack-setup-2`, because `aws login` overwrites the profile it writes.
   Tell the user first: "A browser tab will open. Sign in to account ... as someone who can
   create IAM roles, approve, then come back." Then run
   `aws login --profile raystack-setup --region <region>` (AWS CLI 2.32 or later). Confirm
   `aws sts get-caller-identity --profile raystack-setup` shows the chosen account. A different
-  account: stop and say so. CLI too old: say which version is needed.
+  account: stop and say so. Signed in as root: stop and ask for an IAM user or SSO role
+  instead. CLI too old: say which version is needed.
 - Never ask for, print or write an access key.
 
 ## 3. Create the role
@@ -42,12 +44,21 @@ one: the review's guard blocks writes on purpose.
 - The trust principal is the identity from `get-caller-identity` on the profile used for the
   write. Map it like this:
   - An IAM user ARN: use it as it is.
-  - `arn:aws:sts::A:assumed-role/R/S`: use `arn:aws:iam::A:role/R`.
-  - Root: use `arn:aws:iam::A:root`.
+  - `arn:aws:sts::A:assumed-role/R/S` (including SSO): use the role's real ARN from
+    `aws iam get-role --role-name R --query Role.Arn`. It keeps the role's path, which SSO
+    roles always have.
 - `aws iam create-role --role-name raystack-readonly --max-session-duration 3600 --description "RayStack read-only reviews" --assume-role-policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"<principal>"},"Action":"sts:AssumeRole"}]}'`
 - `aws iam attach-role-policy --role-name raystack-readonly --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess`
-- If the role already exists, list its attached and inline policies. Reuse it only if
-  `ReadOnlyAccess` is its only policy. Otherwise stop and report what's on it.
+- `aws iam put-role-policy --role-name raystack-readonly --policy-name raystack-deny-data --policy-document file://<this skill's folder>/deny-data-policy.json`.
+  ReadOnlyAccess can read data (S3 objects, SSM SecureStrings, secrets, DynamoDB rows,
+  function code). This deny keeps the role to config, metrics and billing, which is all the
+  reviews need.
+- If the role already exists, check three things:
+  - its attached policies are exactly `ReadOnlyAccess`;
+  - its inline policies are exactly `raystack-deny-data`, matching this skill's file;
+  - its trust policy names only principals in this account, with no `*` and no other account.
+
+  Reuse it only if all three hold. Otherwise stop and report what's on it.
 
 ## 4. Add the profile
 
@@ -65,8 +76,8 @@ region = <region>
 
 - `aws sts get-caller-identity --profile raystack-readonly` must show the `raystack-readonly`
   role. New roles can take a few seconds to work, so retry up to 5 times, 5 seconds apart.
-- `aws iam simulate-principal-policy --profile raystack-readonly --policy-source-arn <role ARN> --action-names ec2:RunInstances s3:PutObject iam:CreateUser iam:CreateAccessKey`
-  must say `implicitDeny` for every action. Any `allowed`: stop, report it, and run no review
+- `aws iam simulate-principal-policy --profile raystack-readonly --policy-source-arn <role ARN> --action-names ec2:RunInstances s3:PutObject iam:CreateUser iam:CreateAccessKey s3:GetObject secretsmanager:GetSecretValue ssm:GetParameter`
+  must give `implicitDeny` for the writes and `explicitDeny` for the three data reads. Any `allowed`: stop, report it, and run no review
   with this profile.
 - One read: `aws ec2 describe-regions --profile raystack-readonly --query 'length(Regions)'`.
 
@@ -74,6 +85,7 @@ region = <region>
 
 Give the profile name, the last 4 digits of the account, the region, what you created, and
 each proof result. The AWS reviews then use `raystack-readonly`. To undo, the user runs
+`aws iam delete-role-policy --role-name raystack-readonly --policy-name raystack-deny-data`,
 `aws iam detach-role-policy --role-name raystack-readonly --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess`,
 then `aws iam delete-role --role-name raystack-readonly`, then deletes the profile section.
 
@@ -84,6 +96,6 @@ profile stay.
 ## Never
 
 - Create access keys or IAM users.
-- Attach anything other than `ReadOnlyAccess`.
+- Attach anything other than `ReadOnlyAccess` and the `raystack-deny-data` inline deny.
 - Edit other profiles or `~/.aws/credentials`.
 - Run this from inside a review.

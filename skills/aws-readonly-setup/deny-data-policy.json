@@ -1,0 +1,29 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RayStackReadConfigNotData",
+      "Effect": "Deny",
+      "Action": [
+        "s3:GetObject",
+        "s3:GetObjectVersion",
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:GetParametersByPath",
+        "secretsmanager:GetSecretValue",
+        "lambda:GetFunction",
+        "dynamodb:GetItem",
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "kinesis:GetRecords",
+        "athena:GetQueryResults",
+        "ec2:GetPasswordData",
+        "codecommit:GitPull",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
