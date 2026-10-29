@@ -208,4 +208,24 @@ done
 for t in 'Covers:' 'Tests:' '## Analyze'; do
   check "plan template contains: $t" grep -qF -- "$t" skills/dev-plan/assets/plan.md
 done
+# dev-build: skill, its two prompt templates and the contract link
+bv=skills/dev-build/SKILL.md
+if [ -f "$bv" ]; then
+  for t in ledger converge 'inline review' 'cost if wrong' 'final review' principle-ship 'docs still match' 'fix rounds' done-with-concerns; do
+    check "dev-build contains: $t" grep -qF -- "$t" "$bv"
+  done
+  check "dev-build is 120 lines or fewer" test "$(wc -l < "$bv")" -le 120
+  check "dev-build contract path resolves" test -f "skills/dev-build/../dev/references/dev-contract.md"
+  check "dev-build links the contract" grep -qF '../dev/references/dev-contract.md' "$bv"
+  for r in implementer reviewer; do
+    check "dev-build links references/$r.md" grep -qF "references/$r.md" "$bv"
+    check "dev-build references/$r.md exists" test -f "skills/dev-build/references/$r.md"
+  done
+else
+  fail "missing $bv"
+fi
+for t in weakened B-; do
+  check "dev-build reviewer contains: $t" grep -qF -- "$t" skills/dev-build/references/reviewer.md
+done
+check "dev-build implementer contains: needs-context" grep -qF needs-context skills/dev-build/references/implementer.md
 exit "$FAILED"
