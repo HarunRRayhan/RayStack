@@ -21,7 +21,21 @@
         "ec2:GetPasswordData",
         "codecommit:GitPull",
         "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchGetImage"
+        "ecr:BatchGetImage",
+        "ssm:GetParameterHistory",
+        "dynamodb:PartiQLSelect",
+        "dynamodb:ExecuteStatement",
+        "dynamodb:BatchExecuteStatement",
+        "dynamodb:GetRecords",
+        "lambda:GetLayerVersion",
+        "lambda:GetLayerVersionByArn",
+        "sqs:ReceiveMessage",
+        "ec2:GetConsoleOutput",
+        "ec2:GetConsoleScreenshot",
+        "cloudformation:GetTemplate",
+        "kinesis:GetShardIterator",
+        "s3:GetObjectTorrent",
+        "kms:Decrypt"
       ],
       "Resource": "*"
     }

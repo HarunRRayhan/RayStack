@@ -52,7 +52,8 @@ one: the review's guard blocks writes on purpose.
 - `aws iam put-role-policy --role-name raystack-readonly --policy-name raystack-deny-data --policy-document file://<this skill's folder>/deny-data-policy.json`.
   ReadOnlyAccess can read data (S3 objects, SSM SecureStrings, secrets, DynamoDB rows,
   function code). This deny keeps the role to config, metrics and billing, which is all the
-  reviews need.
+  reviews need. CloudWatch Logs stays readable because the bottleneck review queries it; logs
+  can hold app data, so say so in the report.
 - If the role already exists, check three things:
   - its attached policies are exactly `ReadOnlyAccess`;
   - its inline policies are exactly `raystack-deny-data`, matching this skill's file;
