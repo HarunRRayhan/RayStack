@@ -13,21 +13,22 @@ dispatch, read reports, rule and keep the ledger. You do not skip a review.
 
 ## 1. Start or resume
 
-Follow the contract's session start: read `AGENTS.md`, `DECISIONS.md`, the plan, then the
-ledger, and run the smoke check if the project has one.
+Follow the contract's session start, and read `DECISIONS.md` and the plan too.
 
 - **No ledger:** check the plan's `## Analyze` is clean, else send it back to `dev-plan`.
   Create the ledger: a status table with one `todo` row per `T-NN`, then the log. The
-  log's first lines name the branch and the base commit.
+  log's first lines name the branch and the base commit of each repo.
 - **Ledger exists:** continue at the first row that is not finished. `done` and
   `done-with-concerns` are finished. For `done-with-concerns`, read its concern in the log
   and carry it; do not redo the task. `needs-context`: get the missing context (ask
   through the question tool if only the user has it), then rerun. `blocked`: report to the
   user and stop, unless a later task does not depend on it.
+- **Every row finished:** read the log for the last converge pass, final review or ship
+  step, and continue from the step after it.
 - **Grouping:** small tasks that touch the same files may go to one implementer and one
   reviewer. Log the groups as a ruling before the first dispatch.
 - **Hub mode:** the plan and ledger live in the hub. Each code repo gets its own branch or
-  worktree, its own reviews and its own PR. Note the repo on each task's log entries.
+  worktree, base commit, reviews, final review, fix wave and PR. Log entries name the repo.
 
 ## 2. Each task
 
@@ -36,7 +37,8 @@ ledger, and run the smoke check if the project has one.
    the plan; do not make it read the whole plan. Set the model tier on purpose: cheap for
    mechanical tasks (renames, config, copy), standard for most, strongest for tricky
    concurrency, security or data migrations.
-3. Read its report. `needs-context` or `blocked`: set the row, answer or rule, redispatch.
+3. Read its report. `needs-context`: set the row, answer, redispatch. `blocked`: set the
+   row and follow section 1.
 4. Dispatch a fresh, read-only reviewer with `references/reviewer.md` and the commit range
    `base..head`. Never reuse the implementer as its own reviewer.
 5. Check the reviewer's claims against the code before acting on them. A wrong finding gets
@@ -47,18 +49,14 @@ ledger, and run the smoke check if the project has one.
 ## 3. Fix rounds
 
 Critical and Important findings go to an implementer with the findings pasted verbatim.
-The fix range then goes to a fresh reviewer. Log every round:
-
-```
-### 2026-10-29 T-02 fix round 1/3
-Reviewer: B-003 not covered (no empty-title test). Fixed in b4c5d6e..e7f8a9b.
-```
+The fix range then goes to a fresh reviewer. Log every round in the contract's log
+format, `### <date> T-NN review round N`, with the findings and the fix commit range.
 
 - At most 3 fix rounds per task. After the third, rule on each open finding: park it with
   a ruling, or carry the smallest fix forward into a named later task (`Carried to T-05:`).
   Then continue.
 - Every ruling records its cost if wrong, in one line:
-  `Ruling: <what> - <why> - cost if wrong: <what breaks and who notices>`.
+  `Ruling: <what and why>, cost if wrong: <what breaks and who notices>`.
 - Minor findings are parked, not fixed now: `Parked minor: <finding> (<file>)`. The final
   review sees them.
 - Only status updates touch the table. Everything else is appended to the log.
@@ -81,18 +79,23 @@ When every row is finished, compare the code with the spec, not with the plan:
    row to the ledger. Never reopen or edit a finished row.
 4. Build the new rows with section 2, then converge again.
 
-Converged means a pass finds nothing. Log each pass: `Converge pass 2: clean`.
+Converged means a pass finds nothing. Log each pass: `Converge pass 2: clean`. At most 3
+passes. If the third still finds gaps, rule on each one (build it now or park it for the
+next slice) and continue.
 
 ## 6. Final review
 
-Dispatch one reviewer on the strongest model over the whole branch, `base..HEAD`, with
+Dispatch one reviewer on the strongest model over the whole branch, `base..HEAD` (once
+per repo in hub mode), with
 `references/reviewer.md` in final review mode: the spec, every B-ID in scope, the parked
 minors and the open rulings. It looks for what per-task reviews miss: cross-task bugs,
 duplicate helpers, wiring and missing error paths.
 
 Then one fix wave: one implementer fixes the Critical and Important findings, and you
 rule on each minor (fix now or park with a ruling). A fresh reviewer checks the fix
-wave's range. Log the findings count, the fix wave range and the outcome.
+wave's range. If it still finds Critical or Important items, rule on each one: one more
+fix, or park it with a ruling. Ask the user only when every option is a guess. Log the
+findings count, the fix wave range and the outcome.
 
 ## 7. Ship
 

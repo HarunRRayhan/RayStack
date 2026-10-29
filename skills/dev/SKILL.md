@@ -16,8 +16,8 @@ principles are in `references/principles.md`.
 | `dev-research` | Researches the problem and the options |
 | `dev-prd` | Writes the PRD with B-ID behaviours |
 | `dev-spec` | Writes the tech spec and architecture |
-| `dev-plan` | Turns the spec into a task plan and a ledger |
-| `dev-build` | Builds the plan task by task and updates the ledger |
+| `dev-plan` | Turns the spec into a task plan |
+| `dev-build` | Creates the ledger and builds the plan task by task |
 
 ## 1. Detect state
 
@@ -28,8 +28,9 @@ Look for these, in this order, and say what you found:
   `docs/architecture/`;
 - a plan in `docs/plans/` and its ledger.
 
-If a ledger has rows that are not `done`, resume `dev-build` at the first such row. Never
-restart the plan. Read `DECISIONS.md` first so settled questions are not asked again.
+If a ledger has rows that are not `done` or `done-with-concerns`, resume `dev-build` at the
+first such row. If every row is finished but the log shows no ship, resume `dev-build`
+too. Never restart the plan. Read `DECISIONS.md` first so settled questions are not asked again.
 
 ## 2. Pick the track
 
@@ -53,8 +54,8 @@ When the plan no longer fits, replan:
 
 1. Update the affected spec lines.
 2. Log a dated `D-` row in `DECISIONS.md` that supersedes the old one.
-3. Leave ledger rows that are already `done` as they are. Add or change only rows that are
-   not done.
+3. Leave ledger rows that are already `done` or `done-with-concerns` as they are. Add or
+   change only rows that are not finished.
 
 ## 4. After launch
 

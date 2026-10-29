@@ -87,5 +87,6 @@ only when the host has no question tool. Each answer becomes a `D-` row in `DECI
 ## Session start
 
 A new session reads `AGENTS.md`, then the ledger, then runs the project's smoke check if
-one exists, then continues from the first ledger row that is not `done`. This is how a long
-build survives a context reset.
+one exists, then continues from the first ledger row that is not `done` or
+`done-with-concerns` (both count as finished). This is how a
+long build survives a context reset.

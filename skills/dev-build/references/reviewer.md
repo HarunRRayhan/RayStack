@@ -5,7 +5,8 @@ with no subagent tool, run it yourself as a separate pass and log it as `inline 
 
 ```
 You are reviewing {T-NN, or "the whole branch" in final review mode} in {repo path}.
-You are read-only: do not edit files, commit or run anything that writes.
+You are read-only: you may run the tests and read anything, but do not edit files,
+commit or push.
 Range: git diff {base}..{head}
 
 ## What it must do
