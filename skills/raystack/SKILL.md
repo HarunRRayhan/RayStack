@@ -1,6 +1,6 @@
 ---
 name: raystack
-description: Entry point for RayStack read-only infrastructure reviews. Use for "/raystack", "review my AWS", "review my database", "audit my stack", "which review should I run", or any request to audit cloud cost, security, bottlenecks, deploys, scaling or databases when the right review is unclear. Also routes blog writing ("write a post", "what should I blog about").
+description: Entry point for RayStack read-only infrastructure reviews. Use for "/raystack", "review my AWS", "review my database", "audit my stack", "which review should I run", or any request to audit cloud cost, security, bottlenecks, deploys, scaling, databases or app code security when the right review is unclear. Also routes blog writing ("write a post", "what should I blog about").
 ---
 
 # RayStack
@@ -16,6 +16,7 @@ the right reviews for the repo and runs them in turn.
 | `infra-review` | Deploys, rollback, backups, monitoring, exposure on any platform |
 | `scaling-review` | What breaks first at 10x and 100x load |
 | `database-review` | Queries, indexes, migrations, backups, connections, bloat |
+| `app-security-review` | App code: authorization and IDOR, injection, secrets, sessions, dependency CVEs |
 
 ## Principles
 
@@ -39,6 +40,7 @@ hold names only and are fine), `*.tfstate*`, kubeconfigs or credential files.
 - `migrations/`, ORM config (Prisma, Drizzle, Django, Rails, Laravel), DB services in compose
   or IaC: `database-review`.
 - Queues, workers, autoscaling config: `scaling-review`.
+- App code (routes, controllers, an ORM): `app-security-review`.
 
 Then read the user's words:
 
@@ -46,12 +48,13 @@ Then read the user's words:
 - "secure", "IAM", "public bucket": `aws-security-review`.
 - "slow", "throttling", "limits": `aws-bottleneck-review`.
 - "10x", "launch", "will it scale": `scaling-review`.
+- "security audit of my app", "IDOR", "XSS", "SQL injection": `app-security-review`.
 - AWS with no IaC: if the user mentions AWS or names an AWS profile, recommend the AWS reviews.
 - No signals at all: recommend `infra-review`.
 
 ## 2. Ask once
 
-If the user names or clearly means exactly one of the six, skip the pick. Still ask the
+If the user names or clearly means exactly one of the seven, skip the pick. Still ask the
 consent questions below if that review may make live calls.
 
 Otherwise make ONE call to the host agent's question tool (AskUserQuestion in Claude Code).
@@ -59,10 +62,11 @@ Use plain text only when the agent has no such tool. It allows up to 4 questions
 options each, so batch:
 
 1. "AWS reviews" (multi-select): the three `aws-*` reviews.
-2. "Other reviews" (multi-select): `infra-review`, `scaling-review`, `database-review`.
+2. "Other reviews" (multi-select): `infra-review`, `scaling-review`, `database-review`,
+   `app-security-review`.
 3. "Live access": read-only live access yes or no, and which profile, account, project or
-   region to use. Offer the options you found (e.g. profile names in `~/.aws/config`) and
-   "No, IaC and exports only".
+   region to use (for `app-security-review`, this covers its dependency audits). Offer the
+   options you found (e.g. profile names in `~/.aws/config`) and "No, IaC and exports only".
 4. "Targets": only if `database-review` or `infra-review` is likely. Which database or replica
    to read (`database-review`), and the production URL (optional, for `infra-review`). Offer
    what you found and "None"; the user can type a URL in the free-text option.

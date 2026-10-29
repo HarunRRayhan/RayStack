@@ -1,3 +1,5 @@
+<img src="assets/logo.svg" alt="RayStack logo" width="72" height="72">
+
 # RayStack
 
 RayStack is a pack of read-only infrastructure reviews for coding agents. Point your agent at a
@@ -6,6 +8,7 @@ deploys, scaling or the database, with evidence for every finding and a fix you 
 It's what I check when I audit someone's stack, written down as agent skills.
 
 By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com/harundotdev)).
+Product page: [harun.dev/raystack](https://harun.dev/raystack).
 
 ## Requirements
 
@@ -21,10 +24,10 @@ By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com
 ### Any agent (one command)
 
 ```bash
-npx skills add HarunRRayhan/raystack -g -a claude-code
+npx skills add HarunRRayhan/RayStack -g -a claude-code
 ```
 
-The [skills CLI](https://skills.sh) installs all sixteen skills globally. Swap `claude-code` for
+The [skills CLI](https://skills.sh) installs all eighteen skills globally. Swap `claude-code` for
 `codex` or `cursor`, list several (`-a claude-code codex`), or drop `-a` to pick from a list of
 agents.
 
@@ -33,11 +36,11 @@ The per-agent options below do the same thing in each agent's own way.
 ### Claude Code
 
 ```text
-/plugin marketplace add HarunRRayhan/raystack
+/plugin marketplace add HarunRRayhan/RayStack
 /plugin install raystack@raystack
 ```
 
-From a terminal it's `claude plugin marketplace add HarunRRayhan/raystack` and
+From a terminal it's `claude plugin marketplace add HarunRRayhan/RayStack` and
 `claude plugin install raystack@raystack`. To try a checkout for one session:
 `claude --plugin-dir /path/to/raystack`.
 
@@ -49,7 +52,7 @@ the skills are personal skills and keep their bare names (`/raystack`, `/aws-bil
 ### Codex
 
 ```bash
-codex plugin marketplace add HarunRRayhan/raystack
+codex plugin marketplace add HarunRRayhan/RayStack
 codex plugin add raystack@raystack
 ```
 
@@ -66,7 +69,7 @@ picks up the `.claude-plugin/` files is **unverified**. If it doesn't,
 ### Grok Build
 
 ```bash
-grok plugin marketplace add HarunRRayhan/raystack
+grok plugin marketplace add HarunRRayhan/RayStack
 grok plugin install raystack --trust
 ```
 
@@ -82,7 +85,7 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ./install.sh --agent custom --dir /path/to/skills
 ```
 
-`--dry-run` shows what it would do and `--uninstall` removes exactly the sixteen RayStack skills.
+`--dry-run` shows what it would do and `--uninstall` removes exactly the eighteen RayStack skills.
 Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 
 ## Run a review
@@ -103,6 +106,7 @@ Or skip the router and name a review: "run database-review", `/raystack:aws-bill
 | `infra-review` | Deploys, rollback, backups, monitoring and exposure on any platform |
 | `scaling-review` | What breaks first at 10x and 100x load |
 | `database-review` | Queries, indexes, migrations, backups, connections and bloat |
+| `app-security-review` | App code: authz, injection, secrets, sessions, dependency risk. Code only, never calls a running app. Dependency audits run only with your live consent; without it, the review lists the commands for you to run |
 
 With no live access, a review still works from your IaC and code. It marks those findings
 `(unconfirmed)` and lists the exports or commands it needs from you.
@@ -119,10 +123,14 @@ such as `pulumi`, `cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked o
 `pg_dump` and `pg_restore`, and commands that print secret values or credentials (for example
 `terraform show`, `helm get values`, `aws ecr get-login-password`). A name counts even inside a
 hyphenated or slashed word (`aws-cdk`, `amazon/aws-cli`). Package runners (`npx`, `bunx`, `uvx`),
-shells (`bash`, `sh -c`, `env`), `ssh` and most `npm`, `yarn` and `docker` subcommands are blocked during
-a review; only a short list of reads such as `docker ps`, `docker logs --tail 200` and `npm ls`
-gets through. Reads that return env vars or user data (Lambda configs, ECS task definitions,
-launch templates) are left for you to run.
+shells (`bash`, `sh -c`, `env`), `ssh` and most `npm`, `yarn` and `docker` subcommands are
+blocked during a review; only a short list of reads such as `docker ps`, `docker logs --tail
+200` and `npm ls` gets through. Dependency audits are the one package-manager exception, in
+forms that run no repo code: `npm audit`, `composer audit --no-plugins --no-scripts`,
+`bundle-audit check`, and `pip-audit` (with `-r`, also `--disable-pip` and `--no-deps` or
+`--require-hashes`), with read flags only and no `fix`. They run only with your live consent;
+without it, the review lists the commands for you to run. Reads that return env vars or user data
+(Lambda configs, ECS task definitions, launch templates) are left for you to run.
 
 Everything else is not checked: other tools, the agent's own file Read tool, and scripts in
 the repo (a `make` target can do anything). The guard is a seatbelt, not a
@@ -152,8 +160,9 @@ report is shown as text, not rendered.
 
 ## Principles
 
-RayStack also ships four principle skills. They aren't reviews. Each one is a short rule your
-agent picks up by itself when the task fits, and `/raystack` never runs them.
+RayStack also ships four principle skills and the `local-verify` playbook. They aren't reviews.
+Each principle is a short rule, and `local-verify` is a step-by-step playbook. Your agent picks
+them up by itself when the task fits, and `/raystack` never runs them.
 
 | Skill | The rule |
 | --- | --- |
@@ -161,6 +170,7 @@ agent picks up by itself when the task fits, and `/raystack` never runs them.
 | `principle-smallest-change` | The smallest change that solves the whole task, finished everywhere it reaches |
 | `principle-ask-with-question-tool` | Ask through the agent's question tool, batched, recommended option first |
 | `principle-secrets-layout` | Real values in gitignored `.secrets/<service>.env`, committed `.example` templates, never print a value |
+| `local-verify` | Check a user-facing change in a real local browser. `principle-ship` calls it. Never touches `.env`, production data, live payments or real email |
 
 `principle-ship` reads `.raystack.json` at the repo root, or `~/.raystack.json` if the repo has
 none:

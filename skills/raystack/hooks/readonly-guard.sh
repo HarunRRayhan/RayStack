@@ -13,6 +13,9 @@
 #   deploy tools and pg_dump/pg_restore always deny. Names match on `-`/`/` boundaries too (aws-cdk, amazon/aws-cli).
 # Any word that is a shell, env, ssh/scp/sftp/mosh, or a package runner (npx pnpx bunx uvx) denies.
 # Allow-lists, checked on every word: npm ls/list/view/outdated/audit (no fix)/why/explain; yarn/pnpm/bun --version;
+#   composer audit --no-plugins --no-scripts, bundle-audit check, pip-audit (-r needs --disable-pip plus --no-deps or
+#   --require-hashes), each with listed flags only (no repo plugins, scripts or package builds). Any audit
+#   (npm audit too) takes the cloud-CLI shape below: one call, only filters after a pipe, no ; && || or redirects.
 #   docker/podman/nerdctl ps, images, image ls, version, info, system df, stats --no-stream,
 #   logs --tail N<=200, compose ps|ls|images|logs|config --services/--volumes (no flags before the subcommand,
 #   no NAME=value, export or set anywhere in the command).
@@ -81,6 +84,18 @@ _walk() {
           elif ! _in "$nm" "$bf"; then _deny "unknown flag before subcommand: $1"; return 1; fi ;;
       *) P+=("$(_lc "$1")") ;;
     esac
+    shift
+  done
+  return 0
+}
+
+# _flags_ok "<value flags>" "<bool flags>" args...: every word is a listed flag; value flags take =v or the next word.
+_flags_ok() {
+  local vf=$1 bf=$2 nm; shift 2
+  while [ $# -gt 0 ]; do
+    nm=${1%%=*}
+    if _in "$nm" "$vf"; then [ "$nm" = "$1" ] && { [ $# -gt 1 ] && [ "${2#-}" = "$2" ] || return 1; shift; }
+    elif [ "$nm" != "$1" ] || ! _in "$1" "$bf"; then return 1; fi
     shift
   done
   return 0
@@ -386,7 +401,7 @@ _filter_ok() {
 }
 
 guard_check() {
-  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w
+  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w vf bf seen audit=0
   local -a TOK ARGS
   GUARD_REASON=""
   case "$1" in
@@ -427,7 +442,8 @@ guard_check() {
   for ((i = 0; i < n; i++)); do
     # Prefixes catch CLI abbreviations; --cli-input-* and skeletons can smuggle the same options.
     case "${TOK[i]}" in --with-d*|--include-v*|--cli-in*|--generate-cli*) _deny "${TOK[i]%%=*} not allowed during review"; return 1 ;; esac
-    name=$(_lc "${TOK[i]##*/}")
+    # zsh expands a leading `=` (=composer is the path of composer), so it names the same CLI.
+    name=$(_lc "${TOK[i]##*/}"); name=${name#=}
     case "$name" in
       npx|pnpx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
       npm|pnpm|yarn|bun)
@@ -436,14 +452,60 @@ guard_check() {
         case "$name $(_lc "${TOK[i + 1]:-}") $(_lc "${TOK[i + 2]:-}")" in
           *" --version "|"npm -v ") continue ;;
           "npm ls "*|"npm list "*|"npm view "*|"npm outdated "*|"npm why "*|"npm explain "*) continue ;;
-          "npm audit "*) f=' fix '
+          "npm audit "*) audit=1
+             [ "${TOK[i]}" = npm ] || { _deny "npm audit only as the bare command name"; return 1; }
              for ((j = i + 1; j < n; j++)); do
                [ "${TOK[j]}" = "$PIPE" ] && break
-               _in "$(_lc "${TOK[j]}")" "$f" && { _deny "$name audit fix not allowed during review"; return 1; }
+               case "$(_lc "${TOK[j]}")" in fix|--fix*) _deny "$name audit fix not allowed during review"; return 1 ;;
+                 *[[:space:]]*) _deny "$name audit argument with whitespace"; return 1 ;; esac
              done
              continue ;;
         esac
         _deny "$name ${TOK[i + 1]:-} is not on the read allow-list"; return 1 ;;
+      composer|bundle|bundle-audit|pip-audit)
+        # Dependency audits only: the audit verb first, then listed flags; every other verb runs code or writes.
+        # No `bundle audit`: Bundler loads the repo-local plugin index for it.
+        # A path (./vendor/bin/composer, bin/pip-audit) or `=name` runs a repo-local or other binary.
+        [ "${TOK[i]}" = "$name" ] || { _deny "$name only as the bare command name"; return 1; }
+        j=$((i + 1))
+        case "$name $(_lc "${TOK[j]:-}")" in
+          "composer audit") j=$((j + 1))
+            vf='-f --format --abandoned --ignore-severity'
+            bf='--locked --no-dev --ignore-unreachable --no-plugins --no-scripts -n --no-interaction --no-ansi --ansi -q --quiet -v -vv -vvv' ;;
+          # update/download and --update pull the advisory DB; -o writes a file.
+          "bundle-audit check") j=$((j + 1))
+            vf='-F --format -i --ignore --gemfile-lock'
+            bf='-q --quiet -v --verbose' ;;
+          # No --fix, -o (writes a file), --cache-dir or a project path (builds it).
+          "pip-audit "*)
+            vf='-r --requirement -f --format -s --vulnerability-service --ignore-vuln --timeout'
+            bf='-l --local --strict --skip-editable --no-deps --require-hashes --disable-pip --desc --aliases -v --verbose' ;;
+          *) _deny "$name ${TOK[j]:-} is not on the read allow-list"; return 1 ;;
+        esac
+        ARGS=()
+        for ((; j < n; j++)); do
+          [ "${TOK[j]}" = "$PIPE" ] && break
+          ARGS+=("${TOK[j]}")
+        done
+        _flags_ok "$vf" "$bf" "${ARGS[@]}" || { _deny "$name audit flag not on the read allow-list"; return 1; }
+        # Composer plugins/scripts and pip-installed requirements are repo-controlled code.
+        # Exact per-word matches: a quoted word could hold several flags ("--no-plugins --no-scripts").
+        seen=' '
+        for w in "${ARGS[@]}"; do
+          case "$w" in
+            *[[:space:]]*) _deny "$name audit argument with whitespace"; return 1 ;;
+            --no-plugins|--no-scripts|--disable-pip|--no-deps|--require-hashes) seen+="$w " ;;
+            # Every spelling _flags_ok lets through; -rX and --req abbreviations are denied there.
+            -r|-r=*|--requirement|--requirement=*) seen+="-r " ;;
+          esac
+        done
+        if [ "$name" = composer ] && { ! _in --no-plugins "$seen" || ! _in --no-scripts "$seen"; }; then
+          _deny "composer audit only with --no-plugins --no-scripts"; return 1
+        fi
+        if [ "$name" = pip-audit ] && _in -r "$seen" && { ! _in --disable-pip "$seen" || { ! _in --no-deps "$seen" && ! _in --require-hashes "$seen"; }; }; then
+          _deny "pip-audit -r only with --disable-pip and --no-deps or --require-hashes"; return 1
+        fi
+        audit=1; continue ;;
       pipx|uv) f=' run ' ;;
       # A shell (or env) runs a string or a command these checks never see.
       sh|bash|zsh|dash|ksh|mksh|fish|csh|tcsh|busybox|env|ssh|scp|sftp|mosh) _deny "$name not allowed during review"; return 1 ;;
@@ -469,7 +531,7 @@ guard_check() {
   done
   # RayStack's own skill names (report paths like reviews/...-aws-billing-review.md) are not CLI mentions.
   for name in aws-billing-review aws-security-review aws-bottleneck-review; do strip=${strip//$name/ }; done
-  [[ "$strip" =~ $_MENTION ]] || return 0
+  [[ "$strip" =~ $_MENTION ]] || [ $audit = 1 ] || return 0
   if [ -n "$q" ] || [ $ops = 1 ]; then _shape; return 1; fi
   [ $tilde = 0 ] || { _deny "leading ~ in a word during review"; return 1; }
 
@@ -484,6 +546,8 @@ guard_check() {
   base=$(_lc "${TOK[i]##*/}")
   case "$base" in
     aws|gcloud|az|kubectl|oc|terraform|tofu|terragrunt|helm|railway|wrangler|redis-cli) ;;
+    # Audit words were checked in the loop above; here only the shape is enforced.
+    npm|composer|bundle|bundle-audit|pip-audit) [ $audit = 1 ] || { _shape; return 1; } ;;
     *) _in "$base" "$_UNSUPPORTED" && { _deny "$base client not supported in read-only review"; return 1; }
        _in "$base" "$_SQL_CLIS" || { _shape; return 1; } ;;
   esac
@@ -493,7 +557,7 @@ guard_check() {
     ARGS+=("${TOK[i]}")
   done
   KEYS_ONLY=0
-  _eval_cli "$base" "${ARGS[@]}" || return 1
+  case "$base" in npm|composer|bundle|bundle-audit|pip-audit) ;; *) _eval_cli "$base" "${ARGS[@]}" || return 1 ;; esac
   if [ $KEYS_ONLY = 1 ] && { [ "$(_lc "${TOK[i + 1]:-}")" != jq ] || [ "${TOK[i + 2]:-}" != keys ] || { [ $((i + 3)) -lt "$n" ] && [ "${TOK[i + 3]}" != "$PIPE" ]; }; }; then
     _deny "railway variables only as: railway variables --json | jq 'keys'"; return 1
   fi

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="RayStack">
+  <rect width="64" height="64" rx="14" fill="#1c2b33"/>
+  <rect x="14" y="40" width="36" height="8" rx="2" fill="#e6ecef"/>
+  <rect x="14" y="28" width="36" height="8" rx="2" fill="#e6ecef"/>
+  <rect x="14" y="16" width="22" height="8" rx="2" fill="#f2b84b"/>
+  <circle cx="45" cy="20" r="4" fill="#f2b84b"/>
+</svg>

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Each review skill links the shared contract, its checklist and the guard hook.
-# The entry skill names all six reviews. The blog skill names the content skills.
+# The entry skill names all seven reviews. The blog skill names the content skills.
 cd "$(dirname "$0")/.." || exit 1
 # shellcheck source=/dev/null
 . ./tests/lib.sh
 
-REVIEWS=(aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review)
+REVIEWS=(aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review)
 CONTRACT='../raystack/references/review-contract.md'
 # shellcheck disable=SC2016  # literal text expected in the frontmatter
 HOOK='for f in "${CLAUDE_PLUGIN_ROOT}/skills/raystack/hooks/readonly-guard.sh" "${CLAUDE_PLUGIN_ROOT}/../raystack/hooks/readonly-guard.sh" "$HOME/.claude/skills/raystack/hooks/readonly-guard.sh"; do [ -x "$f" ] && exec "$f"; done; echo "RayStack review is read-only: guard missing" >&2; exit 2'
@@ -27,11 +27,21 @@ for s in "${REVIEWS[@]}"; do
   check "$s has the guard hook command" grep -qF "$HOOK" "$f"
 done
 
+# app-security-review carries its finding bar and its code-only and audit-skip rules.
+app=skills/app-security-review/SKILL.md
+if [ -f "$app" ]; then
+  check "app-security-review needs a concrete exploit" grep -qF 'concrete exploit' "$app"
+  check "app-security-review has Worth hardening" grep -qF 'Worth hardening' "$app"
+  check "app-security-review never sends requests" grep -qF 'never sends requests' "$app"
+  check "app-security-review skips audits with no lockfile" grep -qF 'no lockfile' "$app"
+fi
+
 entry=skills/raystack/SKILL.md
 if [ -f "$entry" ]; then
   for s in "${REVIEWS[@]}"; do
     check "raystack names $s" grep -qF "$s" "$entry"
   done
+  check "raystack is 105 lines or fewer" test "$(wc -l < "$entry")" -le 105
     # shellcheck disable=SC2016  # literal backticks, not a command substitution
   check "raystack names blog" grep -qF '`blog`' "$entry"
 else
@@ -89,5 +99,18 @@ if [ -f "$cover" ]; then
 else
   fail "missing $cover"
 fi
+# local-verify never touches .env, uses throwaway data, and does not fake a browser check.
+lv=skills/local-verify/SKILL.md
+if [ -f "$lv" ]; then
+  check "local-verify never edits .env" grep -qF "Never edit, replace, back up or write \`.env\`" "$lv"
+  check "local-verify uses a throwaway database" grep -qF 'throwaway' "$lv"
+  check "local-verify starts nothing without a browser tool" grep -qF 'no browser tool, say so, start nothing and claim nothing' "$lv"
+  check "local-verify stops only the server it started" grep -qF 'stop only the server you started' "$lv"
+  check "local-verify gives every setup command the overrides" grep -qF 'Every setup command gets the overrides' "$lv"
+else
+  fail "missing $lv"
+fi
+check "principle-ship names local-verify" grep -qF 'local-verify' skills/principle-ship/SKILL.md
+
 check "humanize names repo voice path" grep -qF '.raystack/voice.md' skills/humanize/SKILL.md
 exit "$FAILED"

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 (2026-10-28)
+
+- New `app-security-review`: the seventh read-only review. It reads app code for authorization, injection, secrets and session bugs. It never sends requests to a running app. Dependency audits run only with your live consent.
+- New `local-verify`: a playbook for checking a user-facing change in a real local browser. `principle-ship` calls it. It never edits `.env`, never touches production or shared databases, and says so when no browser tool is available.
+- The review guard allows dependency audits, only in forms that run no repo code: `npm audit`, `composer audit`, `pip-audit` and `bundle-audit check`. Each must be the bare command name, not a path.
+- The guard watches only the CLIs it lists, so `python -m pip_audit` is not covered. That is an accepted residual.
+- `install.sh` installs and uninstalls eighteen skills.
+
 ## 0.3.3 (2026-10-28)
 
 From the first real run (five reviews on a Terraform repo):
@@ -19,7 +27,7 @@ From the first real run (five reviews on a Terraform repo):
 
 ## 0.3.1 (2026-10-28)
 
-- One-command install for any agent: `npx skills add HarunRRayhan/raystack -g -a claude-code`.
+- One-command install for any agent: `npx skills add HarunRRayhan/RayStack -g -a claude-code`.
 - The review guard hook now falls back to `~/.claude/skills/` when `CLAUDE_PLUGIN_ROOT` is unset,
   so a global install keeps the guard working instead of blocking every shell command.
 

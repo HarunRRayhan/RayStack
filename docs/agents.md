@@ -1,6 +1,6 @@
 # Agent support
 
-RayStack ships the same sixteen skills (`skills/<name>/SKILL.md`) to every agent. Each agent gets
+RayStack ships the same eighteen skills (`skills/<name>/SKILL.md`) to every agent. Each agent gets
 a manifest only when it has a documented plugin format. Researched 2026-10-28. Anything marked
 **unverified** was not confirmed against official docs or a local run.
 
@@ -18,7 +18,7 @@ Every manifest `version` equals `VERSION`. `tests/check-versions.sh` checks this
 **Install**
 
 ```bash
-claude plugin marketplace add HarunRRayhan/raystack
+claude plugin marketplace add HarunRRayhan/RayStack
 claude plugin install raystack@raystack
 ```
 
@@ -107,7 +107,7 @@ during reviews, so RayStack does not ship one.
 **Install**
 
 ```bash
-codex plugin marketplace add HarunRRayhan/raystack
+codex plugin marketplace add HarunRRayhan/RayStack
 codex plugin add raystack@raystack
 ```
 
@@ -151,7 +151,7 @@ the facts below come from the user guide in the open-source repo.
 **Install**
 
 ```bash
-grok plugin marketplace add HarunRRayhan/raystack
+grok plugin marketplace add HarunRRayhan/RayStack
 grok plugin install raystack --trust
 ```
 

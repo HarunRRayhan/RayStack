@@ -20,7 +20,7 @@ Read `.raystack.json` at the repo root, else `~/.raystack.json`. No file or no k
 
 ## Steps
 
-1. Work on a feature branch. Open a PR.
+1. Work on a feature branch. For a user-facing change, run `local-verify` first. Open a PR.
 2. Read the whole diff yourself before anyone else does. Fix what you find.
 3. Wait for CI. Every required check must pass.
 4. Merge, or ask first, per `autoMerge`.

@@ -1,14 +1,14 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "raystack",
-  "version": "0.3.3",
-  "description": "Skills by Harun R. Rayhan: read-only infrastructure reviews (AWS billing, security, bottlenecks, infra, scaling, databases), working principles, and blog writing in your own voice.",
+  "version": "0.4.0",
+  "description": "Skills by Harun R. Rayhan: read-only infrastructure and app security reviews (AWS billing, security, bottlenecks, infra, scaling, databases, app security), working principles, local browser verification, and blog writing in your own voice.",
   "author": {
     "name": "Harun R. Rayhan",
     "url": "https://harun.dev"
   },
-  "homepage": "https://github.com/HarunRRayhan/raystack",
-  "repository": "https://github.com/HarunRRayhan/raystack",
+  "homepage": "https://harun.dev/raystack",
+  "repository": "https://github.com/HarunRRayhan/RayStack",
   "license": "MIT",
   "keywords": ["aws", "infrastructure", "review", "security", "cost", "database", "scaling", "blog", "writing"]
 }
