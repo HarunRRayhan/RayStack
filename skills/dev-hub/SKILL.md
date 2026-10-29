@@ -19,7 +19,8 @@ Ask once, through the question tool, with the recommended option first:
 ## 2. Single-repo mode
 
 1. Add `AGENTS.md` from `assets/AGENTS.md`. Fill every `<PLACEHOLDER>` from what you can
-   read in the repo or by asking. Drop the Repositories table. Keep the rest.
+   read in the repo or by asking. Delete each block between `<!-- hub-only -->` and
+   `<!-- /hub-only -->`, markers included. The rest is correct for a repo that holds code.
 2. Add `DECISIONS.md` from `assets/DECISIONS.md`. It is the header row only.
 3. Create `docs/research/`, `docs/prd/`, `docs/architecture/`, `docs/tech-spec/` and
    `docs/plans/`. Add a `.gitkeep` to any that stays empty.
@@ -27,10 +28,11 @@ Ask once, through the question tool, with the recommended option first:
 
 ## 3. Hub mode
 
-1. Ask for the product name, the hub folder path and the code repos (name and path).
+1. Ask through the question tool for the product name, the hub folder path and the code repos (name and path).
 2. Create the hub folder. Run `git init` there. It is a local repo with no remote. Add a
    remote or a GitHub repo only if the user asks.
-3. Put the same files in it as in single-repo mode, with the Repositories table filled in.
+3. Put the same files in it as in single-repo mode, but keep the `hub-only` blocks (delete
+   only the marker lines) and fill in the Repositories table.
 4. For each code repo the user names, write `assets/AGENTS-pointer.md` as its instruction
    file, filled in with the hub path. If that repo already has instructions, follow the
    existing-file rules below.
@@ -42,13 +44,16 @@ Ask once, through the question tool, with the recommended option first:
 This skill never overwrites. Check each target before writing.
 
 - `AGENTS.md` exists: append a `## RayStack dev flow` section with the reading order,
-  the binding rules and the workflow from the template. Say you did.
+  the binding rules and the workflow from the template, with the hub-only blocks removed
+  unless this is hub mode. Say you did.
 - Only `CLAUDE.md` exists: append the same section there.
 - Neither exists: create `AGENTS.md`. On Claude Code also create a one-line `CLAUDE.md`
   that holds `@AGENTS.md`, so both tools read the same file.
 - `DECISIONS.md` or a `docs/` file exists: keep it and skip that step. If it uses other
   columns, keep them and tell the user, do not rewrite its rows.
 - A pointer target exists: append the pointer as a section, do not replace the file.
+- When a template goes into an existing file as a section, demote its H1 to `##` so the
+  file keeps one H1.
 
 ## 5. Finish
 
