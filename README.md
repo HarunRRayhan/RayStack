@@ -8,6 +8,7 @@ deploys, scaling or the database, with evidence for every finding and a fix you 
 It's what I check when I audit someone's stack, written down as agent skills.
 
 By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com/harundotdev)).
+Product page: [harun.dev/raystack](https://harun.dev/raystack).
 
 ## Requirements
 
