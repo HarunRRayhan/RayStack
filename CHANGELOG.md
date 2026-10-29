@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 (2026-10-29)
+
+- Quick track: the separate review is now mandatory, even for a one-line fix. The behaviour
+  note can live in the reply for tiny fixes. With no git remote, ship stops at the commit.
+
 ## 0.6.0 (2026-10-29)
 
 - Removed the blog writing skills: `blog`, `blog-topics`, `blog-draft`, `humanize` and

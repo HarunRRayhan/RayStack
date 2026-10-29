@@ -96,7 +96,7 @@ else
 fi
 dv=skills/dev/SKILL.md
 if [ -f "$dv" ]; then
-  for t in Quick Standard Full replan 'no PRD' ledger 'references/dev-contract.md' 'Shipped:' pointer 'hub path' '../dev-hub/assets/DECISIONS.md' Analyze; do
+  for t in Quick Standard Full replan 'no PRD' ledger 'references/dev-contract.md' 'Shipped:' pointer 'hub path' '../dev-hub/assets/DECISIONS.md' Analyze 'Always review it, even for one line'; do
     check "dev contains: $t" grep -qF -- "$t" "$dv"
   done
   check "dev DECISIONS asset resolves" test -f skills/dev/../dev-hub/assets/DECISIONS.md
