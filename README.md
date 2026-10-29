@@ -2,10 +2,11 @@
 
 # RayStack
 
-RayStack is a pack of read-only infrastructure reviews for coding agents. Point your agent at a
-repo, type `/raystack`, and you get a ranked findings report on cost, security, bottlenecks,
-deploys, scaling or the database, with evidence for every finding and a fix you apply yourself.
-It's what I check when I audit someone's stack, written down as agent skills.
+RayStack is a skill pack for coding agents that builds and reviews software. Type `/raystack`
+in a repo and it works out what you want: take a product from idea to shipped code with
+reviewed builds, or get a ranked findings report on cost, security, bottlenecks, deploys,
+scaling or the database, with evidence for every finding and a fix you apply yourself. It's how
+I build and what I check when I audit someone's stack, written down as agent skills.
 
 By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com/harundotdev)).
 Product page: [harun.dev/raystack](https://harun.dev/raystack).
@@ -186,8 +187,8 @@ the deploy is live: a workflow name, a URL or a health check.
 
 ## Development
 
-RayStack also carries a development flow, from research to a shipped build. Type `/dev`, or say
-"start a new project" or "build this". It picks a track by size:
+RayStack also carries a development flow, from research to a shipped build. Type `/raystack` and pick
+"Build something", say "start a new project" or "build this", or call `/dev` directly. It picks a track by size:
 
 - **Quick**: a bug or small change. No PRD. Fix it, test it, ship it.
 - **Standard**: one slice of work. Spec if missing, then a plan, then a reviewed build.

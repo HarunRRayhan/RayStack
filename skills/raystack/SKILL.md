@@ -1,32 +1,32 @@
 ---
 name: raystack
-description: Entry point for RayStack read-only infrastructure reviews. Use for "/raystack", "review my AWS", "review my database", "audit my stack", "which review should I run", or any request to audit cloud cost, security, bottlenecks, deploys, scaling, databases or app code security when the right review is unclear. Also routes development work ("start a project", "plan this", "build this").
+description: Entry point for everything in RayStack. Use for "/raystack", "what can RayStack do", development work ("start a project", "write a PRD", "plan this", "build this", "fix this bug properly") and read-only reviews ("review my AWS", "review my database", "audit my stack", "which review should I run", cloud cost, security, bottlenecks, deploys, scaling, databases or app code security).
 ---
 
 # RayStack
 
-RayStack is a pack of read-only infrastructure reviews by Harun R. Rayhan. This skill picks
-the right reviews for the repo and runs them in turn.
+RayStack is Harun R. Rayhan's skill pack for building and reviewing software. This skill is
+its front door: it works out what the user wants and runs the right skills.
 
-| Skill | Reviews |
+| Job | Skill |
 | --- | --- |
-| `aws-billing-review` | AWS spend, ranked savings in $/mo |
-| `aws-security-review` | IAM, public exposure, logging, secrets on AWS |
-| `aws-bottleneck-review` | AWS throttling, limits, quotas, single points on the request path |
-| `infra-review` | Deploys, rollback, backups, monitoring, exposure on any platform |
-| `scaling-review` | What breaks first at 10x and 100x load |
-| `database-review` | Queries, indexes, migrations, backups, connections, bloat |
-| `app-security-review` | App code: authorization and IDOR, injection, secrets, sessions, dependency CVEs |
+| Build: idea, PRD, spec, plan, reviewed build, ship | `dev` (it picks Quick, Standard or Full) |
+| Review AWS spend, security, bottlenecks | `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review` |
+| Review deploys, scaling, databases, app code | `infra-review`, `scaling-review`, `database-review`, `app-security-review` |
+| Read-only AWS access for the reviews | `aws-readonly-setup` |
+| Check a change in a real browser | `local-verify` |
 
-## Principles
-
-Four short principle skills load on their own when a task matches; this router never runs them:
+Four principle skills load on their own when a task matches; this router never runs them:
 `principle-ship`, `principle-smallest-change`, `principle-ask-with-question-tool`, `principle-secrets-layout`.
 
-## Development
+## 0. Pick the job
 
-Development is not a review. For "start a project", "write a PRD", "plan this" or "build
-this", hand off to the `dev` skill. Do not run it as part of the review flow.
+- Words about making or changing something ("start", "PRD", "plan", "build", "fix", "where are
+  we") or an unfinished ledger in `docs/plans/`: hand off to `dev` and stop here.
+- Words about auditing, cost, security, speed, scaling or the database: continue at step 1.
+- Bare `/raystack` with no clear job: ask once through the question tool, "Build something"
+  (runs `dev`) or "Review this repo" (step 1). Recommend "Build" when `docs/plans/` or
+  `DECISIONS.md` exists, else "Review".
 
 ## 1. Detect signals
 
