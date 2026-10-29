@@ -7,8 +7,8 @@
     "name": "Harun R. Rayhan",
     "url": "https://harun.dev"
   },
-  "homepage": "https://github.com/HarunRRayhan/raystack",
-  "repository": "https://github.com/HarunRRayhan/raystack",
+  "homepage": "https://github.com/HarunRRayhan/RayStack",
+  "repository": "https://github.com/HarunRRayhan/RayStack",
   "license": "MIT",
   "keywords": ["aws", "infrastructure", "review", "security", "cost", "database", "scaling", "blog", "writing"]
 }

@@ -21,7 +21,7 @@ By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com
 ### Any agent (one command)
 
 ```bash
-npx skills add HarunRRayhan/raystack -g -a claude-code
+npx skills add HarunRRayhan/RayStack -g -a claude-code
 ```
 
 The [skills CLI](https://skills.sh) installs all eighteen skills globally. Swap `claude-code` for
@@ -33,11 +33,11 @@ The per-agent options below do the same thing in each agent's own way.
 ### Claude Code
 
 ```text
-/plugin marketplace add HarunRRayhan/raystack
+/plugin marketplace add HarunRRayhan/RayStack
 /plugin install raystack@raystack
 ```
 
-From a terminal it's `claude plugin marketplace add HarunRRayhan/raystack` and
+From a terminal it's `claude plugin marketplace add HarunRRayhan/RayStack` and
 `claude plugin install raystack@raystack`. To try a checkout for one session:
 `claude --plugin-dir /path/to/raystack`.
 
@@ -49,7 +49,7 @@ the skills are personal skills and keep their bare names (`/raystack`, `/aws-bil
 ### Codex
 
 ```bash
-codex plugin marketplace add HarunRRayhan/raystack
+codex plugin marketplace add HarunRRayhan/RayStack
 codex plugin add raystack@raystack
 ```
 
@@ -66,7 +66,7 @@ picks up the `.claude-plugin/` files is **unverified**. If it doesn't,
 ### Grok Build
 
 ```bash
-grok plugin marketplace add HarunRRayhan/raystack
+grok plugin marketplace add HarunRRayhan/RayStack
 grok plugin install raystack --trust
 ```
 

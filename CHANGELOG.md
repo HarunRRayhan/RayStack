@@ -27,7 +27,7 @@ From the first real run (five reviews on a Terraform repo):
 
 ## 0.3.1 (2026-10-28)
 
-- One-command install for any agent: `npx skills add HarunRRayhan/raystack -g -a claude-code`.
+- One-command install for any agent: `npx skills add HarunRRayhan/RayStack -g -a claude-code`.
 - The review guard hook now falls back to `~/.claude/skills/` when `CLAUDE_PLUGIN_ROOT` is unset,
   so a global install keeps the guard working instead of blocking every shell command.
 

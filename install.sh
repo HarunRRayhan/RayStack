@@ -45,10 +45,10 @@ done
 
 hint=""
 case "$agent" in
-  claude)   default="$HOME/.claude/skills";   hint="claude plugin marketplace add HarunRRayhan/raystack && claude plugin install raystack@raystack" ;;
+  claude)   default="$HOME/.claude/skills";   hint="claude plugin marketplace add HarunRRayhan/RayStack && claude plugin install raystack@raystack" ;;
   cursor)   default="$HOME/.cursor/skills";   hint="cursor-agent plugin marketplace add <gitUrl> (see docs/agents.md)" ;;
-  codex)    default="$HOME/.agents/skills";   hint="codex plugin marketplace add HarunRRayhan/raystack && codex plugin add raystack@raystack" ;;
-  grok)     default="$HOME/.grok/skills";     hint="grok plugin marketplace add HarunRRayhan/raystack && grok plugin install raystack --trust" ;;
+  codex)    default="$HOME/.agents/skills";   hint="codex plugin marketplace add HarunRRayhan/RayStack && codex plugin add raystack@raystack" ;;
+  grok)     default="$HOME/.grok/skills";     hint="grok plugin marketplace add HarunRRayhan/RayStack && grok plugin install raystack --trust" ;;
   opencode) default="$HOME/.config/opencode/skills" ;; # shortcut: not in docs/agents.md, unverified; pass --dir if yours differs
   custom)   default="" ;;
   *) die "unknown agent: $agent" ;;
