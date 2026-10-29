@@ -40,12 +40,13 @@ settled questions are not asked again. If it is missing, see section 2: Standard
 Pick the smallest track that fits. Say which one and why.
 
 - **Quick** (a bug or a small change): no PRD, no hub. Do these inline:
-  1. Write a short note in `docs/plans/YYYY-MM-DD-<fix>.md`: current behaviour, expected
-     behaviour, what must stay unchanged.
-  2. One implementer makes the change with a test. One reviewer checks it against the
-     note's expected and unchanged behaviour. With no subagent tool, use the contract's
-     inline review.
-  3. Ship with `principle-ship`.
+  1. Write the expected and must-stay-unchanged behaviour down: in the reply for a fix of a
+     few lines, else in `docs/plans/YYYY-MM-DD-<fix>.md` with the current behaviour too.
+  2. Make the change with a test.
+  3. Always review it, even for one line: a fresh reviewer checks the diff against the
+     expected and unchanged behaviour. With no subagent tool, use the contract's inline
+     review. Never skip this step; say which kind of review ran.
+  4. Ship with `principle-ship`. With no git remote, say so and stop at the commit.
 - **Standard** (one slice of work): run `dev-spec` if no spec serves the slice (with no
   PRD it writes the slice's B-IDs), then `dev-plan`, then `dev-build`.
 - **Full** (a new product): run `dev-hub`, `dev-research`, `dev-prd`, `dev-spec`,
