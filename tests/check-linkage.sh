@@ -121,4 +121,33 @@ for a in 's3:GetObject*' secretsmanager:GetSecretValue 'ssm:GetParameter*' kms:D
   # shellcheck disable=SC2016  # $a is a jq variable
   check "deny-data policy denies $a" jq -e --arg a "$a" '.Statement[0].Action | index($a)' "$ars/deny-data-policy.json"
 done
+# dev flow: shared contract, principles and the router
+dc=skills/dev/references/dev-contract.md
+if [ -f "$dc" ]; then
+  for h in Decisions 'IDs and EARS' Ledger Subagents Questions 'Session start'; do
+    check "dev-contract has H2 $h" grep -qxF "## $h" "$dc"
+  done
+  for t in 'ID | Date | Decision | Status | Supersedes | How to confirm' 'never asked again' 'Superseded by' \
+    todo in-progress 'done' done-with-concerns needs-context blocked WHEN 'THE SYSTEM SHALL' B-001 'inline review' 'at most 5'; do
+    check "dev-contract contains: $t" grep -qF -- "$t" "$dc"
+  done
+else
+  fail "missing $dc"
+fi
+dp=skills/dev/references/principles.md
+if [ -f "$dp" ]; then
+  check "principles has 11 numbered items" test "$(grep -cE '^[0-9]+\. ' "$dp")" -eq 11
+  check "principles has a reviewer rubric" grep -qxF '## Reviewer rubric' "$dp"
+else
+  fail "missing $dp"
+fi
+dv=skills/dev/SKILL.md
+if [ -f "$dv" ]; then
+  for t in Quick Standard Full replan 'no PRD' ledger 'references/dev-contract.md'; do
+    check "dev contains: $t" grep -qF -- "$t" "$dv"
+  done
+  check "dev is 120 lines or fewer" test "$(wc -l < "$dv")" -le 120
+else
+  fail "missing $dv"
+fi
 exit "$FAILED"

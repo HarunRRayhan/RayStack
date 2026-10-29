@@ -3,7 +3,7 @@ cd "$(dirname "$0")/.." || exit 1
 . tests/lib.sh
 
 REQUIRED=(raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review aws-readonly-setup
-  principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout humanize blog blog-topics blog-draft blog-cover local-verify)
+  principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout humanize blog blog-topics blog-draft blog-cover local-verify dev)
 
 for s in "${REQUIRED[@]}"; do
   [ -f "skills/$s/SKILL.md" ] || fail "missing skill $s"
