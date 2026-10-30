@@ -77,7 +77,7 @@ if [ -f "$dc" ]; then
     check "dev-contract has H2 $h" grep -qxF "## $h" "$dc"
   done
   for t in 'ID | Date | Decision | Status | Supersedes | How to confirm' 'never asked again' 'Superseded by' \
-    todo in-progress 'done' done-with-concerns needs-context blocked WHEN 'THE SYSTEM SHALL' B-001 'inline review' 'at most 5' 'Shipped:' 'Committed:'; do
+    todo in-progress 'done' done-with-concerns needs-context blocked WHEN 'THE SYSTEM SHALL' B-001 'inline review' 'at most 5' 'Shipped:' 'Committed:' 'least possible'; do
     check "dev-contract contains: $t" grep -qF -- "$t" "$dc"
   done
   check "dev-contract links the reviewer checklist" grep -qF '../../dev-build/references/reviewer.md' "$dc"
@@ -96,7 +96,7 @@ else
 fi
 dv=skills/dev/SKILL.md
 if [ -f "$dv" ]; then
-  for t in Quick Standard Full replan 'no PRD' ledger 'references/dev-contract.md' 'Shipped:' pointer 'hub path' '../dev-hub/assets/DECISIONS.md' Analyze 'Always review it, even for one line'; do
+  for t in Quick Standard Full replan 'no PRD' ledger 'references/dev-contract.md' 'Shipped:' pointer 'hub path' '../dev-hub/assets/DECISIONS.md' Analyze 'Always review it, even for one line' 'fresh reviewer subagent' 'never to the flow'; do
     check "dev contains: $t" grep -qF -- "$t" "$dv"
   done
   check "dev DECISIONS asset resolves" test -f skills/dev/../dev-hub/assets/DECISIONS.md

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.4 (2026-10-30)
+
+- `/raystack` and `dev`: once you ask for the flow, its steps run even when another plugin,
+  hook or instruction says to do the least possible. Those rules still shape the code, and
+  subagents are told the same. Only you can drop a step.
+- Quick track: the review must be a fresh reviewer subagent whenever the host has a subagent
+  tool. Reviewing inline is now only for hosts without one.
+
 ## 0.6.3 (2026-10-30)
 
 - `dev-build`: with no git remote, the ledger now ends with `Committed: <commit> on <branch>

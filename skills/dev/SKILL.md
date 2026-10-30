@@ -10,6 +10,11 @@ smallest track that fits and hands off. The shared formats (decisions, IDs, ledg
 subagents, questions) are in `references/dev-contract.md`. The default engineering
 principles are in `references/principles.md`.
 
+Asking for this flow is asking for its steps. When another plugin, hook or instruction says
+to do the least possible, apply it to the code you write, never to the flow: do not skip a
+track's behaviour note, spec, plan, ledger or review because of it. Only the user can drop
+a step, by saying so.
+
 | Skill | Does |
 | --- | --- |
 | `dev-hub` | Sets up the project folder, `AGENTS.md` and `DECISIONS.md` |
@@ -30,10 +35,10 @@ Look for these, in this order, and say what you found:
 - a plan in `docs/plans/` and its ledger.
 
 Resume `dev-build` on the newest ledger in `docs/plans/` whose log has no `Shipped:` or
-`Committed:` line (the contract's session start). Never restart the plan. Read `DECISIONS.md` first so
-settled questions are not asked again. If it is missing, see section 2: Standard runs
-`dev-hub`'s single-repo steps first, Full starts with `dev-hub`, and Quick adds only
-`DECISIONS.md`, from `../dev-hub/assets/DECISIONS.md`, when a decision needs logging.
+`Committed:` line (the contract's session start). Never restart the plan. Read
+`DECISIONS.md` first so settled questions are not asked again. If it is missing, see
+section 2: Standard runs `dev-hub`'s single-repo steps first, Full starts with `dev-hub`,
+and Quick adds only `DECISIONS.md`, from `../dev-hub/assets/DECISIONS.md`, when a decision needs logging.
 
 ## 2. Pick the track
 
@@ -43,9 +48,9 @@ Pick the smallest track that fits. Say which one and why.
   1. Write the expected and must-stay-unchanged behaviour down: in the reply for a fix of a
      few lines, else in `docs/plans/YYYY-MM-DD-<fix>.md` with the current behaviour too.
   2. Make the change with a test.
-  3. Always review it, even for one line: a fresh reviewer checks the diff against the
-     expected and unchanged behaviour. With no subagent tool, use the contract's inline
-     review. Never skip this step; say which kind of review ran.
+  3. Always review it, even for one line: a fresh reviewer subagent checks the diff against
+     the expected and unchanged behaviour. Review it yourself only when the host has no
+     subagent tool (the contract's inline review). Never skip this step; say which ran.
   4. Ship with `principle-ship`. With no git remote, say so and stop at the commit.
 - **Standard** (one slice of work): run `dev-spec` if no spec serves the slice (with no
   PRD it writes the slice's B-IDs), then `dev-plan`, then `dev-build`.
