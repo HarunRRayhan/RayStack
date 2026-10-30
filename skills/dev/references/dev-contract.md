@@ -70,6 +70,8 @@ Parked minor: rename `tmp` in `parse.ts`.
 - Set the model tier on purpose: a cheap one for mechanical tasks, the strongest for the
   final review.
 - Group small tasks into one dispatch to keep the agent count down.
+- Tell each subagent it works inside this flow: instructions to do the least possible
+  shape its code, never its tests, its review checks or its report.
 - **Hosts with no subagent tool:** implement the task, then review it in a separate pass
   against the reviewer checklist. Record `inline review` in the ledger log.
 
