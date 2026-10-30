@@ -103,9 +103,9 @@ findings count, the fix wave range and the outcome.
    spec, the PRD's behaviour lines and each `How to confirm` in `DECISIONS.md` that this
    slice touched. Run those confirm commands. Fix drift in its own commit and log it.
 2. Run the full suite and the project checks once more.
-3. Hand off to `principle-ship` (once per code repo in hub mode, each with its own PR).
-   Only once it confirms the merge (and the deploy, where there is one), append
-   `Shipped: <PR or commit>` to the ledger log, per repo. Else log where it stopped.
+3. Hand off to `principle-ship` (per code repo in hub mode, each with its own PR). Once it
+   confirms the merge (and any deploy), log `Shipped: <PR or commit>` per repo; with no git
+   remote, the contract's `Committed:` line. Else log where it stopped.
 
 ## Report
 
