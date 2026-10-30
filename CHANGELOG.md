@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.3 (2026-10-30)
+
+- `dev-build`: with no git remote, the ledger now ends with `Committed: <commit> on <branch>
+  (no remote, not merged)` instead of `Shipped:`. `Shipped:` now always means merged. Session
+  resume treats either line as finished. Found in a live Standard-track trial.
+
 ## 0.6.2 (2026-10-29)
 
 - `install.sh` now removes skills that earlier versions installed but RayStack no longer ships

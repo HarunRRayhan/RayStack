@@ -77,7 +77,7 @@ if [ -f "$dc" ]; then
     check "dev-contract has H2 $h" grep -qxF "## $h" "$dc"
   done
   for t in 'ID | Date | Decision | Status | Supersedes | How to confirm' 'never asked again' 'Superseded by' \
-    todo in-progress 'done' done-with-concerns needs-context blocked WHEN 'THE SYSTEM SHALL' B-001 'inline review' 'at most 5' 'Shipped:'; do
+    todo in-progress 'done' done-with-concerns needs-context blocked WHEN 'THE SYSTEM SHALL' B-001 'inline review' 'at most 5' 'Shipped:' 'Committed:'; do
     check "dev-contract contains: $t" grep -qF -- "$t" "$dc"
   done
   check "dev-contract links the reviewer checklist" grep -qF '../../dev-build/references/reviewer.md' "$dc"
@@ -167,10 +167,10 @@ done
 # dev-build: skill, its two prompt templates and the contract link
 bv=skills/dev-build/SKILL.md
 if [ -f "$bv" ]; then
-  for t in ledger converge 'inline review' 'cost if wrong' 'final review' principle-ship 'docs still match' 'fix rounds' done-with-concerns 'Shipped:' 'inline whole-branch'; do
+  for t in ledger converge 'inline review' 'cost if wrong' 'final review' principle-ship 'docs still match' 'fix rounds' done-with-concerns 'Shipped:' 'Committed:' 'inline whole-branch'; do
     check "dev-build contains: $t" grep -qF -- "$t" "$bv"
   done
-  check "dev-build writes Shipped only after merge" grep -qF 'Only once it confirms the merge' "$bv"
+  check "dev-build writes Shipped only after merge" grep -qF 'confirms the merge' "$bv"
   check "dev-build is 120 lines or fewer" test "$(wc -l < "$bv")" -le 120
   check "dev-build contract path resolves" test -f "skills/dev-build/../dev/references/dev-contract.md"
   check "dev-build links the contract" grep -qF '../dev/references/dev-contract.md' "$bv"

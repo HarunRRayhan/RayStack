@@ -29,8 +29,8 @@ Look for these, in this order, and say what you found:
   `docs/architecture/`;
 - a plan in `docs/plans/` and its ledger.
 
-Resume `dev-build` on the newest ledger in `docs/plans/` whose log has no `Shipped:` line
-(the contract's session start). Never restart the plan. Read `DECISIONS.md` first so
+Resume `dev-build` on the newest ledger in `docs/plans/` whose log has no `Shipped:` or
+`Committed:` line (the contract's session start). Never restart the plan. Read `DECISIONS.md` first so
 settled questions are not asked again. If it is missing, see section 2: Standard runs
 `dev-hub`'s single-repo steps first, Full starts with `dev-hub`, and Quick adds only
 `DECISIONS.md`, from `../dev-hub/assets/DECISIONS.md`, when a decision needs logging.

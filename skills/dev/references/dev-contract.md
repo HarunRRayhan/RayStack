@@ -51,7 +51,9 @@ Statuses: `todo`, `in-progress`, `done`, `done-with-concerns`, `needs-context`, 
 
 Below the table is an append-only running log. It holds fix rounds with commit ranges,
 rulings with their cost if wrong, concerns, parked minors, final-review notes and, last,
-`Shipped: <PR or commit>` (one line per repo in hub mode):
+`Shipped: <PR or commit>` (one line per repo in hub mode). A repo with no git remote ends
+with `Committed: <commit> on <branch> (no remote, not merged)` instead; `Shipped:` means
+merged:
 
 ```
 ### 2026-10-29 T-02 review round 1
@@ -83,8 +85,9 @@ only when the host has no question tool. Each answer becomes a `D-` row in `DECI
 ## Session start
 
 A new session reads `AGENTS.md` (and, if it points to a hub, the hub's), then the newest
-ledger in `docs/plans/` whose log has no `Shipped:` line (in hub mode, until every repo
-has one), then runs the project's smoke check if one exists, then continues from the
-first ledger row that is not `done` or `done-with-concerns` (both count as finished). If
+ledger in `docs/plans/` whose log has no `Shipped:` or `Committed:` line (in hub mode,
+until every repo has one), then runs the project's smoke check if one exists, then
+continues from the first ledger row that is not `done` or `done-with-concerns` (both count
+as finished). If
 every row is finished, it continues from the last converge, final review or ship step in
 the log. This is how a long build survives a context reset.
