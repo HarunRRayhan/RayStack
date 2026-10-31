@@ -180,6 +180,59 @@ _docker_ok() {
   _no "$base ${1:-} ${2:-}"
 }
 
+# _scanner_ok <name> <i>: 0 when the scanner call at TOK[i] (guard_check's tokens) is its listed read form.
+# Sets SF, SP, LATE (via _scan_args) and sgjq=1 for semgrep in the caller's scope.
+_scanner_ok() {
+  local name=$1 i=$2 j vf bf w seen
+  local -a ARGS
+  # Scanners: the read form only, with no output file, fix or repo config. A path or `=name` runs another binary.
+  [ "${TOK[i]}" = "$name" ] || { _deny "$name only as the bare command name"; return 1; }
+  j=$((i + 1))
+  case "$name $(_lc "${TOK[j]:-}")" in
+    "gitleaks dir"|"gitleaks git") j=$((j + 1)); vf='-f -r --log-level -c --config'; bf='--redact --no-banner' ;;
+    "semgrep scan") j=$((j + 1)); vf='--config --metrics --severity'; bf='--disable-version-check --json --quiet' ;;
+    "osv-scanner scan") j=$((j + 1)); vf='--format --no-call-analysis'; bf='-r --no-resolve --offline --download-offline-databases' ;;
+    "zizmor "*) vf='--format'; bf='--offline --no-config' ;;
+    "actionlint "*) vf='-shellcheck -pyflakes -format'; bf='-oneline' ;;
+    "hadolint "*) vf='-f'; bf='' ;;
+    *) _deny "$name ${TOK[j]:-} is not on the read allow-list"; return 1 ;;
+  esac
+  ARGS=()
+  for ((; j < n; j++)); do
+    [ "${TOK[j]}" = "$PIPE" ] && break
+    ARGS+=("${TOK[j]}")
+  done
+  _scan_args "$vf" "$bf" "${ARGS[@]}" || { _deny "$name flag not on the read allow-list"; return 1; }
+  case "$name" in
+    gitleaks) { _has --redact && _vals -f json && _vals -r -; } || { _deny "gitleaks only with --redact, -f json and -r - (stdout)"; return 1; }
+      # A repo config can redact almost nothing; only RayStack's config, compared as a string.
+      seen=0
+      for w in "${SF[@]}"; do
+        case "$w" in -c=*|--config=*) if [ "${w#*=}" = "$_GITLEAKS_CONF" ] && [ "$seen" = 0 ]; then seen=1; else seen=2; fi ;; esac
+      done
+      [ "$seen" = 1 ] && [ -n "$_GITLEAKS_CONF" ] || { _deny "gitleaks only with -c $_GITLEAKS_CONF"; return 1; }
+      # trace and debug logs print findings unredacted.
+      _vals --log-level 'info|warn|error|fatal' || { _deny "gitleaks --log-level only info, warn, error or fatal"; return 1; } ;;
+    # No --config means repo .semgrep.yml; metrics or version checks phone home.
+    # A local p/ or r/ dir would be read as rules: data, not code.
+    semgrep) { _has --config= && _vals --config '[pr]/[A-Za-z0-9._-]+' && _has --metrics=off && _vals --metrics off && _has --disable-version-check; } ||
+      { _deny "semgrep scan only with --config p/ or r/, --metrics off and --disable-version-check"; return 1; }
+      # Plain text and raw JSON print the matched line, which can be a secret: --json into the documented jq only.
+      _has --json || { _deny "semgrep scan only with --json piped to the documented jq filter"; return 1; }
+      sgjq=1 ;;
+    # `scan image` pulls and unpacks container images.
+    # Go call analysis is on by default and needs the go toolchain; --call-analysis is not listed.
+    osv-scanner) { _vals --format json && _has --no-call-analysis= && _vals --no-call-analysis go && [ "$(_lc "${SP[0]:-}")" != image ]; } ||
+      { _deny "osv-scanner scan only with --no-call-analysis=go, --format json and paths"; return 1; } ;;
+    zizmor) { _has --offline && _vals --format json; } || { _deny "zizmor only with --offline and --format json"; return 1; } ;;
+    # Go flag parsing stops at the first file, so later flags would be files; unset checkers run binaries.
+    actionlint) { [ $LATE = 0 ] && _has -shellcheck= && _vals -shellcheck '' && _has -pyflakes= && _vals -pyflakes ''; } ||
+      { _deny "actionlint only with -shellcheck= -pyflakes= before any file"; return 1; } ;;
+    hadolint) _vals -f json || { _deny "hadolint only with -f json"; return 1; } ;;
+  esac
+  return 0
+}
+
 # _tf_only <name=value> args...: every -name/--name flag in args is exactly that value, and one exists.
 _tf_only() {
   local want=$1 key=${1%%=*} w nm found=1; shift
@@ -602,51 +655,7 @@ guard_check() {
         fi
         audit=1; continue ;;
       gitleaks|semgrep|osv-scanner|zizmor|actionlint|hadolint)
-        # Scanners: the read form only, with no output file, fix or repo config. A path or `=name` runs another binary.
-        [ "${TOK[i]}" = "$name" ] || { _deny "$name only as the bare command name"; return 1; }
-        j=$((i + 1))
-        case "$name $(_lc "${TOK[j]:-}")" in
-          "gitleaks dir"|"gitleaks git") j=$((j + 1)); vf='-f -r --log-level -c --config'; bf='--redact --no-banner' ;;
-          "semgrep scan") j=$((j + 1)); vf='--config --metrics --severity'; bf='--disable-version-check --json --quiet' ;;
-          "osv-scanner scan") j=$((j + 1)); vf='--format --no-call-analysis'; bf='-r --no-resolve --offline --download-offline-databases' ;;
-          "zizmor "*) vf='--format'; bf='--offline --no-config' ;;
-          "actionlint "*) vf='-shellcheck -pyflakes -format'; bf='-oneline' ;;
-          "hadolint "*) vf='-f'; bf='' ;;
-          *) _deny "$name ${TOK[j]:-} is not on the read allow-list"; return 1 ;;
-        esac
-        ARGS=()
-        for ((; j < n; j++)); do
-          [ "${TOK[j]}" = "$PIPE" ] && break
-          ARGS+=("${TOK[j]}")
-        done
-        _scan_args "$vf" "$bf" "${ARGS[@]}" || { _deny "$name flag not on the read allow-list"; return 1; }
-        case "$name" in
-          gitleaks) { _has --redact && _vals -f json && _vals -r -; } || { _deny "gitleaks only with --redact, -f json and -r - (stdout)"; return 1; }
-            # A repo config can redact almost nothing; only RayStack's config, compared as a string.
-            seen=0
-            for w in "${SF[@]}"; do
-              case "$w" in -c=*|--config=*) if [ "${w#*=}" = "$_GITLEAKS_CONF" ] && [ "$seen" = 0 ]; then seen=1; else seen=2; fi ;; esac
-            done
-            [ "$seen" = 1 ] && [ -n "$_GITLEAKS_CONF" ] || { _deny "gitleaks only with -c $_GITLEAKS_CONF"; return 1; }
-            # trace and debug logs print findings unredacted.
-            _vals --log-level 'info|warn|error|fatal' || { _deny "gitleaks --log-level only info, warn, error or fatal"; return 1; } ;;
-          # No --config means repo .semgrep.yml; metrics or version checks phone home.
-          # A local p/ or r/ dir would be read as rules: data, not code.
-          semgrep) { _has --config= && _vals --config '[pr]/[A-Za-z0-9._-]+' && _has --metrics=off && _vals --metrics off && _has --disable-version-check; } ||
-            { _deny "semgrep scan only with --config p/ or r/, --metrics off and --disable-version-check"; return 1; }
-            # Plain text and raw JSON print the matched line, which can be a secret: --json into the documented jq only.
-            _has --json || { _deny "semgrep scan only with --json piped to the documented jq filter"; return 1; }
-            sgjq=1 ;;
-          # `scan image` pulls and unpacks container images.
-          # Go call analysis is on by default and needs the go toolchain; --call-analysis is not listed.
-          osv-scanner) { _vals --format json && _has --no-call-analysis= && _vals --no-call-analysis go && [ "$(_lc "${SP[0]:-}")" != image ]; } ||
-            { _deny "osv-scanner scan only with --no-call-analysis=go, --format json and paths"; return 1; } ;;
-          zizmor) { _has --offline && _vals --format json; } || { _deny "zizmor only with --offline and --format json"; return 1; } ;;
-          # Go flag parsing stops at the first file, so later flags would be files; unset checkers run binaries.
-          actionlint) { [ $LATE = 0 ] && _has -shellcheck= && _vals -shellcheck '' && _has -pyflakes= && _vals -pyflakes ''; } ||
-            { _deny "actionlint only with -shellcheck= -pyflakes= before any file"; return 1; } ;;
-          hadolint) _vals -f json || { _deny "hadolint only with -f json"; return 1; } ;;
-        esac
+        _scanner_ok "$name" "$i" || return 1
         audit=1; continue ;;
       # D-006: no read-only form; the human runs them.
       checkov|trivy) _deny "$name is not allowed during review: list its commands for the human to run"; return 1 ;;
