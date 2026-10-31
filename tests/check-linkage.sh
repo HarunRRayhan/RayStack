@@ -167,7 +167,7 @@ done
 # dev-build: skill, its two prompt templates and the contract link
 bv=skills/dev-build/SKILL.md
 if [ -f "$bv" ]; then
-  for t in ledger converge 'inline review' 'cost if wrong' 'final review' principle-ship 'docs still match' 'fix rounds' done-with-concerns 'Shipped:' 'Committed:' 'inline whole-branch'; do
+  for t in ledger converge 'inline review' 'cost if wrong' 'final review' principle-ship 'docs still match' 'fix rounds' done-with-concerns 'Shipped:' 'Committed:' 'inline whole-branch' 'never write task' 'count a task'; do
     check "dev-build contains: $t" grep -qF -- "$t" "$bv"
   done
   check "dev-build writes Shipped only after merge" grep -qF 'confirms the merge' "$bv"
