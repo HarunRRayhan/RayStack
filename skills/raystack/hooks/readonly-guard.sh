@@ -17,7 +17,7 @@
 #   --require-hashes), each with listed flags only (no repo plugins, scripts or package builds). Any audit
 #   (npm audit too) takes the cloud-CLI shape below: one call, only filters after a pipe, no ; && || or redirects.
 #   Scanners take the same shape, as the bare name, with listed flags only: gitleaks dir|git (--redact and
-#   -c <this skill>/references/gitleaks.toml required, -f json, -r - only, --log-level info|warn|error|fatal), semgrep scan (--metrics off --disable-version-check, --config p/ or r/ only, --json into a listed jq filter),
+#   -c <this skill>/references/gitleaks.toml required, -f json, -r - only, --log-level info|warn|error|fatal), semgrep scan (--metrics off --disable-version-check, --config p/ or r/ only, --json into the documented jq filter),
 #   osv-scanner scan (--no-call-analysis=go required, --format json, no image), zizmor --offline, actionlint -shellcheck= -pyflakes= (flags
 #   before files), hadolint (-f json). No output files, fixes or repo configs. checkov and trivy deny in every form.
 #   docker/podman/nerdctl ps, images, image ls, version, info, system df, stats --no-stream,
@@ -25,6 +25,9 @@
 #   no NAME=value, export or set anywhere in the command).
 # Secret-ish cloud ops (secret, password, token, credential, keys list, ...) deny unless on a metadata list;
 #   ops that return env vars, user data or passwords (lambda config, ecs task defs, launch templates) deny outright.
+# gh (runs on the user's full GitHub token): bare `gh` only; api is GET on repos/... or user with -q/--jq, --paginate,
+#   -X/--method GET; read subcommands repo view, pr list|view, run list|view (no --log), workflow list|view,
+#   release list, secret list, auth status, with -R/--repo --json -L/--limit -b/--branch -q/--jq only.
 # kubectl/oc describe only for nodes, services, ingress, events and namespaces (workloads print env values).
 
 GUARD_REASON=""
@@ -49,15 +52,14 @@ _in_list() { local l; while IFS= read -r l; do [ "$1" = "$l" ] && return 0; done
 # Lower-case only names/verbs/SQL; flags keep their case (-S vs -s, -X vs -x).
 _lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
-_NAMES='gitleaks semgrep osv-scanner zizmor actionlint hadolint checkov trivy aws gcloud az kubectl oc terraform tofu terragrunt helm railway wrangler redis-cli bq psql mysql mariadb sqlite3 sqlcmd mongosh clickhouse-client cqlsh snowsql usql pgcli mycli awscli pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot'
+_NAMES='gh gitleaks semgrep osv-scanner zizmor actionlint hadolint checkov trivy aws gcloud az kubectl oc terraform tofu terragrunt helm railway wrangler redis-cli bq psql mysql mariadb sqlite3 sqlcmd mongosh clickhouse-client cqlsh snowsql usql pgcli mycli awscli pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot'
 # `-` and `/` are boundaries, so hyphen/slash-joined names count too (aws-cdk, netlify-cli, amazon/aws-cli).
 _MENTION="(^|[^a-z0-9_.])(${_NAMES// /|})([^a-z0-9_.]|\$)"
 _SQL_CLIS=' psql mysql mariadb sqlite3 usql pgcli mycli '
 _UNSUPPORTED=' mongosh cqlsh clickhouse-client snowsql sqlcmd bq pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot '
 _FILTERS=' jq head tail grep sort uniq wc cut column tr '
-# The only jq filters semgrep JSON may go through (references/scanners.md): rule, file and line, never the matched text.
-_SEMGREP_JQ='{errors: (.errors|length), results: [.results[] | {check_id, path, line: .start.line}]}
-.results[] | [.check_id,.path,.start.line] | @tsv'
+# The only jq filter semgrep JSON may go through (references/scanners.md): error count, rule, file and line, never the matched text.
+_SEMGREP_JQ='{errors: (.errors|length), results: [.results[] | {check_id, path, line: .start.line}]}'
 _LONGFLAGS=' --raw-output --compact-output --count --ignore-case --unique --reverse --numeric-sort '
 # No KUBECONFIG (or --kubeconfig): a kubeconfig can run exec credential plugins.
 _ENV_OK=' AWS_PROFILE AWS_REGION AWS_DEFAULT_REGION AWS_PAGER PGOPTIONS PGHOST PGPORT PGUSER PGDATABASE PGSSLMODE CLOUDSDK_CORE_PROJECT CLOUDSDK_CONFIG NO_COLOR '
@@ -346,6 +348,39 @@ _eval_cli() {
         case "$a ${P[1]:-}" in "client list"|"config get") return 0 ;; esac
       fi
       _no "redis-cli $a" ;;
+    gh)
+      a=$(_lc "${1:-}"); b=$(_lc "${2:-}")
+      if [ "$a" = api ]; then
+        shift; b=""
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            -q|--jq) [ $# -gt 1 ] || { _deny "gh api $1 needs a value"; return 1; }; w=$2; shift ;;
+            -q?*|--jq=*) w=${1#-q}; w=${w#--jq}; w=${w#=} ;;
+            --paginate) w="" ;;
+            -X|--method) [ $# -gt 1 ] && [ "$(_lc "$2")" = get ] || { _deny "gh api only with method GET"; return 1; }; shift ;;
+            -X?*|--method=*) nm=${1#-X}; nm=${nm#--method}
+                             [ "$(_lc "${nm#=}")" = get ] || { _deny "gh api only with method GET"; return 1; } ;;
+            # -f/-F/--field/--raw-field/--input switch to POST; -H/--hostname and the rest are not reads we need.
+            -*) _deny "gh api flag ${1%%=*} not allowed during review"; return 1 ;;
+            *) [ -z "$b" ] || { _deny "gh api takes one endpoint"; return 1; }; b=$1 ;;
+          esac
+          [[ "$(_lc "${w:-}")" =~ (^|[^a-z0-9_])env([^a-z0-9_]|$) ]] && { _deny "gh api --jq env prints the environment"; return 1; }
+          w=""; shift
+        done
+        [[ "$b" =~ ^(repos/[^[:space:]]+|user)$ ]] || { _deny "gh api only on repos/... or user"; return 1; }
+        case "/$b/" in */../*|*/logs/*) _deny "gh api path $b not allowed during review"; return 1 ;; esac
+        return 0
+      fi
+      case "$a $b" in
+        "repo view"|"pr list"|"pr view"|"run list"|"run view"|"workflow list"|"workflow view"|"release list"|"secret list"|"auth status") shift 2 ;;
+        *) _no "gh $a $b"; return 1 ;;
+      esac
+      # No --log (run output), -t/--show-token, --web or templates: only these flags; bare words are numbers or names.
+      _scan_args "-R --repo --json -L --limit -b --branch -q --jq" "" "$@" || { _deny "gh $a $b flag not on the read allow-list"; return 1; }
+      for w in "${SF[@]}"; do
+        case "$w" in -q=*|--jq=*) [[ "$(_lc "${w#*=}")" =~ (^|[^a-z0-9_])env([^a-z0-9_]|$) ]] && { _deny "gh --jq env prints the environment"; return 1; } ;; esac
+      done
+      return 0 ;;
     *) _sql_check "$cli" "$@" ;;
   esac
 }
@@ -643,8 +678,10 @@ guard_check() {
   done
   [ "$i" -lt "$n" ] || { _shape; return 1; }
   base=$(_lc "${TOK[i]##*/}")
+  # A path, `=gh` or `GH` (case-insensitive filesystems) could run another binary on the same token.
+  [ "$base" != gh ] || [ "${TOK[i]}" = gh ] || { _deny "gh only as the bare command name"; return 1; }
   case "$base" in
-    aws|gcloud|az|kubectl|oc|terraform|tofu|terragrunt|helm|railway|wrangler|redis-cli) ;;
+    gh|aws|gcloud|az|kubectl|oc|terraform|tofu|terragrunt|helm|railway|wrangler|redis-cli) ;;
     # Audit words were checked in the loop above; here only the shape is enforced.
     npm|composer|bundle|bundle-audit|pip-audit|gitleaks|semgrep|osv-scanner|zizmor|actionlint|hadolint) [ $audit = 1 ] || { _shape; return 1; } ;;
     *) _in "$base" "$_UNSUPPORTED" && { _deny "$base client not supported in read-only review"; return 1; }
