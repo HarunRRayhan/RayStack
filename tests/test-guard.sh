@@ -952,6 +952,19 @@ for c in "${ALLOW[@]}"; do
   if guard_check "$c" 2>/dev/null; then pass "allows: $c"; else fail "should allow: $c (${GUARD_REASON:-})"; fi
 done
 
+# Every scanner command the docs show (```scanner blocks) must pass the guard, so docs and guard cannot drift.
+SKILLS_DIR=$(cd skills && pwd -P)
+n=0
+while IFS= read -r c; do
+  [ -n "$c" ] || continue
+  n=$((n + 1)); c=${c//<skills>/$SKILLS_DIR}
+  if guard_check "$c" 2>/dev/null; then pass "documented scanner allowed: $c"; else fail "documented scanner denied: $c (${GUARD_REASON:-})"; fi
+done < <(awk '/^```scanner$/{f=1;next} /^```$/{f=0} f' skills/raystack/references/scanners.md skills/*/references/checklist.md skills/*/SKILL.md 2>/dev/null)
+if [ "$n" -ge 7 ]; then pass "scanner doc blocks found ($n)"; else fail "scanner doc blocks found ($n)"; fi
+for c in 'osv-scanner scan --no-call-analysis=go -r --format json .' 'zizmor --offline .' 'hadolint Dockerfile' "grep -rl '[g]itleaks:allow' ." "semgrep scan --config p/default --metrics off --disable-version-check --json . | jq -r '.results[] | [.check_id,.path,.start.line] | @tsv'"; do
+  if guard_check "$c" 2>/dev/null; then pass "allows: $c"; else fail "should allow: $c (${GUARD_REASON:-})"; fi
+done
+
 # End-to-end through stdin JSON
 err=$(printf '%s' '{"tool_name":"Bash","tool_input":{"command":"terraform destroy"}}' | bash "$GUARD" 2>&1 >/dev/null); rc=$?
 assert_eq "$rc" 2 "json block exits 2"

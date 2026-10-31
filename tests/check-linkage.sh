@@ -38,8 +38,16 @@ fi
 
 # scanner rules (contract) and app-security extensions
 rc=skills/raystack/references/review-contract.md
-for t in Scanners 'never install' '--redact' '--metrics off' checkov 'osv-scanner scan --no-call-analysis=go' 'zizmor --offline' 'realpath'; do
+for t in Scanners 'never install' '--redact' checkov; do
   check "contract contains: $t" grep -qF -- "$t" "$rc"
+done
+sc=skills/raystack/references/scanners.md
+check "scanners.md exists" test -f "$sc"
+check "contract links scanners.md" grep -qF 'references/scanners.md' "$rc"
+check "app-security SKILL links scanners.md" grep -qF 'raystack/references/scanners.md' "$app"
+check "app-security checklist links scanners.md" grep -qF 'raystack/references/scanners.md' skills/app-security-review/references/checklist.md
+for t in '--metrics off' 'osv-scanner scan --no-call-analysis=go -r --format json .' 'zizmor --offline' 'brew install gitleaks semgrep osv-scanner zizmor actionlint hadolint' 'command not found' 'realpath' 'zizmor --offline .' 'hadolint Dockerfile' "grep -rl '[g]itleaks:allow'" '| jq'; do
+  check "scanners.md contains: $t" grep -qF -- "$t" "$sc"
 done
 for t in osv-scanner 'Blind spot'; do
   check "app-security-review contains: $t" grep -qF -- "$t" "$app"

@@ -70,31 +70,14 @@ Use what is available, in this order:
   blocked. Use the bare command name: a path such as `./vendor/bin/composer` is denied. The
   guard watches only these names, so `python -m pip_audit` is not checked; don't use it.
 - `bundle-audit check` may download its advisory DB to the user's data dir on first run.
-### Scanners
-
-Allowed only in these forms, one bare command each, same pipe filters. `<skills>` is the
-`realpath` of `<this review's base directory>/../raystack`.
-- `gitleaks dir . --redact --no-banner -f json -r - -c <skills>/references/gitleaks.toml`
-  (or `gitleaks git ...` for history); `--redact` and that exact `-c` are required
-- `semgrep scan --config p/default --metrics off --disable-version-check` (opt. `--json`)
-- `osv-scanner scan --no-call-analysis=go` (opt. `-r`, `--format json`, `--no-resolve`, paths)
-- `zizmor --offline`; `actionlint -shellcheck= -pyflakes=`; `hadolint` (opt. `-f json`)
-
-- semgrep (registry rules) and osv-scanner (package lists to osv.dev) go online: live consent
-  first. gitleaks, zizmor `--offline`, actionlint and hadolint are local.
-- Installed: run it. Not installed: say so under "Inputs used / missing", put the install
-  command under "Commands for you to run", read the code instead, and never install it.
-- `checkov` and `trivy` are never run: list their commands for the human.
-- Confirm each hit by reading the code. `.gitleaksignore`, `gitleaks:allow` comments and
-  `osv-scanner.toml` can hide findings: mention them in the report if present.
-
 - The guard also denies any command that mentions a shell, `env`, `ssh` or `scp`, a package
   runner (`npx`, `uv run`, `npm test` or other scripts, `yarn`, `pnpm` and `bun` except
   `--version`), a container lifecycle command (`docker compose up`, `docker run`), a docker flag
   before the subcommand, or a monitored tool's name anywhere (e.g. `grep -n npm Dockerfile`,
   `grep -rn "@aws-sdk" .`).
 - To grep for such a name, write it as a bracket class in single quotes, e.g.
-  `grep -rn '[r]ailway' .`, `'[n]pm'`, `'[a]ws-sdk'`, `'[d]ocker'`, `'[c]omposer'`, `'[b]undle'`.
+  `grep -rn '[r]ailway' .`, `'[n]pm'`, `'[a]ws-sdk'`, `'[d]ocker'`, `'[c]omposer'`, `'[b]undle'`,
+  `'[g]itleaks'`, `'[s]emgrep'`. Scanner names are monitored too.
 - For a literal dot in a pattern use `[.]`, not a backslash (backslashes are denied).
 - If the guard blocks a read command for its shape, rewrite it once: quote it, split it, drop
   the redirect.
@@ -112,6 +95,16 @@ Allowed only in these forms, one bare command each, same pipe filters. `<skills>
   - `curl`: one HEAD or GET per URL. No request bodies, loops or parallelism.
   - Load tests are for the human, on a disposable environment. List them under
     "Commands for you to run".
+
+### Scanners
+
+Six scanners (gitleaks, semgrep, osv-scanner, zizmor, actionlint, hadolint) are allowed only
+in the exact forms in `references/scanners.md`: one bare command, the same pipe filters.
+- semgrep and osv-scanner go online: live consent first. The others are local.
+- Never print a secret: gitleaks keeps `--redact`, semgrep goes through `jq` (see the file).
+- Missing tool: say so under "Inputs used / missing", give the install command under
+  "Commands for you to run", read the code instead, and never install it.
+- `checkov` and `trivy` are never run: list their commands for the human.
 
 ## 4. Questions
 

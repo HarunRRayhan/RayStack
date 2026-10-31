@@ -60,8 +60,8 @@ tool:
 If they decline, list the audit commands under "Commands for you to run". Run the audits only
 in the exact forms above, never `audit fix`, `bundle audit` or another verb. If there is
 no lockfile for an ecosystem, or the tool is not installed ("command not found"), skip that
-audit and say so in "Inputs used / missing". Never fail the review over it. The checklist
-has the secret and code scan commands.
+audit and say so in "Inputs used / missing". Never fail the review over it. Areas 13 and 14 of the
+checklist have the secret and code scan steps; the forms are in `../raystack/references/scanners.md`.
 
 ## 4. Work the checklist
 
