@@ -30,9 +30,14 @@ Use what is available, in this order:
 - If the user declines, do not make live calls. Work from IaC and exports only.
 - AWS with no working read-only profile: offer the `aws-readonly-setup` skill, which makes a
   `raystack-readonly` profile. Never run it inside a review.
-- If the raystack router invoked this review with consent answers, use them and do not ask
-  again, and skip its target and scanner questions too; ask only review-specific items (e.g.
-  slow endpoint and window).
+- If the raystack router invoked this review with consent answers, use them and
+  skip only the questions it answered. Otherwise still ask what it did not pass (e.g.
+  which database, the production URL) and review-specific items (e.g. slow endpoint and
+  window).
+- If the router's wording says "part of a raystack scan", ask nothing at all; this overrides
+  every ask in the review's own SKILL.md. Assume the safe default (worst case for security,
+  "unknown" for numbers), list each assumption under "Inputs used / missing", and add
+  `(unconfirmed)` to findings that depend on one.
 
 ## 3. Read-only
 

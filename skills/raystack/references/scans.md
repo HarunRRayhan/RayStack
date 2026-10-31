@@ -5,16 +5,18 @@ when its signals are found (router step 1). Run the reviews in this order.
 
 | Type | Reviews, in run order |
 | --- | --- |
-| security | `app-security-review`, `pipeline-security-review`, `aws-security-review*`, `infra-review*` |
+| security | `app-security-review`, `pipeline-security-review*`, `aws-security-review*`, `infra-review*` |
 | performance | `performance-review`, `database-review*`, `aws-bottleneck-review*` |
 | scalability | `scaling-review`, `database-review*` |
-| infra | `infra-review`, `pipeline-security-review`, `aws-security-review*`, `aws-bottleneck-review*` |
+| infra | `infra-review`, `pipeline-security-review*`, `aws-security-review*`, `aws-bottleneck-review*` |
 | aws | `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review` |
 | database | `database-review` |
 | all | `app-security-review*`, `pipeline-security-review*`, `performance-review*`, `database-review*`, `scaling-review*`, `infra-review*`, `aws-security-review*`, `aws-bottleneck-review*`, `aws-billing-review*` |
 
 For `all`, every review is conditional: those with no signals are listed as skipped.
 Scaling signals: queues, workers, schedulers, autoscaling or replica-count config (step 1).
+Pipeline signals: CI workflows, a `Dockerfile`, IaC or a lockfile (a lockfile alone runs the
+supply-chain items).
 
 ## Type and consent
 
@@ -27,11 +29,17 @@ Skip step 2's review pick. Make ONE question-tool call with only what the mapped
 2. "Live access" as in step 2 item 4 (at most 4 options). Only offer AWS setup when AWS signals
    are found.
 3. "Network scanners" (multi-select): dependency audits + osv-scanner, semgrep, `gh api` with
-   the OWNER/REPO and branch from `git remote` and the default branch.
-4. "Targets": the database or replica, and the production URL, typed in "Other", or "None".
+   the OWNER/REPO and branch from `git remote` and the default branch. In a scan this is the
+   only place app-security-review's dependency audits are asked.
+4. "Targets": what was found (e.g. a `DATABASE_URL`-style name from `.env.example`, DB or app
+   hosts from config), at most 3, plus "None"; others typed in "Other". Nothing found: drop it.
 
-Pass the answers to every review with the router step 3 wording. A declined or empty answer
-means that review works from files only for it; the scan still runs.
+Pass the answers to every review with the router step 3 wording, which says
+"part of a raystack scan". A declined or empty answer means that review works from files
+only for it; the scan still runs. The reviews ask nothing more: each assumes the safe default
+(worst case for security, "unknown" for numbers), lists each assumption under
+"Inputs used / missing", and marks findings that depend on one `(unconfirmed)` (contract
+section 2).
 
 ## Skipped reviews
 

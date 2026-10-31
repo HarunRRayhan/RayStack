@@ -158,8 +158,30 @@ if [ -f "$entry" ]; then
   check "router: no-signals fallback is not for scans" grep -qF 'not in a scan' "$entry"
   check "router: routed consent covers scanners and targets" grep -qF 'scanners, targets' "$entry"
   contract=skills/raystack/references/review-contract.md
-  check "contract: routed review skips target and scanner questions" grep -qF 'target and scanner questions' "$contract"
-  check "contract: replica target is not review-specific" bash -c '! grep -qF "replica target" "$1"' _ "$contract"
+  # A routed review skips only what the router asked and passed; unpassed targets are still asked.
+  check "contract: routed review skips only what was answered" grep -qF 'skip only the questions it answered' "$contract"
+  check "contract: routed review still asks unpassed targets" grep -qF 'still ask what it did not pass' "$contract"
+  check "contract: routed review no longer skips targets wholesale" bash -c '! grep -qF "target and scanner questions" "$1"' _ "$contract"
+  check "router: review skips only the questions answered" grep -qF 'skips only the questions answered here' "$entry"
+  # In a scan, reviews ask nothing: safe defaults, listed, findings unconfirmed.
+  for f in "$contract" "$scans" "$entry"; do
+    check "$(basename "$f") names the scan phrase" grep -qF 'part of a raystack scan' "$f"
+  done
+  for f in "$contract" "$scans"; do
+    check "$(basename "$f"): scan assumes the safe default" grep -qF 'safe default' "$f"
+  done
+  check "scans.md: assumptions go under Inputs used / missing" grep -qF 'Inputs used / missing' "$scans"
+  check "scans.md: Targets offers found targets plus None" grep -qF 'plus "None"' "$scans"
+  check "scans.md: pipeline review starred in security" grep -qE '^\| security \|.*`pipeline-security-review\*`' "$scans"
+  check "scans.md: pipeline review starred in infra" grep -qE '^\| infra \|.*`pipeline-security-review\*`' "$scans"
+  check "scans.md: a lockfile alone runs the pipeline review" grep -qF 'lockfile alone' "$scans"
+  check "scans.md: question 3 owns app-security audits in a scan" grep -qF "app-security-review's dependency audits" "$scans"
+  check "router: live access covers audits only outside a scan" grep -qF 'in a scan, scans.md question 3 asks instead' "$entry"
+  check "router: first match wins in step 0" grep -qF 'first match wins' "$entry"
+  check "router: scan and fix goes to Scan" grep -qF '"scan and fix"' "$entry"
+  check "router: wrap-up offers dev to fix scan findings" grep -qF 'offer `dev` to fix' "$entry"
+  check "router: bare rule comes before the ledger rule" test "$(grep -n 'Bare `/raystack`' "$entry" | cut -d: -f1)" -lt "$(grep -n 'unfinished ledger' "$entry" | cut -d: -f1)"
+  check "database-review: Targets needs live access Yes too" grep -qF 'only when live access was also Yes' skills/database-review/SKILL.md
   for s in database-review infra-review performance-review pipeline-security-review app-security-review; do
     check "$s skips what the router passed" grep -qF 'unless the router passed' "skills/$s/SKILL.md"
   done

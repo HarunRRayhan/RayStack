@@ -20,15 +20,15 @@ door: it works out what the user wants and runs the right skills.
 Four principle skills load on their own; this router never runs them: `principle-ship`,
 `principle-smallest-change`, `principle-ask-with-question-tool`, `principle-secrets-layout`.
 
-## 0. Pick the job
+## 0. Pick the job (in this order; the first match wins)
 
+- "scan", "security scan", "performance scan", "scan and fix"; "scan all", "full audit", "check everything" mean `all`: Scan.
 - Words about making or changing something ("start", "PRD", "plan", "build", "fix", "where are
   we"): hand off to `dev` and stop here, even when told to do the least possible (see `dev`).
-- "scan", "security scan", "performance scan"; "scan all", "full audit", "check everything" mean `all`: Scan.
 - Other words about auditing, cost, security, speed, scaling or the database: step 1.
-- An unfinished ledger in `docs/plans/`, and words not clearly a review or scan: `dev`, as above.
 - Bare `/raystack`: ask once through the question tool, "Build something" (runs `dev`) or
   "Review this repo" (step 1). Recommend "Build" when `docs/plans/` or `DECISIONS.md` exists.
+- An unfinished ledger in `docs/plans/`, and words not clearly a review or scan: `dev`, as above.
 
 ## 1. Detect signals
 
@@ -66,11 +66,10 @@ Use plain text only without such a tool. It allows up to 4 questions with up to 
 2. "App reviews" (multi-select): `app-security-review`, `performance-review`,
    `pipeline-security-review`.
 3. "Platform reviews" (multi-select): `infra-review`, `scaling-review`, `database-review`.
-4. "Live access": read-only live access yes or no, and which profile, account, project or
-   region (for `app-security-review`, this covers its dependency audits). Offer at most 2 found
-   profiles (e.g. from `~/.aws/config`; others typed in "Other") and "No, IaC and exports only".
-   No working read-only AWS profile: offer "Set up read-only access" and run
-   `aws-readonly-setup` before any review.
+4. "Live access": read-only yes or no, and which profile, account, project or region. Outside a
+   scan it also covers `app-security-review`'s audits (in a scan, scans.md question 3 asks instead).
+   Offer at most 2 found profiles (e.g. `~/.aws/config`; others in "Other"), "No, IaC and exports
+   only" and, with no working read-only AWS profile, "Set up read-only access" (run `aws-readonly-setup` first).
 
 - Put recommended reviews first, labelled "(Recommended)", each with a one-line reason tied to
   what you detected, e.g. "Found 14 `.tf` files". Nothing chosen, or declined: stop, run nothing.
@@ -84,22 +83,23 @@ Run each chosen review in turn, one at a time, passing the consent answers:
   install the bare name).
 - Other agents: read `../<skill>/SKILL.md` and follow it, with the answers as instructions.
 
-Use this wording: "consent already given by raystack router (live access, scanners, targets):
-<answers>. The router offers the PDF at the end." The review then skips its consent, target and
-scanner questions (contract section 2) and PDF offer, and asks only review-specific items. From
-the second review on, add the reports already written: "a finding already filed there gets a
-one-line `see <report>` reference, not a second entry". Run `database-review` before `infra-review`.
+Use this wording: "consent already given by raystack router for <what was asked, e.g. live
+access, scanners, targets>: <answers>. The router offers the PDF at the end." In a scan, add
+"This is part of a raystack scan." The review skips only the questions answered here and its
+PDF offer, and in a scan asks nothing (contract section 2). From the second review on, add the
+reports already written: "a finding already filed there gets a one-line `see <report>`
+reference, not a second entry". Run `database-review` before `infra-review`.
 
 ## 4. Wrap up
 
-- List every report file written under `reviews/`.
-- Offer the PDF once, for all the reports together, after the last review. If accepted, run
-  `scripts/report-pdf.sh` from this skill's folder (absolute path) once per report, with the
-  report's absolute path.
+- List every report file written under `reviews/`. Then offer the PDF once, for all the reports;
+  after a scan, offer `dev` to fix the findings in the same question (recommended for "scan and
+  fix"). If the PDF is accepted, run `scripts/report-pdf.sh` from this skill's folder (absolute
+  path) once per report, with the report's absolute path.
 
 ## Scan
 
-`scan <type>` (security, performance, scalability, infra, aws, database, all) runs steps 1, 3 and
-4 on the type's review list. Type and consent: [references/scans.md](references/scans.md), which
-replaces step 2 (no review pick) with one question-tool call. It also has the table, skipped
-reviews and the combined `reviews/YYYY-MM-DD-scan-<type>.md` (skill `scan-<type>`).
+`scan <type>` (security, performance, scalability, infra, aws, database, all) runs steps 1, 3 and 4 on
+the type's review list. Type and consent: [references/scans.md](references/scans.md), which replaces
+step 2 (no review pick) with one question-tool call. It also has the table, skipped reviews and the
+combined `reviews/YYYY-MM-DD-scan-<type>.md` (skill `scan-<type>`).
