@@ -9,22 +9,34 @@
 #   [NAME=literal ...] <cli> args... [| <filter> args ...]...
 # and the CLI's verb must be on that CLI's read allow-list. Everything else is denied.
 # SQL: one statement per command, no comments (--, /*, and # for MySQL/usql); every `name(` must be on a read-only function list.
-# Unquoted glob/redirect chars ([ ] ( ) * ? ! < >) and braces deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq,
+# Unquoted glob/redirect chars ([ ] ( ) * ? ! < > ^), braces and # deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq,
 #   deploy tools and pg_dump/pg_restore always deny. Names match on `-`/`/` boundaries too (aws-cdk, amazon/aws-cli).
+# python/pypy/py -m <monitored name>[.sub] denies (`.` is not a name boundary elsewhere).
 # Any word that is a shell, env, ssh/scp/sftp/mosh, or a package runner (npx pnpx bunx uvx) denies.
 # Allow-lists, checked on every word: npm ls/list/view/outdated/audit (no fix)/why/explain; yarn/pnpm/bun --version;
 #   composer audit --no-plugins --no-scripts, bundle-audit check, pip-audit (-r needs --disable-pip plus --no-deps or
 #   --require-hashes), each with listed flags only (no repo plugins, scripts or package builds). Any audit
 #   (npm audit too) takes the cloud-CLI shape below: one call, only filters after a pipe, no ; && || or redirects.
+#   Scanners take the same shape, as the bare name, with listed flags only: gitleaks dir|git (--redact and
+#   -c <this skill>/references/gitleaks.toml required, -f json, -r - only, --log-level info|warn|error|fatal), semgrep scan (--metrics off --disable-version-check, --config p/ or r/ only, --json into the documented jq filter),
+#   osv-scanner scan (--no-call-analysis=go required, --format json, no image), zizmor --offline, actionlint -shellcheck= -pyflakes= (flags
+#   before files), hadolint (-f json). No output files, fixes or repo configs. checkov and trivy deny in every form.
 #   docker/podman/nerdctl ps, images, image ls, version, info, system df, stats --no-stream,
 #   logs --tail N<=200, compose ps|ls|images|logs|config --services/--volumes (no flags before the subcommand,
 #   no NAME=value, export or set anywhere in the command).
 # Secret-ish cloud ops (secret, password, token, credential, keys list, ...) deny unless on a metadata list;
 #   ops that return env vars, user data or passwords (lambda config, ecs task defs, launch templates) deny outright.
+# gh (runs on the user's full GitHub token): bare `gh` only; api is GET with -q/--jq, --paginate, -X/--method GET,
+#   on an endpoint allow-list only: user, repos/O/R, its branches/B[/protection], rules/branches/B and
+#   actions/permissions/workflow (no `..`); read subcommands repo view, pr list|view, run list|view (no --log),
+#   workflow list|view, release list, secret list, auth status, with -R/--repo --json -L/--limit -b/--branch -q/--jq
+#   only. -R/--repo and bare words are OWNER/REPO, a number or a plain name: a HOST/ or URL would get the token.
 # kubectl/oc describe only for nodes, services, ingress, events and namespaces (workloads print env values).
 
 GUARD_REASON=""
 KEYS_ONLY=0
+# gitleaks must use the config shipped beside this guard, or it loads the scanned repo's .gitleaks.toml.
+_GITLEAKS_CONF=$(cd "$(dirname "${BASH_SOURCE[0]}")/../references" 2>/dev/null && printf '%s/gitleaks.toml' "$(pwd -P)")
 P=()
 PIPE=$'\001'
 
@@ -38,15 +50,22 @@ _secret_op() {
   _deny "$1 may print secrets or credentials"; return 0
 }
 _in() { case " $2 " in *" $1 "*) return 0 ;; esac; return 1; }
+# _in_list <word> <newline-separated list>: exact whole-line match.
+_in_list() { local l; while IFS= read -r l; do [ "$1" = "$l" ] && return 0; done <<< "$2"; return 1; }
 # Lower-case only names/verbs/SQL; flags keep their case (-S vs -s, -X vs -x).
 _lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
-_NAMES='aws gcloud az kubectl oc terraform tofu terragrunt helm railway wrangler redis-cli bq psql mysql mariadb sqlite3 sqlcmd mongosh clickhouse-client cqlsh snowsql usql pgcli mycli awscli pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot'
+_NAMES='gh gitleaks semgrep osv-scanner zizmor actionlint hadolint checkov trivy aws gcloud az kubectl oc terraform tofu terragrunt helm railway wrangler redis-cli bq psql mysql mariadb sqlite3 sqlcmd mongosh clickhouse-client cqlsh snowsql usql pgcli mycli awscli pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot'
 # `-` and `/` are boundaries, so hyphen/slash-joined names count too (aws-cdk, netlify-cli, amazon/aws-cli).
 _MENTION="(^|[^a-z0-9_.])(${_NAMES// /|})([^a-z0-9_.]|\$)"
 _SQL_CLIS=' psql mysql mariadb sqlite3 usql pgcli mycli '
 _UNSUPPORTED=' mongosh cqlsh clickhouse-client snowsql sqlcmd bq pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot '
 _FILTERS=' jq head tail grep sort uniq wc cut column tr '
+_GH_REPO='[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+'
+# gh api endpoints the reviews read: the user, repo metadata, branch protection, rulesets, workflow token default.
+_GH_PATH="^(user|repos/${_GH_REPO}(/(branches/[A-Za-z0-9_./-]+(/protection)?|rules/branches/[A-Za-z0-9_./-]+|actions/permissions/workflow))?)\$"
+# The only jq filter semgrep JSON may go through (references/scanners.md): error count, rule, file and line, never the matched text.
+_SEMGREP_JQ='{errors: (.errors|length), results: [.results[] | {check_id, path, line: .start.line}]}'
 _LONGFLAGS=' --raw-output --compact-output --count --ignore-case --unique --reverse --numeric-sort '
 # No KUBECONFIG (or --kubeconfig): a kubeconfig can run exec credential plugins.
 _ENV_OK=' AWS_PROFILE AWS_REGION AWS_DEFAULT_REGION AWS_PAGER PGOPTIONS PGHOST PGPORT PGUSER PGDATABASE PGSSLMODE CLOUDSDK_CORE_PROJECT CLOUDSDK_CONFIG NO_COLOR '
@@ -101,6 +120,32 @@ _flags_ok() {
   return 0
 }
 
+# _scan_args "<value flags>" "<bool flags>" args...: like _flags_ok, but bare words are paths (SP) and each
+# flag lands in SF as `flag` or `flag=value`; LATE=1 when a flag follows a path. Only values may hold spaces.
+_scan_args() {
+  local vf=$1 bf=$2 nm; shift 2; SF=(); SP=(); LATE=0
+  while [ $# -gt 0 ]; do
+    nm=${1%%=*}
+    case "$nm" in *[[:space:]]*) return 1 ;; esac
+    if [ "${1#-}" = "$1" ] || [ "$1" = - ]; then SP+=("$1")
+    else
+      [ ${#SP[@]} = 0 ] || LATE=1
+      if _in "$nm" "$vf"; then
+        if [ "$nm" = "$1" ]; then
+          [ $# -gt 1 ] && { [ "${2#-}" = "$2" ] || [ "$2" = - ]; } || return 1
+          SF+=("$1=$2"); shift
+        else SF+=("$1"); fi
+      elif [ "$nm" = "$1" ] && _in "$1" "$bf"; then SF+=("$1")
+      else return 1; fi
+    fi
+    shift
+  done
+  return 0
+}
+# _has <prefix>: some SF entry starts with it. _vals <flag> <regex>: every value given to <flag> matches.
+_has() { local w; for w in "${SF[@]}"; do case "$w" in "$1"*) return 0 ;; esac; done; return 1; }
+_vals() { local w; for w in "${SF[@]}"; do case "$w" in "$1="*) [[ "${w#*=}" =~ ^($2)$ ]] || return 1 ;; esac; done; return 0; }
+
 # _tail_ok args...: a --tail N with N <= 200 is present (bounded log reads).
 _tail_ok() {
   while [ $# -gt 0 ]; do
@@ -134,6 +179,59 @@ _docker_ok() {
       return 0 ;;
   esac
   _no "$base ${1:-} ${2:-}"
+}
+
+# _scanner_ok <name> <i>: 0 when the scanner call at TOK[i] (guard_check's tokens) is its listed read form.
+# Sets SF, SP, LATE (via _scan_args) and sgjq=1 for semgrep in the caller's scope.
+_scanner_ok() {
+  local name=$1 i=$2 j vf bf w seen
+  local -a ARGS
+  # Scanners: the read form only, with no output file, fix or repo config. A path or `=name` runs another binary.
+  [ "${TOK[i]}" = "$name" ] || { _deny "$name only as the bare command name"; return 1; }
+  j=$((i + 1))
+  case "$name $(_lc "${TOK[j]:-}")" in
+    "gitleaks dir"|"gitleaks git") j=$((j + 1)); vf='-f -r --log-level -c --config'; bf='--redact --no-banner' ;;
+    "semgrep scan") j=$((j + 1)); vf='--config --metrics --severity'; bf='--disable-version-check --json --quiet' ;;
+    "osv-scanner scan") j=$((j + 1)); vf='--format --no-call-analysis'; bf='-r --no-resolve --offline --download-offline-databases' ;;
+    "zizmor "*) vf='--format'; bf='--offline --no-config' ;;
+    "actionlint "*) vf='-shellcheck -pyflakes -format'; bf='-oneline' ;;
+    "hadolint "*) vf='-f'; bf='' ;;
+    *) _deny "$name ${TOK[j]:-} is not on the read allow-list"; return 1 ;;
+  esac
+  ARGS=()
+  for ((; j < n; j++)); do
+    [ "${TOK[j]}" = "$PIPE" ] && break
+    ARGS+=("${TOK[j]}")
+  done
+  _scan_args "$vf" "$bf" "${ARGS[@]}" || { _deny "$name flag not on the read allow-list"; return 1; }
+  case "$name" in
+    gitleaks) { _has --redact && _vals -f json && _vals -r -; } || { _deny "gitleaks only with --redact, -f json and -r - (stdout)"; return 1; }
+      # A repo config can redact almost nothing; only RayStack's config, compared as a string.
+      seen=0
+      for w in "${SF[@]}"; do
+        case "$w" in -c=*|--config=*) if [ "${w#*=}" = "$_GITLEAKS_CONF" ] && [ "$seen" = 0 ]; then seen=1; else seen=2; fi ;; esac
+      done
+      if ! { [ "$seen" = 1 ] && [ -n "$_GITLEAKS_CONF" ]; }; then _deny "gitleaks only with -c $_GITLEAKS_CONF"; return 1; fi
+      # trace and debug logs print findings unredacted.
+      _vals --log-level 'info|warn|error|fatal' || { _deny "gitleaks --log-level only info, warn, error or fatal"; return 1; } ;;
+    # No --config means repo .semgrep.yml; metrics or version checks phone home.
+    # A local p/ or r/ dir would be read as rules: data, not code.
+    semgrep) { _has --config= && _vals --config '[pr]/[A-Za-z0-9._-]+' && _has --metrics=off && _vals --metrics off && _has --disable-version-check; } ||
+      { _deny "semgrep scan only with --config p/ or r/, --metrics off and --disable-version-check"; return 1; }
+      # Plain text and raw JSON print the matched line, which can be a secret: --json into the documented jq only.
+      _has --json || { _deny "semgrep scan only with --json piped to the documented jq filter"; return 1; }
+      sgjq=1 ;;
+    # `scan image` pulls and unpacks container images.
+    # Go call analysis is on by default and needs the go toolchain; --call-analysis is not listed.
+    osv-scanner) { _vals --format json && _has --no-call-analysis= && _vals --no-call-analysis go && [ "$(_lc "${SP[0]:-}")" != image ]; } ||
+      { _deny "osv-scanner scan only with --no-call-analysis=go, --format json and paths"; return 1; } ;;
+    zizmor) { _has --offline && _vals --format json; } || { _deny "zizmor only with --offline and --format json"; return 1; } ;;
+    # Go flag parsing stops at the first file, so later flags would be files; unset checkers run binaries.
+    actionlint) { [ $LATE = 0 ] && _has -shellcheck= && _vals -shellcheck '' && _has -pyflakes= && _vals -pyflakes ''; } ||
+      { _deny "actionlint only with -shellcheck= -pyflakes= before any file"; return 1; } ;;
+    hadolint) _vals -f json || { _deny "hadolint only with -f json"; return 1; } ;;
+  esac
+  return 0
 }
 
 # _tf_only <name=value> args...: every -name/--name flag in args is exactly that value, and one exists.
@@ -309,6 +407,44 @@ _eval_cli() {
         case "$a ${P[1]:-}" in "client list"|"config get") return 0 ;; esac
       fi
       _no "redis-cli $a" ;;
+    gh)
+      a=$(_lc "${1:-}"); b=$(_lc "${2:-}")
+      if [ "$a" = api ]; then
+        shift; b=""
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            -q|--jq) [ $# -gt 1 ] || { _deny "gh api $1 needs a value"; return 1; }; w=$2; shift ;;
+            -q?*|--jq=*) w=${1#-q}; w=${w#--jq}; w=${w#=} ;;
+            --paginate) w="" ;;
+            -X|--method) if ! { [ $# -gt 1 ] && [ "$(_lc "$2")" = get ]; }; then _deny "gh api only with method GET"; return 1; fi; shift ;;
+            -X?*|--method=*) nm=${1#-X}; nm=${nm#--method}
+                             [ "$(_lc "${nm#=}")" = get ] || { _deny "gh api only with method GET"; return 1; } ;;
+            # -f/-F/--field/--raw-field/--input switch to POST; -H/--hostname and the rest are not reads we need.
+            -*) _deny "gh api flag ${1%%=*} not allowed during review"; return 1 ;;
+            *) [ -z "$b" ] || { _deny "gh api takes one endpoint"; return 1; }; b=$1 ;;
+          esac
+          [[ "$(_lc "${w:-}")" =~ (^|[^a-z0-9_])env([^a-z0-9_]|$) ]] && { _deny "gh api --jq env prints the environment"; return 1; }
+          w=""; shift
+        done
+        # Allow-list, not a denylist: logs, archives, artifacts, variables and contents return data, and ? or # hid them.
+        if ! { [[ "$b" =~ $_GH_PATH ]] && [[ "$b" != *..* ]]; }; then _deny "gh api endpoint $b not on the read allow-list"; return 1; fi
+        return 0
+      fi
+      case "$a $b" in
+        "repo view"|"pr list"|"pr view"|"run list"|"run view"|"workflow list"|"workflow view"|"release list"|"secret list"|"auth status") shift 2 ;;
+        *) _no "gh $a $b"; return 1 ;;
+      esac
+      # No --log (run output), -t/--show-token, --web or templates: only these flags; bare words are numbers or names.
+      _scan_args "-R --repo --json -L --limit -b --branch -q --jq" "" "$@" || { _deny "gh $a $b flag not on the read allow-list"; return 1; }
+      # gh sends the token to the host a HOST/OWNER/REPO or URL names, so repos are OWNER/REPO and bare words plain.
+      { _vals -R "$_GH_REPO" && _vals --repo "$_GH_REPO"; } || { _deny "gh -R takes OWNER/REPO only"; return 1; }
+      for w in "${SP[@]}"; do
+        if ! { [[ "$w" =~ ^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?$ ]] && [[ "$w" != *..* ]]; }; then _deny "gh argument $w not allowed"; return 1; fi
+      done
+      for w in "${SF[@]}"; do
+        case "$w" in -q=*|--jq=*) [[ "$(_lc "${w#*=}")" =~ (^|[^a-z0-9_])env([^a-z0-9_]|$) ]] && { _deny "gh --jq env prints the environment"; return 1; } ;; esac
+      done
+      return 0 ;;
     *) _sql_check "$cli" "$@" ;;
   esac
 }
@@ -401,8 +537,8 @@ _filter_ok() {
 }
 
 guard_check() {
-  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w vf bf seen audit=0
-  local -a TOK ARGS
+  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w vf bf seen audit=0 LATE=0 sgjq=0
+  local -a TOK ARGS SF SP
   GUARD_REASON=""
   case "$1" in
     *\\*|*'`'*|*\$*) _deny "dynamic command during review"; return 1 ;;
@@ -421,7 +557,8 @@ guard_check() {
       '{'|'}') _deny "brace expansion/group during review"; return 1 ;;
       # Unquoted glob/extglob/history characters (bash and zsh) could expand to any CLI name.
       # `<`/`>` too: zsh numeric ranges (sqlite<3-3>) and redirections.
-      '['|']'|'('|')'|'*'|'?'|'!'|'<'|'>') _deny "unquoted glob/redirect character '$ch' during review"; return 1 ;;
+      # `^`: zsh EXTENDED_GLOB negation (^x matches every other file name).
+      '['|']'|'('|')'|'*'|'?'|'!'|'<'|'>'|'^') _deny "unquoted glob/redirect character '$ch' during review"; return 1 ;;
       ' '|$'\t'|'|'|';'|'&'|$'\n')
         [ $intok = 1 ] && TOK+=("$tok")
         tok=""; intok=0
@@ -430,6 +567,8 @@ guard_check() {
           '|') TOK+=("$PIPE") ;;
           *) ops=1 ;;
         esac ;;
+      # A word-start `#` starts a shell comment the checks below would not see; mid-word it is a zsh EXTENDED_GLOB operator.
+      '#') _deny "unquoted # during review"; return 1 ;;
       *) [ $intok = 0 ] && [ "$ch" = '~' ] && tilde=1
          tok+=$ch; intok=1 ;;
     esac
@@ -445,6 +584,16 @@ guard_check() {
     # zsh expands a leading `=` (=composer is the path of composer), so it names the same CLI.
     name=$(_lc "${TOK[i]##*/}"); name=${name#=}
     case "$name" in
+      python*|pypy*|py)
+        # `.` is not a _MENTION boundary (docs/aws.md), so `-m awscli.clidriver` is caught here.
+        for ((j = i + 1; j < n; j++)); do
+          [ "${TOK[j]}" = "$PIPE" ] && break
+          w=""
+          if [[ "${TOK[j]}" =~ ^-[A-Za-z]*m$ ]]; then w=${TOK[j + 1]:-}
+          elif [[ "${TOK[j]}" =~ ^-[A-Za-z]*m(.+)$ ]]; then w=${BASH_REMATCH[1]}; fi
+          [[ "$(_lc "$w")" =~ ^(${_NAMES// /|})(\.|$) ]] && { _deny "python -m $w during review"; return 1; }
+        done
+        continue ;;
       npx|pnpx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
       npm|pnpm|yarn|bun)
         # Read allow-list; npm accepts prefixes and aliases (exe, innit, c), and yarn/pnpm/bun run a
@@ -506,6 +655,11 @@ guard_check() {
           _deny "pip-audit -r only with --disable-pip and --no-deps or --require-hashes"; return 1
         fi
         audit=1; continue ;;
+      gitleaks|semgrep|osv-scanner|zizmor|actionlint|hadolint)
+        _scanner_ok "$name" "$i" || return 1
+        audit=1; continue ;;
+      # D-006: no read-only form; the human runs them.
+      checkov|trivy) _deny "$name is not allowed during review: list its commands for the human to run"; return 1 ;;
       pipx|uv) f=' run ' ;;
       # A shell (or env) runs a string or a command these checks never see.
       sh|bash|zsh|dash|ksh|mksh|fish|csh|tcsh|busybox|env|ssh|scp|sftp|mosh) _deny "$name not allowed during review"; return 1 ;;
@@ -544,10 +698,12 @@ guard_check() {
   done
   [ "$i" -lt "$n" ] || { _shape; return 1; }
   base=$(_lc "${TOK[i]##*/}")
+  # A path, `=gh` or `GH` (case-insensitive filesystems) could run another binary on the same token.
+  [ "$base" != gh ] || [ "${TOK[i]}" = gh ] || { _deny "gh only as the bare command name"; return 1; }
   case "$base" in
-    aws|gcloud|az|kubectl|oc|terraform|tofu|terragrunt|helm|railway|wrangler|redis-cli) ;;
+    gh|aws|gcloud|az|kubectl|oc|terraform|tofu|terragrunt|helm|railway|wrangler|redis-cli) ;;
     # Audit words were checked in the loop above; here only the shape is enforced.
-    npm|composer|bundle|bundle-audit|pip-audit) [ $audit = 1 ] || { _shape; return 1; } ;;
+    npm|composer|bundle|bundle-audit|pip-audit|gitleaks|semgrep|osv-scanner|zizmor|actionlint|hadolint) [ $audit = 1 ] || { _shape; return 1; } ;;
     *) _in "$base" "$_UNSUPPORTED" && { _deny "$base client not supported in read-only review"; return 1; }
        _in "$base" "$_SQL_CLIS" || { _shape; return 1; } ;;
   esac
@@ -557,9 +713,15 @@ guard_check() {
     ARGS+=("${TOK[i]}")
   done
   KEYS_ONLY=0
-  case "$base" in npm|composer|bundle|bundle-audit|pip-audit) ;; *) _eval_cli "$base" "${ARGS[@]}" || return 1 ;; esac
+  case "$base" in npm|composer|bundle|bundle-audit|pip-audit|gitleaks|semgrep|osv-scanner|zizmor|actionlint|hadolint) ;; *) _eval_cli "$base" "${ARGS[@]}" || return 1 ;; esac
   if [ $KEYS_ONLY = 1 ] && { [ "$(_lc "${TOK[i + 1]:-}")" != jq ] || [ "${TOK[i + 2]:-}" != keys ] || { [ $((i + 3)) -lt "$n" ] && [ "${TOK[i + 3]}" != "$PIPE" ]; }; }; then
     _deny "railway variables only as: railway variables --json | jq 'keys'"; return 1
+  fi
+  if [ $sgjq = 1 ]; then
+    j=$((i + 2)); [ "${TOK[j]:-}" = -r ] && j=$((j + 1))
+    if [ "$(_lc "${TOK[i + 1]:-}")" != jq ] || ! _in_list "${TOK[j]:-}" "$_SEMGREP_JQ" || { [ $((j + 1)) -lt "$n" ] && [ "${TOK[j + 1]}" != "$PIPE" ]; }; then
+      _deny "semgrep output only through the documented jq filter (references/scanners.md)"; return 1
+    fi
   fi
 
   # Remaining segments: each must be `| <filter> args` with vetted args and no further CLI mention.

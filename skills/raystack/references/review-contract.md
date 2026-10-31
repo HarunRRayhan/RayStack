@@ -30,8 +30,14 @@ Use what is available, in this order:
 - If the user declines, do not make live calls. Work from IaC and exports only.
 - AWS with no working read-only profile: offer the `aws-readonly-setup` skill, which makes a
   `raystack-readonly` profile. Never run it inside a review.
-- If the raystack router invoked this review with consent answers, use them and do not ask
-  again; ask only review-specific items (e.g. slow endpoint and window, replica target).
+- If the raystack router invoked this review with consent answers, use them and
+  skip only the questions it answered. Otherwise still ask what it did not pass (e.g.
+  which database, the production URL) and review-specific items (e.g. slow endpoint and
+  window).
+- If the router's wording says "part of a raystack scan", ask nothing at all; this overrides
+  every ask in the review's own SKILL.md. Assume the safe default (worst case for security,
+  "unknown" for numbers), list each assumption under "Inputs used / missing", and add
+  `(unconfirmed)` to findings that depend on one.
 
 ## 3. Read-only
 
@@ -40,10 +46,10 @@ Use what is available, in this order:
 - A read-only guard hook may run during the review. It checks every Bash command, not only
   cloud and DB ones:
   - `$`, backticks and backslashes are denied anywhere, even inside quotes.
-  - Unquoted `[ ] ( ) * ? ! < > { }` are denied. Single-quote any argument that holds them,
-    e.g. `--query 'Reservations[].Instances[].InstanceType'`.
-  - So write report files with the agent's file write/edit tool. Never `cat >`, heredocs or
-    redirects.
+  - Unquoted `[ ] ( ) * ? ! < > { } ^` and an unquoted `#` anywhere are denied. Single-quote
+    any argument that holds them, e.g. `--query 'Reservations[].Instances[].InstanceType'`,
+    `git show 'HEAD^'`, `grep -c '^FROM' Dockerfile`.
+  - So write report files with the agent's file write/edit tool, never `cat >` or heredocs.
 - For cloud and DB commands the allowed shape is:
   - one CLI call per command, with no `;`, `&&`, `||` or redirects (`>`, `<`, `2>&1`)
   - optionally piped into `jq`, `head`, `tail`, `grep`, `sort`, `uniq`, `wc`, `cut`,
@@ -76,7 +82,9 @@ Use what is available, in this order:
   before the subcommand, or a monitored tool's name anywhere (e.g. `grep -n npm Dockerfile`,
   `grep -rn "@aws-sdk" .`).
 - To grep for such a name, write it as a bracket class in single quotes, e.g.
-  `grep -rn '[r]ailway' .`, `'[n]pm'`, `'[a]ws-sdk'`, `'[d]ocker'`, `'[c]omposer'`, `'[b]undle'`.
+  `grep -rn '[r]ailway' .`, `'[n]pm'`, `'[a]ws-sdk'`, `'[d]ocker'`, `'[c]omposer'`, `'[b]undle'`,
+  `'[g]itleaks'`, `'[s]emgrep'`, `'[g]h-pages'`. Scanner names and `gh` are monitored too, so
+  read a path holding one (`.github/workflows/gh-pages.yml`) with the file read tool, not `cat`.
 - For a literal dot in a pattern use `[.]`, not a backslash (backslashes are denied).
 - If the guard blocks a read command for its shape, rewrite it once: quote it, split it, drop
   the redirect.
@@ -94,6 +102,17 @@ Use what is available, in this order:
   - `curl`: one HEAD or GET per URL. No request bodies, loops or parallelism.
   - Load tests are for the human, on a disposable environment. List them under
     "Commands for you to run".
+
+### Scanners
+
+Six scanners (gitleaks, semgrep, osv-scanner, zizmor, actionlint, hadolint) are allowed only
+in the exact forms in `references/scanners.md` (in the raystack skill folder): one bare
+command, the same pipe filters.
+- semgrep and osv-scanner go online: live consent first. The others are local.
+- Never print a secret: gitleaks keeps `--redact`, semgrep goes through `jq` (see the file).
+- Missing tool: say so under "Inputs used / missing", give the install command under
+  "Commands for you to run", read the code instead, and never install it.
+- `checkov` and `trivy` are never run: list their commands for the human.
 
 ## 4. Questions
 

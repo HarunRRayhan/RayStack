@@ -2,7 +2,7 @@
 cd "$(dirname "$0")/.." || exit 1
 . tests/lib.sh
 
-REQUIRED=(raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review aws-readonly-setup
+REQUIRED=(raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review aws-readonly-setup
   principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build)
 
 for s in "${REQUIRED[@]}"; do

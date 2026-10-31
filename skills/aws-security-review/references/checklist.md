@@ -306,9 +306,10 @@ with the value masked, for example `AKIA************WXYZ`.
 - **Est. $/mo:** n/a. Risk: long-lived exposure after a leak.
 
 ### 6.3 Git history and logs are clean
-- **Evidence:** `gitleaks git --redact --no-banner .` (history; gitleaks before 8.19 uses
-  `gitleaks detect --redact --no-banner`) and `gitleaks dir --redact --no-banner .` (working tree).
-  Always `--redact`. Grep code for logging of config, env, request bodies or provider error text.
+- **Evidence:** gitleaks only in the forms in `../../raystack/references/scanners.md`:
+  `gitleaks git . --redact --no-banner -f json -r - -c <skills>/raystack/references/gitleaks.toml`
+  (history) and the same with `dir` (working tree); that file says how to fill `<skills>`.
+  Grep code for logging of config, env, request bodies or provider error text.
 - **Why:** a secret in history stays valid until rotated; debug prints of config leak `DATABASE_URL`.
 - **Fix:** rotate first, then purge; ban print of secret-holding config; test that the pre-commit
   secret hook actually fails on a planted secret.

@@ -23,7 +23,7 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack && ~/.raystack/install.sh
 ```
 
-This clones RayStack to `~/.raystack` and copies all twenty-one skills into `~/.claude/skills`.
+This clones RayStack to `~/.raystack` and copies all twenty-three skills into `~/.claude/skills`.
 For another agent add `--agent codex`, `--agent cursor` or `--agent grok`. To update, run
 `git -C ~/.raystack pull && ~/.raystack/install.sh`. `--uninstall` removes them again.
 
@@ -83,7 +83,7 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ./install.sh --agent custom --dir /path/to/skills
 ```
 
-`--dry-run` shows what it would do and `--uninstall` removes exactly the twenty-one RayStack skills.
+`--dry-run` shows what it would do and `--uninstall` removes exactly the twenty-three RayStack skills.
 Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 
 ## Run a review
@@ -105,9 +105,32 @@ Or skip the router and name a review: "run database-review", `/raystack:aws-bill
 | `scaling-review` | What breaks first at 10x and 100x load |
 | `database-review` | Queries, indexes, migrations, backups, connections and bloat |
 | `app-security-review` | App code: authz, injection, secrets, sessions, dependency risk. Code only, never calls a running app. Dependency audits run only with your live consent; without it, the review lists the commands for you to run |
+| `performance-review` | App speed: N+1 queries, hot paths, blocking calls, caching, payload and bundle weight |
+| `pipeline-security-review` | CI/CD pipelines: workflow permissions, untrusted input, pinned actions, Dockerfile and supply chain |
 
 With no live access, a review still works from your IaC and code. It marks those findings
 `(unconfirmed)` and lists the exports or commands it needs from you.
+
+## Scans
+
+`/raystack scan <type>` runs a set of reviews as one job, with one consent call for live
+access, network scanners and targets. Reviews with no signals in the repo are listed as skipped.
+
+| Type | Runs |
+| --- | --- |
+| `security` | `app-security-review`, `pipeline-security-review`, `aws-security-review`, `infra-review` |
+| `performance` | `performance-review`, `database-review`, `aws-bottleneck-review` |
+| `scalability` | `scaling-review`, `database-review` |
+| `infra` | `infra-review`, `pipeline-security-review`, `aws-security-review`, `aws-bottleneck-review` |
+| `aws` | `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review` |
+| `database` | `database-review` |
+| `all` | every review above whose signals are found |
+
+When 2 or more reviews run, `reviews/YYYY-MM-DD-scan-<type>.md` merges them: one ranked list,
+duplicates merged, with a table of what ran and what was skipped.
+
+Scanners (gitleaks, semgrep, osv-scanner, zizmor, actionlint, hadolint) are used when
+installed and never installed by RayStack: `brew install gitleaks semgrep osv-scanner zizmor actionlint hadolint`.
 
 ## Reviews are read-only
 
@@ -115,7 +138,7 @@ No review changes anything live. Fixes come back as diffs or as commands for you
 
 Each review turns on a guard hook (`skills/raystack/hooks/readonly-guard.sh`) that checks every
 shell command before it runs. Only the CLIs it lists are checked: `aws`, `gcloud`, `az`,
-`kubectl`, `oc`, `terraform`, `tofu`, `terragrunt`, `helm`, `railway`, `wrangler`, `redis-cli`
+`kubectl`, `oc`, `gh`, `terraform`, `tofu`, `terragrunt`, `helm`, `railway`, `wrangler`, `redis-cli`
 and the SQL clients get read verbs only, one SQL read per call with no SQL comments. Deploy tools
 such as `pulumi`, `cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked outright, as are
 `pg_dump` and `pg_restore`, and commands that print secret values or credentials (for example
@@ -128,7 +151,10 @@ forms that run no repo code: `npm audit`, `composer audit --no-plugins --no-scri
 `bundle-audit check`, and `pip-audit` (with `-r`, also `--disable-pip` and `--no-deps` or
 `--require-hashes`), with read flags only and no `fix`. They run only with your live consent;
 without it, the review lists the commands for you to run. Reads that return env vars or user data
-(Lambda configs, ECS task definitions, launch templates) are left for you to run.
+(Lambda configs, ECS task definitions, launch templates) are left for you to run. The six
+scanners (`gitleaks`, `semgrep`, `osv-scanner`, `zizmor`, `actionlint`, `hadolint`) are checked
+too and run only in the read forms in `skills/raystack/references/scanners.md`; `gh` runs on
+your GitHub token, so it gets a read allow-list.
 
 Everything else is not checked: other tools, the agent's own file Read tool, and scripts in
 the repo (a `make` target can do anything). The guard is a seatbelt, not a

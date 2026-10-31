@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Each review skill links the shared contract, its checklist and the guard hook.
-# The entry skill names all seven reviews. The router hands development to dev.
+# The entry skill names all nine reviews and the scan types. The router hands development to dev.
 cd "$(dirname "$0")/.." || exit 1
 # shellcheck source=/dev/null
 . ./tests/lib.sh
 
-REVIEWS=(aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review)
+REVIEWS=(aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review)
 CONTRACT='../raystack/references/review-contract.md'
 # shellcheck disable=SC2016  # literal text expected in the frontmatter
 HOOK='for f in "${CLAUDE_PLUGIN_ROOT}/skills/raystack/hooks/readonly-guard.sh" "${CLAUDE_PLUGIN_ROOT}/../raystack/hooks/readonly-guard.sh" "$HOME/.claude/skills/raystack/hooks/readonly-guard.sh"; do [ -x "$f" ] && exec "$f"; done; echo "RayStack review is read-only: guard missing" >&2; exit 2'
@@ -36,6 +36,101 @@ if [ -f "$app" ]; then
   check "app-security-review skips audits with no lockfile" grep -qF 'no lockfile' "$app"
 fi
 
+# scanner rules (contract) and app-security extensions
+rc=skills/raystack/references/review-contract.md
+for t in Scanners 'never install' '--redact' checkov; do
+  check "contract contains: $t" grep -qF -- "$t" "$rc"
+done
+sc=skills/raystack/references/scanners.md
+check "scanners.md exists" test -f "$sc"
+check "contract links scanners.md" grep -qF 'references/scanners.md' "$rc"
+check "app-security SKILL links scanners.md" grep -qF 'raystack/references/scanners.md' "$app"
+check "app-security checklist links scanners.md" grep -qF 'raystack/references/scanners.md' skills/app-security-review/references/checklist.md
+for t in '--metrics off' 'osv-scanner scan --no-call-analysis=go -r --format json .' 'zizmor --offline' 'brew install gitleaks semgrep osv-scanner zizmor actionlint hadolint' 'command not found' 'realpath' 'zizmor --offline .' 'hadolint Dockerfile' "grep -rl '[g]itleaks:allow'" '| jq'; do
+  check "scanners.md contains: $t" grep -qF -- "$t" "$sc"
+done
+for t in osv-scanner 'Blind spot'; do
+  check "app-security-review contains: $t" grep -qF -- "$t" "$app"
+done
+check "app-security-review is 120 lines or fewer" test "$(wc -l < "$app")" -le 120
+# gitleaks dir reads ignored files too: only tracked hits count, in a form the guard allows.
+for f in "$sc" skills/app-security-review/references/checklist.md; do
+  check "$(basename "$f"): gitleaks hits filtered to tracked files" grep -qF 'git ls-files -- .' "$f"
+done
+check "scanners.md: findings exit non-zero, not a failure" grep -qF 'not a failure' "$sc"
+check "scanners.md: osv-scanner offline is not clean" grep -qF 'Offline,' "$sc"
+check "app-security-review: osv and npm/composer counted once" grep -qF 'count a package once' "$app"
+# Contract lists every tokenizer rule agents hit: ^, # anywhere, gh as a monitored name.
+# shellcheck disable=SC2016  # backticks are literal
+for t in '< > { } ^`' 'unquoted `#` anywhere' "git show 'HEAD^'" "'[g]h-pages'" 'Scanner names and `gh` are monitored'; do
+  check "contract contains: $t" grep -qF -- "$t" "$rc"
+done
+check "README names the scanners the guard checks" grep -qF 'The six' README.md
+for t in 'Security logging' 'Secret scan' 'Code scan'; do
+  check "app-security checklist contains: $t" grep -qF -- "$t" skills/app-security-review/references/checklist.md
+done
+
+# performance-review: same shape as the other reviews, with its own checklist items.
+pf=skills/performance-review/SKILL.md
+pc=skills/performance-review/references/checklist.md
+if [ -f "$pf" ]; then
+  check "performance-review is 120 lines or fewer" test "$(wc -l < "$pf")" -le 120
+  for t in database-review scaling-review aws-bottleneck-review; do
+    check "performance-review names $t" grep -qF -- "$t" "$pf"
+  done
+else
+  fail "missing $pf"
+fi
+if [ -f "$pc" ]; then
+  for t in 'N+1' pagination timeout cache memory payload bundle; do
+    check "performance checklist contains: $t" grep -qiF -- "$t" "$pc"
+  done
+else
+  fail "missing $pc"
+fi
+check "scaling checklist names performance-review" grep -qF 'performance-review' skills/scaling-review/references/checklist.md
+
+# pipeline-security-review: same shape as the other reviews; CI, containers, IaC, supply chain.
+ps=skills/pipeline-security-review/SKILL.md
+psc=skills/pipeline-security-review/references/checklist.md
+if [ -f "$ps" ]; then
+  check "pipeline-security-review is 120 lines or fewer" test "$(wc -l < "$ps")" -le 120
+  for t in zizmor actionlint hadolint osv-scanner checkov trivy aws-security-review infra-review app-security-review \
+    'raystack/references/scanners.md' 'reviews/YYYY-MM-DD-pipeline-security-review.md' 'Worth hardening' 'Commands for you to run' \
+    'gh api repos/OWNER/REPO/branches/BRANCH/protection'; do
+    check "pipeline-security-review contains: $t" grep -qF -- "$t" "$ps"
+  done
+  for t in 'not logged in (exit 4)' 'not GitHub'; do
+    check "pipeline-security-review: gh fallback for $t" grep -qF -- "$t" "$ps"
+  done
+else
+  fail "missing $ps"
+fi
+if [ -f "$psc" ]; then
+  for t in pull_request_target workflow_run 'github.event.pull_request.head' 'permissions:' write-all '[0-9a-f]{40}' \
+    'self-hosted' 'token.actions.githubusercontent.com:sub' '.gitlab-ci.yml' USER latest ARG \
+    '(curl|wget)[^|]*[|]' issue_comment 'workflow_run)[^ ]*' 'canonical: false' \
+    'npm ci' Dependabot Renovate 'branch protection' aws-security-review; do
+    check "pipeline checklist contains: $t" grep -qF -- "$t" "$psc"
+  done
+  # Each grep the checklist gives, with the line it must catch and the line it must not.
+  # shellcheck disable=SC2016  # ${{ }} and $( ) are sample text
+  while IFS=$'\t' read -r fl re yes no; do
+    check "pipeline checklist has grep: $re" grep -qF -- "$re" "$psc"
+    check "grep $re catches: $yes" grep -q"$fl"E -- "$re" <<< "$yes"
+    check "grep $re skips: $no" test -z "$(grep "-$fl"E -- "$re" <<< "$no" | grep -viE -- '--checksum=')"
+  done <<'ROWS'
+s	pull/[^/]*/head	git fetch origin pull/${{ github.event.issue.number }}/head	git fetch origin main
+s	subjects *= *[[][^]]*[*]	  subjects = ["org/app:*"]	  subjects = ["repo:org/app:ref:refs/heads/main"]
+x	 *kind: *"?Secret"? *(#.*)?	  kind: "Secret" # creds	kind: SecretProviderClass
+i	^ *ADD +(--[^ ]+ +)*([[] *")?https?://	  add ["https://x.example/a.sh", "/a.sh"]	ADD --checksum=sha256:ab https://x.example/a.tgz /a.tgz
+w	(curl|wget)[^|]*[|] *(tee +[^|]*[|] *)?(sudo +(-[A-Za-z]+ +)*)?(ba|z)?sh	curl -fsSL https://x.example/i | tee i.sh | sh	curl -fsSL https://x.example/i | sha256sum
+s	"canonical" *: *false	"canonical": false	"canonical": true
+ROWS
+else
+  fail "missing $psc"
+fi
+
 entry=skills/raystack/SKILL.md
 if [ -f "$entry" ]; then
   for s in "${REVIEWS[@]}"; do
@@ -46,6 +141,75 @@ if [ -f "$entry" ]; then
   check "raystack names dev" grep -qF '`dev`' "$entry"
 else
   fail "missing $entry"
+fi
+
+# scan: the router names the command, every type, the summary skill name and the skipped list.
+# shellcheck disable=SC2016  # literal backticks
+if [ -f "$entry" ]; then
+  for t in 'scan <type>' 'scan-<type>' skipped security performance scalability infra aws database all; do
+    check "raystack scan contains: $t" grep -qF -- "$t" "$entry"
+  done
+  scans=skills/raystack/references/scans.md
+  check "raystack links references/scans.md" grep -qF 'references/scans.md' "$entry"
+  check "scans.md exists" test -f "$scans"
+  for t in 'security-review*' 'aws-bottleneck-review*' 'database-review*' 'infra-review*' 'one merged entry' 'see <report>' 'skipped'; do
+    check "scans.md contains: $t" grep -qF -- "$t" "$scans"
+  done
+  for s in "${REVIEWS[@]}"; do
+    check "scans.md names $s" grep -qF "$s" "$scans"
+  done
+  # B-003/B-004: one consent call per scan, type asked with `all` recommended, review pick skipped.
+  for t in '`all` (Recommended)' 'missing or unknown' 'Skip step 2' 'ONE question-tool call' \
+    'Network scanners' 'Targets' 'Only offer AWS setup when AWS signals' 'Pass the answers to every review' \
+    'listed as skipped' 'Scaling signals' 'not findings'; do
+    check "scans.md contains: $t" grep -qF -- "$t" "$scans"
+  done
+  check "scans.md all row has a full run order" grep -qE '^\| all \| `app-security-review\*`.*`scaling-review\*`.*`aws-billing-review\*`' "$scans"
+  check "router: type and consent come from scans.md" grep -qF 'Type and consent' "$entry"
+  check "router: scan skips no step it still claims" bash -c '! grep -qF "reuses steps 1 to 4" "$1"' _ "$entry"
+  check "router: full audit and check everything mean all" grep -qE '"full audit", "check everything".*`all`' "$entry"
+  check "router: ledger only when not clearly a review or scan" grep -qF 'not clearly a review or scan' "$entry"
+  check "router: scan rule comes before the ledger rule" test "$(grep -n 'The request starts with "scan"' "$entry" | cut -d: -f1)" -lt "$(grep -n 'unfinished ledger' "$entry" | cut -d: -f1)"
+  check "router: live access offers at most 2 profiles" grep -qF 'at most 2' "$entry"
+  check "router: no-signals fallback is not for scans" grep -qF 'not in a scan' "$entry"
+  check "router: routed consent covers scanners and targets" grep -qF 'scanners, targets' "$entry"
+  contract=skills/raystack/references/review-contract.md
+  # A routed review skips only what the router asked and passed; unpassed targets are still asked.
+  check "contract: routed review skips only what was answered" grep -qF 'skip only the questions it answered' "$contract"
+  check "contract: routed review still asks unpassed targets" grep -qF 'still ask what it did not pass' "$contract"
+  check "contract: routed review no longer skips targets wholesale" bash -c '! grep -qF "target and scanner questions" "$1"' _ "$contract"
+  check "router: review skips only the questions answered" grep -qF 'skips only the questions answered here' "$entry"
+  # In a scan, reviews ask nothing: safe defaults, listed, findings unconfirmed.
+  for f in "$contract" "$scans" "$entry"; do
+    check "$(basename "$f") names the scan phrase" grep -qF 'part of a raystack scan' "$f"
+  done
+  for f in "$contract" "$scans"; do
+    check "$(basename "$f"): scan assumes the safe default" grep -qF 'safe default' "$f"
+  done
+  check "scans.md: assumptions go under Inputs used / missing" grep -qF 'Inputs used / missing' "$scans"
+  check "scans.md: Targets offers found targets plus None" grep -qF 'plus "None"' "$scans"
+  check "scans.md: pipeline review starred in security" grep -qE '^\| security \|.*`pipeline-security-review\*`' "$scans"
+  check "scans.md: pipeline review starred in infra" grep -qE '^\| infra \|.*`pipeline-security-review\*`' "$scans"
+  check "scans.md: a lockfile alone runs the pipeline review" grep -qF 'lockfile alone' "$scans"
+  check "scans.md: question 3 owns app-security audits in a scan" grep -qF "app-security-review's dependency audits" "$scans"
+  check "router: live access covers audits only outside a scan" grep -qF 'in a scan, scans.md question 3 asks instead' "$entry"
+  check "router: first match wins in step 0" grep -qF 'first match wins' "$entry"
+  check "router: scan and fix goes to Scan" grep -qF '"scan and fix"' "$entry"
+  check "router: wrap-up offers dev to fix scan findings" grep -qF 'offer `dev` to fix' "$entry"
+  check "router: bare rule comes before the ledger rule" test "$(grep -n 'Bare `/raystack`' "$entry" | cut -d: -f1)" -lt "$(grep -n 'unfinished ledger' "$entry" | cut -d: -f1)"
+  check "database-review: Targets needs live access Yes too" grep -qF 'only when live access was also Yes' skills/database-review/SKILL.md
+  for s in database-review infra-review performance-review pipeline-security-review app-security-review; do
+    check "$s skips what the router passed" grep -qF 'unless the router passed' "skills/$s/SKILL.md"
+  done
+  check "scans.md: a scan that runs nothing writes no summary" grep -qF 'If no review runs' "$scans"
+  check "scans.md: scan aws offers AWS setup" grep -qF 'or the type is aws' "$scans"
+  for t in '"scan"' '"scan all"' 'performance' 'N+1' 'CI/CD security' 'GitHub Actions security'; do
+    check "router description triggers on $t" bash -c 'sed -n 3p "$1" | grep -qF -- "$2"' _ "$entry" "$t"
+  done
+  check "router is 105 lines or fewer" test "$(wc -l < "$entry")" -le 105
+  check "CHANGELOG 0.7.0 notes routed reviews skip only what was asked" grep -qF 'skip only the questions the router asked' CHANGELOG.md
+  check "scans.md has no em-dash" bash -c '! grep -q "—" "$1"' _ "$scans"
+  check "router has no em-dash" bash -c '! grep -q "—" "$1"' _ "$entry"
 fi
 
 # local-verify never touches .env, uses throwaway data, and does not fake a browser check.
@@ -185,4 +349,11 @@ for t in weakened B-; do
   check "dev-build reviewer contains: $t" grep -qF -- "$t" skills/dev-build/references/reviewer.md
 done
 check "dev-build implementer contains: needs-context" grep -qF needs-context skills/dev-build/references/implementer.md
+# router: scan wins only as the command word or a scan phrase; it comes before the build line
+rt=skills/raystack/SKILL.md
+check "router: scan rule needs scan as the command word" grep -qF 'The request starts with "scan"' "$rt"
+check "router: scan rule lists the scan phrases" grep -qF '"security scan", "performance scan", "scan and fix", "full audit", "check everything"' "$rt"
+check "router: scan elsewhere does not win" grep -qF '"scan" elsewhere in a request' "$rt"
+check "router: scan line comes before the build line" test "$(grep -n 'The request starts with "scan"' "$rt" | head -1 | cut -d: -f1)" -lt "$(grep -n 'Words about making or changing' "$rt" | head -1 | cut -d: -f1)"
+check "router is 105 lines or fewer" test "$(wc -l < "$rt")" -le 105
 exit "$FAILED"

@@ -140,6 +140,7 @@ Use these to turn "will it scale" into a number. Show the arithmetic in the repo
   relations = 151 queries per request; at 10x traffic the DB sees 10x of that.
 - **Fix**: eager-load, batch with `IN`, add a loader, paginate. Turn on lazy-loading
   violations in dev/test (for example `preventLazyLoading`).
+  For per-request detail, use `performance-review`.
 - **Cost curve**: free to fix in code; otherwise it forces a DB size jump (2x price per tier)
   long before real load does. Index and `EXPLAIN` depth: `database-review`.
 
