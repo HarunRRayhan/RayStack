@@ -451,7 +451,8 @@ guard_check() {
       '{'|'}') _deny "brace expansion/group during review"; return 1 ;;
       # Unquoted glob/extglob/history characters (bash and zsh) could expand to any CLI name.
       # `<`/`>` too: zsh numeric ranges (sqlite<3-3>) and redirections.
-      '['|']'|'('|')'|'*'|'?'|'!'|'<'|'>') _deny "unquoted glob/redirect character '$ch' during review"; return 1 ;;
+      # `^`: zsh EXTENDED_GLOB negation (^x matches every other file name).
+      '['|']'|'('|')'|'*'|'?'|'!'|'<'|'>'|'^') _deny "unquoted glob/redirect character '$ch' during review"; return 1 ;;
       ' '|$'\t'|'|'|';'|'&'|$'\n')
         [ $intok = 1 ] && TOK+=("$tok")
         tok=""; intok=0
@@ -460,9 +461,8 @@ guard_check() {
           '|') TOK+=("$PIPE") ;;
           *) ops=1 ;;
         esac ;;
-      # A word-start `#` starts a shell comment: the shell drops the rest, the checks below would not.
-      '#') [ $intok = 0 ] && { _deny "unquoted # comment during review"; return 1; }
-           tok+=$ch ;;
+      # A word-start `#` starts a shell comment the checks below would not see; mid-word it is a zsh EXTENDED_GLOB operator.
+      '#') _deny "unquoted # during review"; return 1 ;;
       *) [ $intok = 0 ] && [ "$ch" = '~' ] && tilde=1
          tok+=$ch; intok=1 ;;
     esac
@@ -478,6 +478,16 @@ guard_check() {
     # zsh expands a leading `=` (=composer is the path of composer), so it names the same CLI.
     name=$(_lc "${TOK[i]##*/}"); name=${name#=}
     case "$name" in
+      python|python3|python[0-9].*|py)
+        # `.` is not a _MENTION boundary (docs/aws.md), so `-m awscli.clidriver` is caught here.
+        for ((j = i + 1; j < n; j++)); do
+          [ "${TOK[j]}" = "$PIPE" ] && break
+          w=""
+          if [[ "${TOK[j]}" =~ ^-[A-Za-z]*m$ ]]; then w=${TOK[j + 1]:-}
+          elif [[ "${TOK[j]}" =~ ^-[A-Za-z]*m(.+)$ ]]; then w=${BASH_REMATCH[1]}; fi
+          [[ "$(_lc "$w")" =~ ^(${_NAMES// /|})(\.|$) ]] && { _deny "python -m $w during review"; return 1; }
+        done
+        continue ;;
       npx|pnpx|bunx|uvx) _deny "package runners are not allowed during a review"; return 1 ;;
       npm|pnpm|yarn|bun)
         # Read allow-list; npm accepts prefixes and aliases (exe, innit, c), and yarn/pnpm/bun run a

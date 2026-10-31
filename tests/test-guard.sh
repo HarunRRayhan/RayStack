@@ -688,6 +688,14 @@ BLOCK=(
   'zizmor --offline --format json --cache-dir /tmp/c .'
   'actionlint -shellcheck= -pyflakes= -debug'
   'hadolint -f json --verbose Dockerfile'
+  # zsh EXTENDED_GLOB: unquoted ^ and a mid-word # are glob operators
+  'gitleaks dir . --redact ^nomatch'
+  'gitleaks dir . --redact x#--log-level=trace'
+  'zizmor --offline --format json ^nomatch'
+  'aws s3 ls ^x'
+  # python -m <monitored module>[.sub]
+  'python -m checkov.main -d .'
+  'python -m awscli.clidriver s3 rm s3://b/k'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -891,7 +899,9 @@ ALLOW=(
   'gitleaks dir . --redact --log-level info'
   'gitleaks dir . --redact --log-level=error'
   "git log --format='#%h'"
-  'echo a#b'
+  "grep -rn '^foo' ."
+  "git log --format='#%h' | grep '^#'"
+  'python3 -m json.tool x.json'
 )
 
 for c in "${BLOCK[@]}"; do
