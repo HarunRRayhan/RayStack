@@ -57,6 +57,30 @@ for t in 'Security logging' 'Secret scan' 'Code scan'; do
   check "app-security checklist contains: $t" grep -qF -- "$t" skills/app-security-review/references/checklist.md
 done
 
+# performance-review: same shape as the other reviews, with its own checklist items.
+pf=skills/performance-review/SKILL.md
+pc=skills/performance-review/references/checklist.md
+if [ -f "$pf" ]; then
+  check "performance-review links the contract" grep -qF "$CONTRACT" "$pf"
+  check "performance-review contract path resolves" test -f "skills/performance-review/$CONTRACT"
+  check "performance-review links references/checklist.md" grep -qF 'references/checklist.md' "$pf"
+  check "performance-review has the guard hook command" grep -qF "$HOOK" "$pf"
+  check "performance-review is 120 lines or fewer" test "$(wc -l < "$pf")" -le 120
+  for t in database-review scaling-review aws-bottleneck-review; do
+    check "performance-review names $t" grep -qF -- "$t" "$pf"
+  done
+else
+  fail "missing $pf"
+fi
+if [ -f "$pc" ]; then
+  for t in 'N+1' pagination timeout cache memory payload bundle; do
+    check "performance checklist contains: $t" grep -qiF -- "$t" "$pc"
+  done
+else
+  fail "missing $pc"
+fi
+check "scaling checklist names performance-review" grep -qF 'performance-review' skills/scaling-review/references/checklist.md
+
 entry=skills/raystack/SKILL.md
 if [ -f "$entry" ]; then
   for s in "${REVIEWS[@]}"; do
