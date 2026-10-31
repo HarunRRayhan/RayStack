@@ -19,14 +19,18 @@ Run each `Run:` command once, never in a loop. Prefer a read replica when one ex
     `.count` or `.exists?` inside a loop.
   - Node: `findUnique`/`findOne`/`findByPk`/`getRepository` inside `map`/`for`, `Promise.all`
     over per-item queries, missing Prisma `include`, TypeORM `relations`, Sequelize `include`,
-    Drizzle `with`.
-  - Run (PostgreSQL 13+): `psql -c 'select calls, round(mean_exec_time) as ms, substring(query, 1, 80) as q from pg_stat_statements order by calls desc limit 20'`
-  - Run (PostgreSQL 12 and older): `psql -c 'select calls, round(mean_time) as ms, substring(query, 1, 80) as q from pg_stat_statements order by calls desc limit 20'`
+    Drizzle `with`. Prisma batches same-tick `findUnique` calls, so `Promise.all` over
+    `findUnique` is mostly a false positive; `findMany`/`findFirst` are not batched.
+  - Run (PostgreSQL 13+): `PGOPTIONS=-cdefault_transaction_read_only=on psql -X -c 'select calls, round(mean_exec_time) as ms, substring(query, 1, 80) as q from pg_stat_statements order by calls desc limit 20'`
+  - Run (PostgreSQL 12 and older): `PGOPTIONS=-cdefault_transaction_read_only=on psql -X -c 'select calls, round(mean_time) as ms, substring(query, 1, 80) as q from pg_stat_statements order by calls desc limit 20'`
   - Run: `mysql -e 'select digest_text, count_star from performance_schema.events_statements_summary_by_digest order by count_star desc limit 20'`
 - **Costs because**: queries per request grow with page size. 50 rows x 3 relations + 1 = 151
   queries; at 2 ms each that is about 300 ms of database time per request.
-- **Fix**: eager-load, batch with `IN`, add a loader, or paginate. Turn on lazy-load detection
-  (item 10).
+- **Fix**: eager-load, batch with `IN`, add a loader, or paginate. For a per-row `count()`,
+  eager-loading is not enough: use `withCount` (Laravel), `annotate(Count(...))` (Django), or
+  `counter_cache` or `.size` on a loaded association (Rails). `.count` in Rails still queries
+  per row after `includes`, and counting an eager-loaded relation in Laravel or Django loads
+  every related row. Turn on lazy-load detection (item 10).
 
 ## 2. Unbounded queries and missing pagination
 
@@ -45,11 +49,15 @@ Run each `Run:` command once, never in a loop. Prefer a read replica when one ex
   report builds done before the response is sent.
 - **Evidence**: Grep `Mail::send`, `send_mail`, `deliver_now`, `nodemailer`, `sendMail`,
   `Http::`, `requests\.(get|post)`, `axios`, `fetch\(`, `Net::HTTP`, `intervention`, `sharp`,
-  `Pillow`, `ImageMagick`, `dompdf`, `wkhtmltopdf` in controllers and views.
+  `Pillow`, `ImageMagick`, `dompdf`, `wkhtmltopdf` in controllers and views. Next.js server
+  components and route handlers: sequential `await`s of independent calls that could be one
+  `Promise.all`.
 - **Costs because**: the user waits for it. A 600 ms mail API call adds 600 ms to every
   signup, and a slow provider blocks the worker for the whole call.
 - **Fix**: dispatch to a queue (`dispatch`, `.delay`, `deliver_later`, a job runner) and return
-  at once. Resize images on upload, once, not on read.
+  at once. First check the queue driver and that a worker exists: with `QUEUE_CONNECTION=sync`
+  the job still runs inside the request, and with no worker jobs pile up and never run. If
+  there is no worker, use `dispatch()->afterResponse()`. Resize images on upload, once, not on read.
 
 ## 4. Outbound calls with no timeout
 
@@ -67,7 +75,8 @@ Run each `Run:` command once, never in a loop. Prefer a read replica when one ex
 - **Check**: the same expensive read repeated on every request: settings, menus, counts,
   rendered fragments, third-party responses.
 - **Evidence**: Grep the hot controllers for queries on data that rarely changes. Check for
-  `Cache::`, `cache.get`, `@cache`, `Rails.cache`, `redis`, HTTP `Cache-Control`. Run
+  `Cache::`, `cache.get`, `@cache`, `Rails.cache`, `redis`, HTTP `Cache-Control`. Next.js: `cache: 'no-store'` or
+  `export const dynamic = 'force-dynamic'` on hot routes. Run
   (consented, PostgreSQL): the item 1 statistics show the same query with a high `calls`.
 - **Costs because**: 200 req/s x one 5 ms query = 1 s of database time per second for one
   value that changed once this week.
@@ -91,7 +100,7 @@ Run each `Run:` command once, never in a loop. Prefer a read replica when one ex
 - **Evidence**: Grep API resources and serializers (`toArray`, `JsonResource`, `serializers.`,
   `as_json`, `to_json`, `res.json(` of a whole model). Check config for `gzip`, `brotli`,
   `compression(`, `GZipMiddleware`, `Rack::Deflater`, or a CDN doing it.
-  - Run (only a URL the user named, one request): `curl -sI -H 'Accept-Encoding: gzip' URL`
+  - Run (only a URL the user named, one request): `curl -s -D - -o /dev/null -H 'Accept-Encoding: gzip' URL` (a GET; HEAD skips compression in some servers)
 - **Costs because**: bytes = rows x fields x size. 100 rows x 2 KB = 200 KB per call; gzip
   often cuts JSON by 70 to 80 percent, so skipping it sends about 5x the bytes.
 - **Fix**: return only the fields the client uses, paginate, enable gzip or brotli at the app
@@ -105,9 +114,10 @@ Run each `Run:` command once, never in a loop. Prefer a read replica when one ex
   `webpack.config.*`, `next.config.*`). Grep for whole-library imports (`import _ from 'lodash'`,
   `import moment`), missing `React.lazy`/dynamic `import(`. If a build output exists, list sizes:
   - Run: `ls -lS public/build/assets`
-  - Run: `du -sh public/build dist build .next`
-- **Costs because**: bytes over the wire. A 1.2 MB bundle on a 1.6 Mbps phone link is about
-  6 s before the page runs (1.2 MB x 8 / 1.6 Mbps).
+  - Run: `du -sh public/build dist build .next/static` (`.next/cache` is never shipped)
+- **Costs because**: bytes over the wire, and the wire size is the gzip size, not the size on
+  disk. A 1.2 MB bundle that gzips to 400 KB on a 1.6 Mbps phone link is about 2 s
+  (0.4 MB x 8 / 1.6 Mbps); uncompressed it would be about 6 s.
 - **Fix**: split by route, lazy-load heavy components, replace large libraries with small ones,
   turn on minification and tree-shaking, set long-cache headers on hashed files.
 
