@@ -656,6 +656,38 @@ BLOCK=(
   'hadolint -f=tty Dockerfile'
   'hadolint Dockerfile; rm -rf x'
   'hadolint Dockerfile || rm -rf x'
+  # v0.7 fix round 1: an unquoted word-start # is a shell comment that hides later flags
+  'gitleaks dir . #x --redact'
+  'semgrep scan #x --config p/default --metrics off --disable-version-check'
+  'semgrep scan --config p/default #x --metrics off --disable-version-check'
+  'zizmor #x --offline .'
+  'composer audit #x --no-plugins --no-scripts'
+  'aws s3 ls #x'
+  # gitleaks trace/debug logging prints unredacted findings
+  'gitleaks dir . --redact --log-level trace'
+  'gitleaks dir . --redact --log-level=TRACE'
+  'gitleaks dir . --redact --log-level debug'
+  'gitleaks dir . --redact --log-level Debug'
+  'gitleaks dir . --redact --log-level=-1'
+  # D-006: checkov and trivy deny in every form
+  'checkov -d .'
+  'trivy fs .'
+  'checkov --version'
+  'trivy --version'
+  './trivy fs .'
+  # real write/debug flags (made-up ones above stay as unknown-flag checks)
+  'gitleaks dir . --redact --diagnostics cpu'
+  'gitleaks dir . --redact --diagnostics-dir /tmp/d'
+  'gitleaks dir . --redact --baseline-path b.json'
+  'gitleaks dir . --redact --gitleaks-ignore-path x'
+  'semgrep scan --config p/default --metrics off --disable-version-check --debug'
+  'semgrep scan --config p/default --metrics off --disable-version-check --sarif-output out.sarif'
+  'semgrep scan --config p/default --metrics off --disable-version-check --json-output=out.json'
+  'osv-scanner scan --format json --verbosity debug .'
+  'zizmor --offline --format json --gh-token t .'
+  'zizmor --offline --format json --cache-dir /tmp/c .'
+  'actionlint -shellcheck= -pyflakes= -debug'
+  'hadolint -f json --verbose Dockerfile'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -854,6 +886,12 @@ ALLOW=(
   'actionlint -shellcheck "" -pyflakes ""'
   'hadolint Dockerfile'
   'hadolint -f json Dockerfile | jq length'
+  # a quoted or mid-word # is literal, not a comment
+  "gitleaks dir '#x' --redact"
+  'gitleaks dir . --redact --log-level info'
+  'gitleaks dir . --redact --log-level=error'
+  "git log --format='#%h'"
+  'echo a#b'
 )
 
 for c in "${BLOCK[@]}"; do

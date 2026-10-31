@@ -9,7 +9,7 @@
 #   [NAME=literal ...] <cli> args... [| <filter> args ...]...
 # and the CLI's verb must be on that CLI's read allow-list. Everything else is denied.
 # SQL: one statement per command, no comments (--, /*, and # for MySQL/usql); every `name(` must be on a read-only function list.
-# Unquoted glob/redirect chars ([ ] ( ) * ? ! < >) and braces deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq,
+# Unquoted glob/redirect chars ([ ] ( ) * ? ! < >), braces and a word-start # deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq,
 #   deploy tools and pg_dump/pg_restore always deny. Names match on `-`/`/` boundaries too (aws-cdk, amazon/aws-cli).
 # Any word that is a shell, env, ssh/scp/sftp/mosh, or a package runner (npx pnpx bunx uvx) denies.
 # Allow-lists, checked on every word: npm ls/list/view/outdated/audit (no fix)/why/explain; yarn/pnpm/bun --version;
@@ -17,9 +17,9 @@
 #   --require-hashes), each with listed flags only (no repo plugins, scripts or package builds). Any audit
 #   (npm audit too) takes the cloud-CLI shape below: one call, only filters after a pipe, no ; && || or redirects.
 #   Scanners take the same shape, as the bare name, with listed flags only: gitleaks dir|git (--redact required,
-#   -f json, -r - only), semgrep scan (--metrics off --disable-version-check, --config p/ or r/ only),
+#   -f json, -r - only, --log-level info|warn|error|fatal), semgrep scan (--metrics off --disable-version-check, --config p/ or r/ only),
 #   osv-scanner scan (--format json, no image), zizmor --offline, actionlint -shellcheck= -pyflakes= (flags
-#   before files), hadolint (-f json). No output files, fixes or repo configs. checkov and trivy are not allowed.
+#   before files), hadolint (-f json). No output files, fixes or repo configs. checkov and trivy deny in every form.
 #   docker/podman/nerdctl ps, images, image ls, version, info, system df, stats --no-stream,
 #   logs --tail N<=200, compose ps|ls|images|logs|config --services/--volumes (no flags before the subcommand,
 #   no NAME=value, export or set anywhere in the command).
@@ -45,7 +45,7 @@ _in() { case " $2 " in *" $1 "*) return 0 ;; esac; return 1; }
 # Lower-case only names/verbs/SQL; flags keep their case (-S vs -s, -X vs -x).
 _lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
-_NAMES='gitleaks semgrep osv-scanner zizmor actionlint hadolint aws gcloud az kubectl oc terraform tofu terragrunt helm railway wrangler redis-cli bq psql mysql mariadb sqlite3 sqlcmd mongosh clickhouse-client cqlsh snowsql usql pgcli mycli awscli pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot'
+_NAMES='gitleaks semgrep osv-scanner zizmor actionlint hadolint checkov trivy aws gcloud az kubectl oc terraform tofu terragrunt helm railway wrangler redis-cli bq psql mysql mariadb sqlite3 sqlcmd mongosh clickhouse-client cqlsh snowsql usql pgcli mycli awscli pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot'
 # `-` and `/` are boundaries, so hyphen/slash-joined names count too (aws-cdk, netlify-cli, amazon/aws-cli).
 _MENTION="(^|[^a-z0-9_.])(${_NAMES// /|})([^a-z0-9_.]|\$)"
 _SQL_CLIS=' psql mysql mariadb sqlite3 usql pgcli mycli '
@@ -460,6 +460,9 @@ guard_check() {
           '|') TOK+=("$PIPE") ;;
           *) ops=1 ;;
         esac ;;
+      # A word-start `#` starts a shell comment: the shell drops the rest, the checks below would not.
+      '#') [ $intok = 0 ] && { _deny "unquoted # comment during review"; return 1; }
+           tok+=$ch ;;
       *) [ $intok = 0 ] && [ "$ch" = '~' ] && tilde=1
          tok+=$ch; intok=1 ;;
     esac
@@ -556,7 +559,9 @@ guard_check() {
         done
         _scan_args "$vf" "$bf" "${ARGS[@]}" || { _deny "$name flag not on the read allow-list"; return 1; }
         case "$name" in
-          gitleaks) { _has --redact && _vals -f json && _vals -r -; } || { _deny "gitleaks only with --redact, -f json and -r - (stdout)"; return 1; } ;;
+          gitleaks) { _has --redact && _vals -f json && _vals -r -; } || { _deny "gitleaks only with --redact, -f json and -r - (stdout)"; return 1; }
+            # trace and debug logs print findings unredacted.
+            _vals --log-level 'info|warn|error|fatal' || { _deny "gitleaks --log-level only info, warn, error or fatal"; return 1; } ;;
           # No --config means repo .semgrep.yml; metrics or version checks phone home.
           semgrep) { _has --config= && _vals --config '[pr]/[A-Za-z0-9._-]+' && _has --metrics=off && _vals --metrics off && _has --disable-version-check; } ||
             { _deny "semgrep scan only with --config p/ or r/, --metrics off and --disable-version-check"; return 1; } ;;
@@ -569,6 +574,8 @@ guard_check() {
           hadolint) _vals -f json || { _deny "hadolint only with -f json"; return 1; } ;;
         esac
         audit=1; continue ;;
+      # D-006: no read-only form; the human runs them.
+      checkov|trivy) _deny "$name is not allowed during review: list its commands for the human to run"; return 1 ;;
       pipx|uv) f=' run ' ;;
       # A shell (or env) runs a string or a command these checks never see.
       sh|bash|zsh|dash|ksh|mksh|fish|csh|tcsh|busybox|env|ssh|scp|sftp|mosh) _deny "$name not allowed during review"; return 1 ;;
