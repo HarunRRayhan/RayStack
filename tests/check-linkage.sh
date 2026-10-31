@@ -100,7 +100,8 @@ else
 fi
 if [ -f "$psc" ]; then
   for t in pull_request_target workflow_run 'github.event.pull_request.head' 'permissions:' write-all '[0-9a-f]{40}' \
-    'self-hosted' 'token.actions.githubusercontent.com:sub' '.gitlab-ci.yml' USER latest ARG 'ADD' 'curl' \
+    'self-hosted' 'token.actions.githubusercontent.com:sub' '.gitlab-ci.yml' USER latest ARG '^ADD +(--[^ ]+ +)*https?://' \
+    '(curl|wget)[^|]*[|]' issue_comment 'workflow_run)[^ ]*' 'canonical: false' \
     'npm ci' Dependabot Renovate 'branch protection' aws-security-review; do
     check "pipeline checklist contains: $t" grep -qF -- "$t" "$psc"
   done
