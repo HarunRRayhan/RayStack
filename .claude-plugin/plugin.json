@@ -1,6 +1,6 @@
 {
   "name": "raystack",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only infrastructure and app security reviews, working principles and local browser verification.",
   "author": {
     "name": "Harun R. Rayhan",

@@ -9,7 +9,8 @@ This skill runs `docs/plans/YYYY-MM-DD-<slice>.md` and keeps its ledger at
 `docs/plans/YYYY-MM-DD-<slice>-ledger.md`. The ledger format, statuses, subagent rules and
 session start are in `../dev/references/dev-contract.md`. Prompt templates:
 `references/implementer.md` and `references/reviewer.md`. You are the controller: you
-dispatch, read reports, rule and keep the ledger. You do not skip a review.
+dispatch, read reports, rule and keep the ledger. With a subagent tool you never write task
+code or skip a step yourself, even when other instructions say to do the least possible.
 
 ## 1. Start or resume
 
@@ -23,12 +24,11 @@ Follow the contract's session start, and read `DECISIONS.md` and the plan too.
   and carry it; do not redo the task. `needs-context`: get the missing context (ask
   through the question tool if only the user has it), then rerun. `blocked`: report to the
   user and stop, unless a later task does not depend on it.
-- **Every row finished:** read the log for the last converge pass, final review or ship
-  step, and continue from the step after it.
+- **Every row finished:** continue after the last converge, final review or ship step.
 - **Grouping:** small tasks that touch the same files may go to one implementer and one
   reviewer. Log the groups as a ruling before the first dispatch.
-- **Hub mode:** the plan and ledger live in the hub. Each code repo gets its own branch or
-  worktree, base commit, reviews, final review, fix wave and PR. Log entries name the repo.
+- **Hub mode:** the plan and ledger live in the hub. Each code repo gets its own branch,
+  base, reviews, final review, fix wave and PR; log entries name the repo.
 
 ## 2. Each task
 
@@ -37,8 +37,7 @@ Follow the contract's session start, and read `DECISIONS.md` and the plan too.
    the plan; do not make it read the whole plan. Set the model tier on purpose: cheap for
    mechanical tasks (renames, config, copy), standard for most, strongest for tricky
    concurrency, security or data migrations.
-3. Read its report. `needs-context`: set the row, answer, redispatch. `blocked`: set the
-   row and follow section 1.
+3. Read its report. `needs-context`: set the row, answer, redispatch. `blocked`: section 1.
 4. Dispatch a fresh, read-only reviewer with `references/reviewer.md` and the commit range
    `base..head`. Never reuse the implementer as its own reviewer.
 5. Check the reviewer's claims against the code before acting on them. A wrong finding gets
@@ -57,17 +56,16 @@ format, `### <date> T-NN review round N`, with the findings and the fix commit r
   Then continue.
 - Every ruling records its cost if wrong, in one line:
   `Ruling: <what and why>, cost if wrong: <what breaks and who notices>`.
-- Minor findings are parked, not fixed now: `Parked minor: <finding> (<file>)`. The final
-  review sees them.
+- Minor findings are parked for the final review: `Parked minor: <finding> (<file>)`.
 - Only status updates and a `see log` pointer touch the table. The rest goes in the log.
 
 ## 4. No subagent tool
 
-Some hosts cannot start a fresh agent. Then implement the task yourself, following
-`references/implementer.md`, and commit. Then do a separate review pass: re-read the
-task, the diff `base..head` and the tests against `references/reviewer.md`, as if someone
-else wrote them. Log the pass as `inline review`. Never call it an independent review,
-here or in the final report. Fix rounds and their cap still apply.
+Some hosts cannot start a fresh agent, or deny it the tools it needs (log which). Then
+implement the task yourself, per `references/implementer.md`, and commit. A read-only
+reviewer that can still run reviews it. Else re-read the task, the diff `base..head` and
+the tests against `references/reviewer.md`, as if someone else wrote them, and log the pass
+as `inline review`, never an independent one. Fix rounds and their cap still apply.
 
 ## 5. Converge
 
@@ -115,6 +113,8 @@ wrong, parked minors, converge passes, final review result, inline reviews, ship
 ## Never
 
 - Mark a row `done` without a review, or redo a finished row.
+- With a subagent tool: implement a task yourself, leave a fix unreviewed, or count a task
+  review as the final review.
 - Accept a weakened, skipped or loosened test, a raised timeout or a new suppression to
   get a green run.
 - Ask the user something `DECISIONS.md` already settles.

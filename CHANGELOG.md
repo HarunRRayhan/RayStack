@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.5 (2026-10-31)
+
+- `dev-build`: when a subagent tool exists, the controller never writes task code itself,
+  never leaves a fix unreviewed and never counts a task review as the final review, even
+  when other instructions say to do the least possible. Found in a live trial where a
+  minimal-work plugin led the agent to skip those steps.
+- `dev-build`: when the host can start agents but denies them the tools they need, the
+  controller implements the task inline, logs why, and still sends the review to a
+  read-only reviewer when one can run.
+
 ## 0.6.4 (2026-10-30)
 
 - `/raystack` and `dev`: once you ask for the flow, its steps run even when another plugin,
