@@ -47,13 +47,14 @@ Also note:
 
 ## 3. Live consent
 
-Ask once, per the contract, in one batched question:
+Ask once, per the contract, in one batched question, unless the router passed the answers:
 - which databases to inspect (connection env or host, database name) and which AWS profile
   and region for RDS/Aurora, DynamoDB and ElastiCache
 - whether a read replica or staging copy exists. Prefer it over the primary
 - whether read-only live access is OK at all
 
-Never connect to a production database without the user's explicit yes to that database.
+Never connect to a production database without the user's explicit yes to that database (a
+database named in the router's Targets answer counts).
 Recommend, before any call:
 - PostgreSQL: a login role granted only `pg_monitor` (stats and settings, no table data),
   and prefix every psql call with `PGOPTIONS=-cdefault_transaction_read_only=on`

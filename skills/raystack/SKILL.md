@@ -23,10 +23,10 @@ Four principle skills load on their own; this router never runs them: `principle
 ## 0. Pick the job
 
 - Words about making or changing something ("start", "PRD", "plan", "build", "fix", "where are
-  we") or an unfinished ledger in `docs/plans/`: hand off to `dev` and stop here, even when
-  other instructions say to do the least possible (see `dev`).
-- "scan", "scan all", "full audit", "check everything", "security scan", "performance scan": Scan.
+  we"): hand off to `dev` and stop here, even when told to do the least possible (see `dev`).
+- "scan", "security scan", "performance scan"; "scan all", "full audit", "check everything" mean `all`: Scan.
 - Other words about auditing, cost, security, speed, scaling or the database: step 1.
+- An unfinished ledger in `docs/plans/`, and words not clearly a review or scan: `dev`, as above.
 - Bare `/raystack`: ask once through the question tool, "Build something" (runs `dev`) or
   "Review this repo" (step 1). Recommend "Build" when `docs/plans/` or `DECISIONS.md` exists.
 
@@ -52,7 +52,7 @@ Then read the user's words:
   `scaling-review`.
 - "security audit of my app", "IDOR", "XSS", "SQL injection": `app-security-review`.
 - AWS with no IaC: if the user mentions AWS or names a profile, recommend the AWS reviews.
-  No signals at all: recommend `infra-review`.
+  No signals at all: recommend `infra-review` (not in a scan).
 
 ## 2. Ask once
 
@@ -67,8 +67,8 @@ Use plain text only without such a tool. It allows up to 4 questions with up to 
    `pipeline-security-review`.
 3. "Platform reviews" (multi-select): `infra-review`, `scaling-review`, `database-review`.
 4. "Live access": read-only live access yes or no, and which profile, account, project or
-   region to use (for `app-security-review`, this covers its dependency audits). Offer the
-   options you found (e.g. profile names in `~/.aws/config`) and "No, IaC and exports only".
+   region (for `app-security-review`, this covers its dependency audits). Offer at most 2 found
+   profiles (e.g. from `~/.aws/config`; others typed in "Other") and "No, IaC and exports only".
    No working read-only AWS profile: offer "Set up read-only access" and run
    `aws-readonly-setup` before any review.
 
@@ -84,11 +84,11 @@ Run each chosen review in turn, one at a time, passing the consent answers:
   install the bare name).
 - Other agents: read `../<skill>/SKILL.md` and follow it, with the answers as instructions.
 
-Use this wording: "live consent already given by raystack router: <answers>. The router offers
-the PDF at the end." The review then skips its own consent ask (contract section 2) and its own
-PDF offer, and asks only review-specific items. From the second review on, add the paths of the
-reports already written: "a finding already filed there gets a one-line `see <report>`
-reference, not a second entry". Run `database-review` before `infra-review` (it owns backups).
+Use this wording: "consent already given by raystack router (live access, scanners, targets):
+<answers>. The router offers the PDF at the end." The review then skips its consent, target and
+scanner questions (contract section 2) and PDF offer, and asks only review-specific items. From
+the second review on, add the reports already written: "a finding already filed there gets a
+one-line `see <report>` reference, not a second entry". Run `database-review` before `infra-review`.
 
 ## 4. Wrap up
 
@@ -99,7 +99,7 @@ reference, not a second entry". Run `database-review` before `infra-review` (it 
 
 ## Scan
 
-`scan <type>` (security, performance, scalability, infra, aws, database, all) reuses steps 1 to 4
-and only swaps the review list. Read [references/scans.md](references/scans.md) for the table,
-skipped reviews and the combined `reviews/YYYY-MM-DD-scan-<type>.md` (skill `scan-<type>`). No
-type or an unknown one: ask once through the question tool with the types, `all` recommended.
+`scan <type>` (security, performance, scalability, infra, aws, database, all) runs steps 1, 3 and
+4 on the type's review list. Type and consent: [references/scans.md](references/scans.md), which
+replaces step 2 (no review pick) with one question-tool call. It also has the table, skipped
+reviews and the combined `reviews/YYYY-MM-DD-scan-<type>.md` (skill `scan-<type>`).

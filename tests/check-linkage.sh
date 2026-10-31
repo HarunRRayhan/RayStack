@@ -142,6 +142,27 @@ if [ -f "$entry" ]; then
   for s in "${REVIEWS[@]}"; do
     check "scans.md names $s" grep -qF "$s" "$scans"
   done
+  # B-003/B-004: one consent call per scan, type asked with `all` recommended, review pick skipped.
+  for t in '`all` (Recommended)' 'missing or unknown' 'Skip step 2' 'ONE question-tool call' \
+    'Network scanners' 'Targets' 'Only offer AWS setup when AWS signals' 'Pass the answers to every review' \
+    'listed as skipped' 'Scaling signals' 'not findings'; do
+    check "scans.md contains: $t" grep -qF -- "$t" "$scans"
+  done
+  check "scans.md all row has a full run order" grep -qE '^\| all \| `app-security-review\*`.*`scaling-review\*`.*`aws-billing-review\*`' "$scans"
+  check "router: type and consent come from scans.md" grep -qF 'Type and consent' "$entry"
+  check "router: scan skips no step it still claims" bash -c '! grep -qF "reuses steps 1 to 4" "$1"' _ "$entry"
+  check "router: full audit and check everything mean all" grep -qE '"full audit", "check everything".*`all`' "$entry"
+  check "router: ledger only when not clearly a review or scan" grep -qF 'not clearly a review or scan' "$entry"
+  check "router: scan rule comes before the ledger rule" test "$(grep -n '"scan all"' "$entry" | cut -d: -f1)" -lt "$(grep -n 'unfinished ledger' "$entry" | cut -d: -f1)"
+  check "router: live access offers at most 2 profiles" grep -qF 'at most 2' "$entry"
+  check "router: no-signals fallback is not for scans" grep -qF 'not in a scan' "$entry"
+  check "router: routed consent covers scanners and targets" grep -qF 'scanners, targets' "$entry"
+  contract=skills/raystack/references/review-contract.md
+  check "contract: routed review skips target and scanner questions" grep -qF 'target and scanner questions' "$contract"
+  check "contract: replica target is not review-specific" bash -c '! grep -qF "replica target" "$1"' _ "$contract"
+  for s in database-review infra-review performance-review pipeline-security-review app-security-review; do
+    check "$s skips what the router passed" grep -qF 'unless the router passed' "skills/$s/SKILL.md"
+  done
   check "scans.md has no em-dash" bash -c '! grep -q "—" "$1"' _ "$scans"
   check "router has no em-dash" bash -c '! grep -q "—" "$1"' _ "$entry"
 fi

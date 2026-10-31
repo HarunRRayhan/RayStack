@@ -31,7 +31,8 @@ Use what is available, in this order:
 - AWS with no working read-only profile: offer the `aws-readonly-setup` skill, which makes a
   `raystack-readonly` profile. Never run it inside a review.
 - If the raystack router invoked this review with consent answers, use them and do not ask
-  again; ask only review-specific items (e.g. slow endpoint and window, replica target).
+  again, and skip its target and scanner questions too; ask only review-specific items (e.g.
+  slow endpoint and window).
 
 ## 3. Read-only
 

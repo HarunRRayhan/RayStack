@@ -39,7 +39,7 @@ Also read `README`, `docs/`, `CLAUDE.md`/`AGENTS.md` for the hot routes and know
 
 Ask once, per the contract, with one batched call to the host agent's question tool:
 - whether the database may be read for query statistics (`pg_stat_statements`,
-  `performance_schema`), and which database
+  `performance_schema`), and which database, unless the router passed it
 - whether APM or log exports exist to read, and where
 - which pages or endpoints feel slow, if the repo does not say
 

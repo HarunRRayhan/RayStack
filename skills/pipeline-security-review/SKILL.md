@@ -44,8 +44,8 @@ Also read `README`, `docs/`, `SECURITY.md`, `CLAUDE.md`/`AGENTS.md`: who may pus
 osv-scanner sends the lockfile's package list to osv.dev, and `gh api` reads the repo's
 settings on GitHub, so they are live calls. Ask once, per the contract, with one batched call
 to the host agent's question tool:
-- whether osv-scanner may run on the lockfiles
-- whether `gh api` may read visibility, the workflow token default, branch protection and rules, and for which repo and branch
+- whether osv-scanner may run on the lockfiles, unless the router passed it
+- whether `gh api` may read visibility, the workflow token default, branch protection and rules, and for which repo and branch, unless the router passed it
 - whether the repo is public and whether fork PRs get secrets, if `gh api` is declined
 
 If they decline, list those commands under "Commands for you to run".

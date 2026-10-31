@@ -54,7 +54,7 @@ trust model (who is anonymous, who is a user, who is an admin) and known inciden
 Dependency audits and osv-scanner send the lockfile's package list to public advisory
 registries, and semgrep fetches its rules from the registry, so they are live calls. Ask once, per the contract, with one batched call to the host agent's question
 tool:
-- whether the dependency audits listed above, osv-scanner and semgrep may run
+- whether the dependency audits listed above, osv-scanner and semgrep may run, unless the router passed it
 - which roles exist and which data must never cross between users, if the repo does not say
 
 If they decline, list the audit commands under "Commands for you to run". Run the audits only

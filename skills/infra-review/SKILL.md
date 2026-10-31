@@ -46,7 +46,7 @@ platform runs production.
 
 ## 3. Ask for consent
 
-Ask once, per the contract, in one batched question:
+Ask once, per the contract, in one batched question, unless the router passed the answers:
 - which platforms and accounts, projects, subscriptions or Railway projects to read
 - whether read-only live access is OK (`aws`, `gcloud`, `az`, `railway`, `wrangler`, `kubectl`)
 - the production URL, if not in the repo (for `curl -sI` header checks)
