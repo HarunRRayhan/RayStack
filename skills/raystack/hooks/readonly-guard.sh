@@ -25,9 +25,11 @@
 #   no NAME=value, export or set anywhere in the command).
 # Secret-ish cloud ops (secret, password, token, credential, keys list, ...) deny unless on a metadata list;
 #   ops that return env vars, user data or passwords (lambda config, ecs task defs, launch templates) deny outright.
-# gh (runs on the user's full GitHub token): bare `gh` only; api is GET on repos/... or user with -q/--jq, --paginate,
-#   -X/--method GET; read subcommands repo view, pr list|view, run list|view (no --log), workflow list|view,
-#   release list, secret list, auth status, with -R/--repo --json -L/--limit -b/--branch -q/--jq only.
+# gh (runs on the user's full GitHub token): bare `gh` only; api is GET with -q/--jq, --paginate, -X/--method GET,
+#   on an endpoint allow-list only: user, repos/O/R, its branches/B[/protection], rules/branches/B and
+#   actions/permissions/workflow (no `..`); read subcommands repo view, pr list|view, run list|view (no --log),
+#   workflow list|view, release list, secret list, auth status, with -R/--repo --json -L/--limit -b/--branch -q/--jq
+#   only. -R/--repo and bare words are OWNER/REPO, a number or a plain name: a HOST/ or URL would get the token.
 # kubectl/oc describe only for nodes, services, ingress, events and namespaces (workloads print env values).
 
 GUARD_REASON=""
@@ -58,6 +60,9 @@ _MENTION="(^|[^a-z0-9_.])(${_NAMES// /|})([^a-z0-9_.]|\$)"
 _SQL_CLIS=' psql mysql mariadb sqlite3 usql pgcli mycli '
 _UNSUPPORTED=' mongosh cqlsh clickhouse-client snowsql sqlcmd bq pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot '
 _FILTERS=' jq head tail grep sort uniq wc cut column tr '
+_GH_REPO='[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+'
+# gh api endpoints the reviews read: the user, repo metadata, branch protection, rulesets, workflow token default.
+_GH_PATH="^(user|repos/${_GH_REPO}(/(branches/[A-Za-z0-9_./-]+(/protection)?|rules/branches/[A-Za-z0-9_./-]+|actions/permissions/workflow))?)\$"
 # The only jq filter semgrep JSON may go through (references/scanners.md): error count, rule, file and line, never the matched text.
 _SEMGREP_JQ='{errors: (.errors|length), results: [.results[] | {check_id, path, line: .start.line}]}'
 _LONGFLAGS=' --raw-output --compact-output --count --ignore-case --unique --reverse --numeric-sort '
@@ -367,8 +372,8 @@ _eval_cli() {
           [[ "$(_lc "${w:-}")" =~ (^|[^a-z0-9_])env([^a-z0-9_]|$) ]] && { _deny "gh api --jq env prints the environment"; return 1; }
           w=""; shift
         done
-        [[ "$b" =~ ^(repos/[^[:space:]]+|user)$ ]] || { _deny "gh api only on repos/... or user"; return 1; }
-        case "/$b/" in */../*|*/logs/*) _deny "gh api path $b not allowed during review"; return 1 ;; esac
+        # Allow-list, not a denylist: logs, archives, artifacts, variables and contents return data, and ? or # hid them.
+        [[ "$b" =~ $_GH_PATH ]] && [[ "$b" != *..* ]] || { _deny "gh api endpoint $b not on the read allow-list"; return 1; }
         return 0
       fi
       case "$a $b" in
@@ -377,6 +382,11 @@ _eval_cli() {
       esac
       # No --log (run output), -t/--show-token, --web or templates: only these flags; bare words are numbers or names.
       _scan_args "-R --repo --json -L --limit -b --branch -q --jq" "" "$@" || { _deny "gh $a $b flag not on the read allow-list"; return 1; }
+      # gh sends the token to the host a HOST/OWNER/REPO or URL names, so repos are OWNER/REPO and bare words plain.
+      { _vals -R "$_GH_REPO" && _vals --repo "$_GH_REPO"; } || { _deny "gh -R takes OWNER/REPO only"; return 1; }
+      for w in "${SP[@]}"; do
+        [[ "$w" =~ ^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?$ ]] && [[ "$w" != *..* ]] || { _deny "gh argument $w not allowed"; return 1; }
+      done
       for w in "${SF[@]}"; do
         case "$w" in -q=*|--jq=*) [[ "$(_lc "${w#*=}")" =~ (^|[^a-z0-9_])env([^a-z0-9_]|$) ]] && { _deny "gh --jq env prints the environment"; return 1; } ;; esac
       done

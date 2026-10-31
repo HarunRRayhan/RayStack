@@ -1032,6 +1032,25 @@ BLOCK+=(
   'GH api user'
   'gh api user | gh api -X POST repos/o/r/issues'
   'gh api user && gh repo delete x/y --yes'
+  # read allow-list, not a denylist: ? and # cannot hide logs; archives, artifacts, variables and contents deny
+  "gh api 'repos/o/r/actions/runs/1/logs?x=1'"
+  "gh api 'repos/o/r/actions/runs/1/logs#x'"
+  'gh api repos/o/r/tarball'
+  'gh api repos/o/r/zipball/main'
+  'gh api repos/o/r/actions/artifacts/1/zip'
+  'gh api repos/o/r/actions/runs/1/artifacts'
+  'gh api repos/o/r/actions/variables'
+  'gh api repos/o/r/environments/prod/variables'
+  'gh api repos/o/r/contents/.env'
+  'gh api repos/o/r/branches/../../../user/emails'
+  'gh api repos/o/r/actions/permissions/workflow/x'
+  # gh sends the token to whatever host -R, --repo or a bare argument names
+  'gh pr list -R host/o/r'
+  'gh pr list --repo=host/o/r'
+  'gh repo view host/o/r'
+  'gh pr view https://host/o/r/pull/1'
+  'gh run view 1 --repo host/o/r'
+  'gh repo view ../o'
 )
 ALLOW+=(
   'gh api user'
@@ -1057,6 +1076,10 @@ ALLOW+=(
   'gh release list --limit 3'
   'gh secret list'
   'gh auth status'
+  'gh api repos/o/r/branches/release/1.2/protection'
+  'gh api repos/o.x/r-y_z/rules/branches/main'
+  'gh repo view o/r'
+  'gh workflow view ci.yml -R o/r'
 )
 
 for c in "${BLOCK[@]}"; do
