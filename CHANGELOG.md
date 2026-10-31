@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.0 (2026-10-31)
+
+- `/raystack scan <type>` runs a set of reviews as one job (security, performance, scalability,
+  infra, aws, database, all) with one consent call, and writes a combined summary,
+  `reviews/YYYY-MM-DD-scan-<type>.md`. The router only picks Scan when the request starts with
+  "scan" or uses a scan phrase, so "build a barcode scan screen" still goes to `dev`.
+- New `performance-review`: read-only review of app speed, with a ranked findings report.
+- New `pipeline-security-review`: read-only review of CI/CD pipelines, workflows, Dockerfiles
+  and the supply chain.
+- `app-security-review` gains security logging, a secret scan, a code scan and osv-scanner.
+- Scanners and guard: six scanners (gitleaks, semgrep, osv-scanner, zizmor, actionlint,
+  hadolint) run in safe read forms only. gitleaks runs only with RayStack's config. checkov and
+  trivy are left for you to run. `gh` is limited to a read allow-list (it was unguarded before
+  this release). Shell comments and zsh glob operators are denied.
+
 ## 0.6.5 (2026-10-31)
 
 - `dev-build`: when a subagent tool exists, the controller never writes task code itself,

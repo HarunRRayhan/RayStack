@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.." || exit 1
 . ./tests/lib.sh
 INSTALL=./install.sh
 if [ ! -f "$INSTALL" ]; then fail "install.sh missing"; exit 1; fi
-SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build"
+SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build"
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
 
@@ -15,7 +15,7 @@ count() { n=0; for s in $SKILLS; do [ -e "$1/$s/SKILL.md" ] && n=$((n + 1)); don
 # install twice into a dir that holds another skill
 D="$T/a"; mkdir -p "$D/other-skill"; echo keep > "$D/other-skill/SKILL.md"
 bash "$INSTALL" --dir "$D" >/dev/null; assert_eq "$?" 0 "install exits 0"
-assert_eq "$(count "$D")" 21 "all twenty-one skills installed"
+assert_eq "$(count "$D")" 23 "all twenty-three skills installed"
 assert_eq "$(cat "$D/other-skill/SKILL.md")" keep "other-skill intact"
 cp -R "$D" "$T/snap"
 bash "$INSTALL" --dir "$D" >/dev/null
@@ -29,7 +29,7 @@ assert_eq "$(gl "$IC")" 0 "installed guard allows its own gitleaks config"
 assert_eq "$(gl "$(pwd -P)/skills/raystack/references/gitleaks.toml")" 2 "installed guard denies the checkout's config"
 [ ! -e "$D/.denylist" ] && [ ! -e "$D/hooks" ] && [ ! -e "$D/scripts" ] && [ ! -e "$D/docs" ] && [ ! -e "$D/raystack/.denylist" ] \
   && pass "nothing outside skills/ copied" || fail "extra files copied"
-assert_eq "$(ls "$D" | wc -l | tr -d ' ')" 22 "target holds twenty-one skills plus other-skill"
+assert_eq "$(ls "$D" | wc -l | tr -d ' ')" 24 "target holds twenty-three skills plus other-skill"
 
 # uninstall removes only ours
 bash "$INSTALL" --dir "$D" --uninstall >/dev/null
@@ -40,7 +40,7 @@ assert_eq "$(ls "$D")" other-skill "uninstall left other-skill"
 L="$T/l"
 bash "$INSTALL" --dir "$L" --link >/dev/null 2>&1
 links=0; for s in $SKILLS; do [ -L "$L/$s" ] && links=$((links + 1)); done
-assert_eq "$links" 21 "--link makes twenty-one symlinks"
+assert_eq "$links" 23 "--link makes twenty-three symlinks"
 bash "$INSTALL" --dir "$L" >/dev/null
 assert_eq "$([ -L "$L/raystack" ] && echo link || echo dir)" dir "copy replaces a symlink with a real dir"
 bash "$INSTALL" --dir "$L" --uninstall >/dev/null
@@ -52,7 +52,7 @@ bash "$INSTALL" --dir "$T/dry" --dry-run >/dev/null
 bash "$INSTALL" --dir "$D" --uninstall --dry-run >/dev/null
 bash "$INSTALL" --dir "$D" >/dev/null
 bash "$INSTALL" --dir "$D" --uninstall --dry-run >/dev/null
-assert_eq "$(count "$D")" 21 "--uninstall --dry-run removes nothing"
+assert_eq "$(count "$D")" 23 "--uninstall --dry-run removes nothing"
 
 # refusals
 bash "$INSTALL" --dir / >/dev/null 2>&1; assert_eq "$?" 1 "refuses /"
@@ -64,7 +64,7 @@ bash "$INSTALL" --agent nope >/dev/null 2>&1; assert_eq "$?" 1 "unknown agent"
 # agent default dir, caveat, works from another cwd
 H="$T/home"; mkdir -p "$H"
 out=$(cd "$T" && HOME="$H" bash "$OLDPWD/$INSTALL" --agent codex 2>&1)
-assert_eq "$(count "$H/.agents/skills")" 21 "codex default dir"
+assert_eq "$(count "$H/.agents/skills")" 23 "codex default dir"
 case "$out" in *docs/agents.md*) pass "prints guard caveat";; *) fail "no guard caveat";; esac
 case "$out" in *"codex plugin"*) pass "prints plugin hint";; *) fail "no plugin hint";; esac
 
@@ -74,7 +74,7 @@ err=$(bash "$INSTALL" --dir "$F" 2>&1 >/dev/null); rc=$?
 assert_eq "$rc" 1 "install exits 1 when a foreign dir is skipped"
 assert_eq "$(cat "$F/infra-review/notes.txt")" mine "foreign dir preserved by install"
 case "$err" in *"skipping $F/infra-review: not installed by RayStack (use --force to replace)"*) pass "skip warning";; *) fail "no skip warning: $err";; esac
-assert_eq "$(count "$F")" 20 "other twenty still installed"
+assert_eq "$(count "$F")" 22 "other twenty-two still installed"
 bash "$INSTALL" --dir "$F" --uninstall >/dev/null 2>&1; assert_eq "$?" 1 "uninstall exits 1 on foreign dir"
 assert_eq "$(cat "$F/infra-review/notes.txt")" mine "foreign dir preserved by uninstall"
 assert_eq "$(find "$F" -mindepth 1 -maxdepth 1 | wc -l | tr -d " ")" 1 "uninstall removed only ours"
@@ -97,7 +97,7 @@ bash "$INSTALL" --dir "$R" --uninstall >/dev/null 2>&1
 assert_eq "$(cat "$R/blog-cover/notes.txt")" mine "uninstall keeps foreign retired-name dir"
 
 # path with spaces
-bash "$INSTALL" --dir "$T/with space/skills" >/dev/null; assert_eq "$(count "$T/with space/skills")" 21 "dir with spaces"
+bash "$INSTALL" --dir "$T/with space/skills" >/dev/null; assert_eq "$(count "$T/with space/skills")" 23 "dir with spaces"
 
 # source tree and HOME/. refused
 bash "$INSTALL" --dir "$PWD/skills" >/dev/null 2>&1; assert_eq "$?" 1 "refuses source skills dir"
@@ -136,6 +136,6 @@ bash "$INSTALL" --dir "$T/bad\"dir" >/dev/null 2>&1; assert_eq "$?" 1 "refuses q
 
 # symlinked install.sh still finds the checkout
 mkdir -p "$T/bin"; ln -s "$PWD/install.sh" "$T/bin/install.sh"
-bash "$T/bin/install.sh" --dir "$T/viaLink" >/dev/null; assert_eq "$(count "$T/viaLink")" 21 "works via symlinked install.sh"
+bash "$T/bin/install.sh" --dir "$T/viaLink" >/dev/null; assert_eq "$(count "$T/viaLink")" 23 "works via symlinked install.sh"
 
 exit "$FAILED"

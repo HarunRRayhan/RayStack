@@ -22,7 +22,7 @@ Four principle skills load on their own; this router never runs them: `principle
 
 ## 0. Pick the job (in this order; the first match wins)
 
-- "scan", "security scan", "performance scan", "scan and fix"; "scan all", "full audit", "check everything" mean `all`: Scan.
+- The request starts with "scan" (`/raystack scan all`), or uses a scan phrase ("security scan", "performance scan", "scan and fix", "full audit", "check everything"; the last two mean `all`): Scan. "scan" elsewhere in a request ("build a barcode scan screen") is not this rule.
 - Words about making or changing something ("start", "PRD", "plan", "build", "fix", "where are
   we"): hand off to `dev` and stop here, even when told to do the least possible (see `dev`).
 - Other words about auditing, cost, security, speed, scaling or the database: step 1.

@@ -153,7 +153,7 @@ if [ -f "$entry" ]; then
   check "router: scan skips no step it still claims" bash -c '! grep -qF "reuses steps 1 to 4" "$1"' _ "$entry"
   check "router: full audit and check everything mean all" grep -qE '"full audit", "check everything".*`all`' "$entry"
   check "router: ledger only when not clearly a review or scan" grep -qF 'not clearly a review or scan' "$entry"
-  check "router: scan rule comes before the ledger rule" test "$(grep -n '"scan all"' "$entry" | cut -d: -f1)" -lt "$(grep -n 'unfinished ledger' "$entry" | cut -d: -f1)"
+  check "router: scan rule comes before the ledger rule" test "$(grep -n 'The request starts with "scan"' "$entry" | cut -d: -f1)" -lt "$(grep -n 'unfinished ledger' "$entry" | cut -d: -f1)"
   check "router: live access offers at most 2 profiles" grep -qF 'at most 2' "$entry"
   check "router: no-signals fallback is not for scans" grep -qF 'not in a scan' "$entry"
   check "router: routed consent covers scanners and targets" grep -qF 'scanners, targets' "$entry"
@@ -326,4 +326,11 @@ for t in weakened B-; do
   check "dev-build reviewer contains: $t" grep -qF -- "$t" skills/dev-build/references/reviewer.md
 done
 check "dev-build implementer contains: needs-context" grep -qF needs-context skills/dev-build/references/implementer.md
+# router: scan wins only as the command word or a scan phrase; it comes before the build line
+rt=skills/raystack/SKILL.md
+check "router: scan rule needs scan as the command word" grep -qF 'The request starts with "scan"' "$rt"
+check "router: scan rule lists the scan phrases" grep -qF '"security scan", "performance scan", "scan and fix", "full audit", "check everything"' "$rt"
+check "router: scan elsewhere does not win" grep -qF '"scan" elsewhere in a request' "$rt"
+check "router: scan line comes before the build line" test "$(grep -n 'The request starts with "scan"' "$rt" | head -1 | cut -d: -f1)" -lt "$(grep -n 'Words about making or changing' "$rt" | head -1 | cut -d: -f1)"
+check "router is 105 lines or fewer" test "$(wc -l < "$rt")" -le 105
 exit "$FAILED"
