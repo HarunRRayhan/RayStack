@@ -211,7 +211,7 @@ _scanner_ok() {
       for w in "${SF[@]}"; do
         case "$w" in -c=*|--config=*) if [ "${w#*=}" = "$_GITLEAKS_CONF" ] && [ "$seen" = 0 ]; then seen=1; else seen=2; fi ;; esac
       done
-      [ "$seen" = 1 ] && [ -n "$_GITLEAKS_CONF" ] || { _deny "gitleaks only with -c $_GITLEAKS_CONF"; return 1; }
+      if ! { [ "$seen" = 1 ] && [ -n "$_GITLEAKS_CONF" ]; }; then _deny "gitleaks only with -c $_GITLEAKS_CONF"; return 1; fi
       # trace and debug logs print findings unredacted.
       _vals --log-level 'info|warn|error|fatal' || { _deny "gitleaks --log-level only info, warn, error or fatal"; return 1; } ;;
     # No --config means repo .semgrep.yml; metrics or version checks phone home.
@@ -416,7 +416,7 @@ _eval_cli() {
             -q|--jq) [ $# -gt 1 ] || { _deny "gh api $1 needs a value"; return 1; }; w=$2; shift ;;
             -q?*|--jq=*) w=${1#-q}; w=${w#--jq}; w=${w#=} ;;
             --paginate) w="" ;;
-            -X|--method) [ $# -gt 1 ] && [ "$(_lc "$2")" = get ] || { _deny "gh api only with method GET"; return 1; }; shift ;;
+            -X|--method) if ! { [ $# -gt 1 ] && [ "$(_lc "$2")" = get ]; }; then _deny "gh api only with method GET"; return 1; fi; shift ;;
             -X?*|--method=*) nm=${1#-X}; nm=${nm#--method}
                              [ "$(_lc "${nm#=}")" = get ] || { _deny "gh api only with method GET"; return 1; } ;;
             # -f/-F/--field/--raw-field/--input switch to POST; -H/--hostname and the rest are not reads we need.
@@ -427,7 +427,7 @@ _eval_cli() {
           w=""; shift
         done
         # Allow-list, not a denylist: logs, archives, artifacts, variables and contents return data, and ? or # hid them.
-        [[ "$b" =~ $_GH_PATH ]] && [[ "$b" != *..* ]] || { _deny "gh api endpoint $b not on the read allow-list"; return 1; }
+        if ! { [[ "$b" =~ $_GH_PATH ]] && [[ "$b" != *..* ]]; }; then _deny "gh api endpoint $b not on the read allow-list"; return 1; fi
         return 0
       fi
       case "$a $b" in
@@ -439,7 +439,7 @@ _eval_cli() {
       # gh sends the token to the host a HOST/OWNER/REPO or URL names, so repos are OWNER/REPO and bare words plain.
       { _vals -R "$_GH_REPO" && _vals --repo "$_GH_REPO"; } || { _deny "gh -R takes OWNER/REPO only"; return 1; }
       for w in "${SP[@]}"; do
-        [[ "$w" =~ ^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?$ ]] && [[ "$w" != *..* ]] || { _deny "gh argument $w not allowed"; return 1; }
+        if ! { [[ "$w" =~ ^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?$ ]] && [[ "$w" != *..* ]]; }; then _deny "gh argument $w not allowed"; return 1; fi
       done
       for w in "${SF[@]}"; do
         case "$w" in -q=*|--jq=*) [[ "$(_lc "${w#*=}")" =~ (^|[^a-z0-9_])env([^a-z0-9_]|$) ]] && { _deny "gh --jq env prints the environment"; return 1; } ;; esac
