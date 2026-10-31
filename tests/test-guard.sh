@@ -8,6 +8,10 @@ if [ ! -f "$GUARD" ]; then fail "guard missing: $GUARD"; exit 1; fi
 # shellcheck source=/dev/null
 . "$GUARD"
 
+# RayStack's gitleaks config, canonical, as the guard resolves it from its own path.
+GLC=$(cd skills/raystack/references && pwd -P)/gitleaks.toml
+GLC_FAKE=$PWD/tests/fixtures/x/raystack/references/gitleaks.toml
+
 # shellcheck disable=SC2016,SC2088  # single quotes are intentional: commands are test data
 BLOCK=(
   'aws ec2 terminate-instances --instance-ids i-1'
@@ -696,6 +700,41 @@ BLOCK=(
   # python -m <monitored module>[.sub]
   'python -m checkov.main -d .'
   'python -m awscli.clidriver s3 rm s3://b/k'
+  # gitleaks loads ./.gitleaks.toml unless -c names RayStack's own config (B-043)
+  'gitleaks dir . --redact --no-banner'
+  'gitleaks git . --redact --no-banner'
+  'gitleaks dir . --redact --no-banner -f json -r -'
+  'gitleaks git . --redact -v --log-level warn'
+  'gitleaks dir . --redact --no-banner -f=json -r=- | jq length'
+  "gitleaks dir '#x' --redact"
+  'gitleaks dir . --redact --log-level info'
+  'gitleaks dir . --redact --log-level=error'
+  'gitleaks dir . --redact -f json -r - -c ./x.toml'
+  'gitleaks dir . --redact -f json -r - --config=/tmp/x/skills/raystack/references/gitleaks.toml'
+  "gitleaks dir . --redact -c $GLC_FAKE"
+  "gitleaks dir . --redact -c $GLC -c ./x.toml"
+  "gitleaks dir . --redact -c $GLC/"
+  "GITLEAKS_CONFIG=x gitleaks dir . --redact -c $GLC"
+  "GITLEAKS_CONFIG_TOML=x gitleaks git . --redact -c $GLC"
+  "export GITLEAKS_CONFIG=x; gitleaks dir . --redact -c $GLC"
+  # osv-scanner Go call analysis (on by default) needs the go toolchain
+  'osv-scanner scan'
+  'osv-scanner scan -r --format json .'
+  'osv-scanner scan --offline --download-offline-databases --no-resolve -r .'
+  'osv-scanner scan --format json --call-analysis=go .'
+  'osv-scanner scan --format json --call-analysis go .'
+  'osv-scanner scan --format json --call-analysis=all --no-call-analysis=go .'
+  'osv-scanner scan --format json --experimental-call-analysis .'
+  'osv-scanner scan --format json --no-call-analysis=rust .'
+  'osv-scanner scan --format json --no-call-analysis=go --no-call-analysis=rust .'
+  # python -m: every python/pypy build
+  'pypy3 -m checkov.main -d .'
+  'pythonw -m awscli.clidriver s3 rm s3://b/k'
+  'pythonw3 -m awscli s3 rm s3://b/k'
+  'python3t -m awscli s3 rm s3://b/k'
+  'python3-intel64 -m awscli s3 rm s3://b/k'
+  'pypy -m awscli s3 rm s3://b/k'
+  '/usr/bin/python3.12 -m awscli s3 rm s3://b/k'
 )
 ALLOW=(
   'aws ec2 describe-instances'
@@ -875,17 +914,9 @@ ALLOW=(
   'pip-audit -r requirements.txt --strict -f json --disable-pip --no-deps'
   'NO_COLOR=1 npm audit'
   # v0.7: scanners in their read forms
-  'gitleaks dir . --redact --no-banner'
-  'gitleaks git . --redact --no-banner'
-  'gitleaks dir . --redact --no-banner -f json -r -'
-  'gitleaks git . --redact -v --log-level warn'
-  'gitleaks dir . --redact --no-banner -f=json -r=- | jq length'
   'semgrep scan --config p/default --metrics off --disable-version-check'
   'semgrep scan --config p/default --metrics off --disable-version-check --json --quiet .'
   'semgrep scan --config=r/python.lang.security --metrics=off --disable-version-check --severity ERROR src'
-  'osv-scanner scan'
-  'osv-scanner scan -r --format json .'
-  'osv-scanner scan --offline --download-offline-databases --no-resolve -r .'
   'zizmor --offline .'
   'zizmor --offline --format json --no-config .github/workflows'
   'actionlint -shellcheck= -pyflakes='
@@ -895,13 +926,23 @@ ALLOW=(
   'hadolint Dockerfile'
   'hadolint -f json Dockerfile | jq length'
   # a quoted or mid-word # is literal, not a comment
-  "gitleaks dir '#x' --redact"
-  'gitleaks dir . --redact --log-level info'
-  'gitleaks dir . --redact --log-level=error'
   "git log --format='#%h'"
   "grep -rn '^foo' ."
   "git log --format='#%h' | grep '^#'"
   'python3 -m json.tool x.json'
+)
+
+ALLOW+=(
+  "gitleaks dir . --redact --no-banner -f json -r - -c $GLC"
+  "gitleaks git . --redact --no-banner -f json -r - --config $GLC"
+  "gitleaks dir . --redact --no-banner -f=json -r=- --config=$GLC | jq length"
+  "gitleaks git . --redact -v --log-level warn -c $GLC"
+  "gitleaks dir '#x' --redact -c $GLC"
+  "gitleaks dir . --redact --log-level=error -c $GLC"
+  'osv-scanner scan --no-call-analysis=go'
+  'osv-scanner scan -r --format json --no-call-analysis go .'
+  'osv-scanner scan --offline --download-offline-databases --no-resolve --no-call-analysis=go -r .'
+  'pypy3 -m json.tool x.json'
 )
 
 for c in "${BLOCK[@]}"; do

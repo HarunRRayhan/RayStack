@@ -16,9 +16,9 @@
 #   composer audit --no-plugins --no-scripts, bundle-audit check, pip-audit (-r needs --disable-pip plus --no-deps or
 #   --require-hashes), each with listed flags only (no repo plugins, scripts or package builds). Any audit
 #   (npm audit too) takes the cloud-CLI shape below: one call, only filters after a pipe, no ; && || or redirects.
-#   Scanners take the same shape, as the bare name, with listed flags only: gitleaks dir|git (--redact required,
-#   -f json, -r - only, --log-level info|warn|error|fatal), semgrep scan (--metrics off --disable-version-check, --config p/ or r/ only),
-#   osv-scanner scan (--format json, no image), zizmor --offline, actionlint -shellcheck= -pyflakes= (flags
+#   Scanners take the same shape, as the bare name, with listed flags only: gitleaks dir|git (--redact and
+#   -c <this skill>/references/gitleaks.toml required, -f json, -r - only, --log-level info|warn|error|fatal), semgrep scan (--metrics off --disable-version-check, --config p/ or r/ only),
+#   osv-scanner scan (--no-call-analysis=go required, --format json, no image), zizmor --offline, actionlint -shellcheck= -pyflakes= (flags
 #   before files), hadolint (-f json). No output files, fixes or repo configs. checkov and trivy deny in every form.
 #   docker/podman/nerdctl ps, images, image ls, version, info, system df, stats --no-stream,
 #   logs --tail N<=200, compose ps|ls|images|logs|config --services/--volumes (no flags before the subcommand,
@@ -29,6 +29,8 @@
 
 GUARD_REASON=""
 KEYS_ONLY=0
+# gitleaks must use the config shipped beside this guard, or it loads the scanned repo's .gitleaks.toml.
+_GITLEAKS_CONF=$(cd "$(dirname "${BASH_SOURCE[0]}")/../references" 2>/dev/null && printf '%s/gitleaks.toml' "$(pwd -P)")
 P=()
 PIPE=$'\001'
 
@@ -478,7 +480,7 @@ guard_check() {
     # zsh expands a leading `=` (=composer is the path of composer), so it names the same CLI.
     name=$(_lc "${TOK[i]##*/}"); name=${name#=}
     case "$name" in
-      python|python3|python[0-9].*|py)
+      python*|pypy*|py)
         # `.` is not a _MENTION boundary (docs/aws.md), so `-m awscli.clidriver` is caught here.
         for ((j = i + 1; j < n; j++)); do
           [ "${TOK[j]}" = "$PIPE" ] && break
@@ -554,9 +556,9 @@ guard_check() {
         [ "${TOK[i]}" = "$name" ] || { _deny "$name only as the bare command name"; return 1; }
         j=$((i + 1))
         case "$name $(_lc "${TOK[j]:-}")" in
-          "gitleaks dir"|"gitleaks git") j=$((j + 1)); vf='-f -r --log-level'; bf='--redact --no-banner -v' ;;
+          "gitleaks dir"|"gitleaks git") j=$((j + 1)); vf='-f -r --log-level -c --config'; bf='--redact --no-banner -v' ;;
           "semgrep scan") j=$((j + 1)); vf='--config --metrics --severity'; bf='--disable-version-check --json --quiet' ;;
-          "osv-scanner scan") j=$((j + 1)); vf='--format'; bf='-r --no-resolve --offline --download-offline-databases' ;;
+          "osv-scanner scan") j=$((j + 1)); vf='--format --no-call-analysis'; bf='-r --no-resolve --offline --download-offline-databases' ;;
           "zizmor "*) vf='--format'; bf='--offline --no-config' ;;
           "actionlint "*) vf='-shellcheck -pyflakes -format'; bf='-oneline' ;;
           "hadolint "*) vf='-f'; bf='' ;;
@@ -570,13 +572,22 @@ guard_check() {
         _scan_args "$vf" "$bf" "${ARGS[@]}" || { _deny "$name flag not on the read allow-list"; return 1; }
         case "$name" in
           gitleaks) { _has --redact && _vals -f json && _vals -r -; } || { _deny "gitleaks only with --redact, -f json and -r - (stdout)"; return 1; }
+            # A repo config can redact almost nothing; only RayStack's config, compared as a string.
+            seen=0
+            for w in "${SF[@]}"; do
+              case "$w" in -c=*|--config=*) if [ "${w#*=}" = "$_GITLEAKS_CONF" ] && [ "$seen" = 0 ]; then seen=1; else seen=2; fi ;; esac
+            done
+            [ "$seen" = 1 ] && [ -n "$_GITLEAKS_CONF" ] || { _deny "gitleaks only with -c $_GITLEAKS_CONF"; return 1; }
             # trace and debug logs print findings unredacted.
             _vals --log-level 'info|warn|error|fatal' || { _deny "gitleaks --log-level only info, warn, error or fatal"; return 1; } ;;
           # No --config means repo .semgrep.yml; metrics or version checks phone home.
+          # A local p/ or r/ dir would be read as rules: data, not code.
           semgrep) { _has --config= && _vals --config '[pr]/[A-Za-z0-9._-]+' && _has --metrics=off && _vals --metrics off && _has --disable-version-check; } ||
             { _deny "semgrep scan only with --config p/ or r/, --metrics off and --disable-version-check"; return 1; } ;;
           # `scan image` pulls and unpacks container images.
-          osv-scanner) { _vals --format json && [ "$(_lc "${SP[0]:-}")" != image ]; } || { _deny "osv-scanner scan only with --format json and paths"; return 1; } ;;
+          # Go call analysis is on by default and needs the go toolchain; --call-analysis is not listed.
+          osv-scanner) { _vals --format json && _has --no-call-analysis= && _vals --no-call-analysis go && [ "$(_lc "${SP[0]:-}")" != image ]; } ||
+            { _deny "osv-scanner scan only with --no-call-analysis=go, --format json and paths"; return 1; } ;;
           zizmor) { _has --offline && _vals --format json; } || { _deny "zizmor only with --offline and --format json"; return 1; } ;;
           # Go flag parsing stops at the first file, so later flags would be files; unset checkers run binaries.
           actionlint) { [ $LATE = 0 ] && _has -shellcheck= && _vals -shellcheck '' && _has -pyflakes= && _vals -pyflakes ''; } ||

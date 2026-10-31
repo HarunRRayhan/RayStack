@@ -1,0 +1,3 @@
+# The readonly guard makes gitleaks use this file, so a scanned repo's .gitleaks.toml cannot weaken --redact.
+[extend]
+useDefault = true

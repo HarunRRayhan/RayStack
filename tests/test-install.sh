@@ -21,6 +21,12 @@ cp -R "$D" "$T/snap"
 bash "$INSTALL" --dir "$D" >/dev/null
 if diff -r "$T/snap" "$D" >/dev/null; then pass "second run identical"; else fail "second run changed tree"; fi
 [ -x "$D/raystack/hooks/readonly-guard.sh" ] && pass "copied guard executable" || fail "guard not executable"
+# The installed guard resolves gitleaks -c to the installed references/gitleaks.toml, from any cwd.
+IC=$(cd "$D/raystack/references" && pwd -P)/gitleaks.toml
+[ -f "$IC" ] && pass "gitleaks.toml installed" || fail "gitleaks.toml not installed"
+gl() { jq -cn --arg c "gitleaks dir . --redact -f json -r - -c $1" '{tool_input:{command:$c}}' | (cd / && "$D/raystack/hooks/readonly-guard.sh" >/dev/null 2>&1); echo $?; }
+assert_eq "$(gl "$IC")" 0 "installed guard allows its own gitleaks config"
+assert_eq "$(gl "$(pwd -P)/skills/raystack/references/gitleaks.toml")" 2 "installed guard denies the checkout's config"
 [ ! -e "$D/.denylist" ] && [ ! -e "$D/hooks" ] && [ ! -e "$D/scripts" ] && [ ! -e "$D/docs" ] && [ ! -e "$D/raystack/.denylist" ] \
   && pass "nothing outside skills/ copied" || fail "extra files copied"
 assert_eq "$(ls "$D" | wc -l | tr -d ' ')" 22 "target holds twenty-one skills plus other-skill"
