@@ -962,6 +962,9 @@ ALLOW+=(
   'osv-scanner scan -r --format json --no-call-analysis go .'
   'osv-scanner scan --offline --download-offline-databases --no-resolve --no-call-analysis=go -r .'
   'pypy3 -m json.tool x.json'
+  # pipeline-security-review reads branch protection after consent
+  'gh api repos/OWNER/REPO/branches/BRANCH/protection'
+  'gh api repos/OWNER/REPO/rules/branches/BRANCH'
 )
 
 for c in "${BLOCK[@]}"; do

@@ -81,6 +81,33 @@ else
 fi
 check "scaling checklist names performance-review" grep -qF 'performance-review' skills/scaling-review/references/checklist.md
 
+# pipeline-security-review: same shape as the other reviews; CI, containers, IaC, supply chain.
+ps=skills/pipeline-security-review/SKILL.md
+psc=skills/pipeline-security-review/references/checklist.md
+if [ -f "$ps" ]; then
+  check "pipeline-security-review links the contract" grep -qF "$CONTRACT" "$ps"
+  check "pipeline-security-review contract path resolves" test -f "skills/pipeline-security-review/$CONTRACT"
+  check "pipeline-security-review links references/checklist.md" grep -qF 'references/checklist.md' "$ps"
+  check "pipeline-security-review has the guard hook command" grep -qF "$HOOK" "$ps"
+  check "pipeline-security-review is 120 lines or fewer" test "$(wc -l < "$ps")" -le 120
+  for t in zizmor actionlint hadolint osv-scanner checkov trivy aws-security-review infra-review app-security-review \
+    'raystack/references/scanners.md' 'reviews/YYYY-MM-DD-pipeline-security-review.md' 'Worth hardening' 'Commands for you to run' \
+    'gh api repos/OWNER/REPO/branches/BRANCH/protection'; do
+    check "pipeline-security-review contains: $t" grep -qF -- "$t" "$ps"
+  done
+else
+  fail "missing $ps"
+fi
+if [ -f "$psc" ]; then
+  for t in pull_request_target workflow_run 'github.event.pull_request.head' 'permissions:' write-all '[0-9a-f]{40}' \
+    'self-hosted' 'token.actions.githubusercontent.com:sub' '.gitlab-ci.yml' USER latest ARG 'ADD' 'curl' \
+    'npm ci' Dependabot Renovate 'branch protection' aws-security-review; do
+    check "pipeline checklist contains: $t" grep -qF -- "$t" "$psc"
+  done
+else
+  fail "missing $psc"
+fi
+
 entry=skills/raystack/SKILL.md
 if [ -f "$entry" ]; then
   for s in "${REVIEWS[@]}"; do
