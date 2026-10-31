@@ -14,6 +14,8 @@
   hadolint) run in safe read forms only. gitleaks runs only with RayStack's config. checkov and
   trivy are left for you to run. `gh` is limited to a read allow-list (it was unguarded before
   this release). Shell comments and zsh glob operators are denied.
+- Routed reviews skip only the questions the router asked and passed; any target the router did
+  not pass is still asked.
 
 ## 0.6.5 (2026-10-31)
 

@@ -199,8 +199,10 @@ Findings here use a **Blind spot** line (the attack that would go unseen) in pla
 
 - **Scan tracked files and history.** Installed: run `gitleaks dir` and `gitleaks git` in the
   exact forms in `../../raystack/references/scanners.md` (linked from the contract, section 3). Report rule,
-  file and line only. Not installed ("command not found"): say so, give the install command,
-  and use the `grep -rlE` patterns from area 6 (file names only). Never print matched lines.
+  file and line only. `gitleaks dir` also reads untracked and gitignored files: keep only hits
+  whose file `git ls-files -- .` lists. Not installed ("command not found"): say so, give the
+  install command, and use the `grep -rlE` patterns from area 6 (file names only). Never print
+  matched lines.
   Exploit: anyone with repo access, or a leaked clone, gets the key. Fix: rotate first, then
   remove it; history still holds the old value.
 - **Hidden findings.** Evidence: `.gitleaksignore`, or `grep -rl '[g]itleaks:allow' .` (names

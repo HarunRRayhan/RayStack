@@ -46,10 +46,10 @@ Use what is available, in this order:
 - A read-only guard hook may run during the review. It checks every Bash command, not only
   cloud and DB ones:
   - `$`, backticks and backslashes are denied anywhere, even inside quotes.
-  - Unquoted `[ ] ( ) * ? ! < > { }` are denied. Single-quote any argument that holds them,
-    e.g. `--query 'Reservations[].Instances[].InstanceType'`.
-  - So write report files with the agent's file write/edit tool. Never `cat >`, heredocs or
-    redirects.
+  - Unquoted `[ ] ( ) * ? ! < > { } ^` and an unquoted `#` anywhere are denied. Single-quote
+    any argument that holds them, e.g. `--query 'Reservations[].Instances[].InstanceType'`,
+    `git show 'HEAD^'`, `grep -c '^FROM' Dockerfile`.
+  - So write report files with the agent's file write/edit tool, never `cat >` or heredocs.
 - For cloud and DB commands the allowed shape is:
   - one CLI call per command, with no `;`, `&&`, `||` or redirects (`>`, `<`, `2>&1`)
   - optionally piped into `jq`, `head`, `tail`, `grep`, `sort`, `uniq`, `wc`, `cut`,
@@ -83,7 +83,8 @@ Use what is available, in this order:
   `grep -rn "@aws-sdk" .`).
 - To grep for such a name, write it as a bracket class in single quotes, e.g.
   `grep -rn '[r]ailway' .`, `'[n]pm'`, `'[a]ws-sdk'`, `'[d]ocker'`, `'[c]omposer'`, `'[b]undle'`,
-  `'[g]itleaks'`, `'[s]emgrep'`. Scanner names are monitored too.
+  `'[g]itleaks'`, `'[s]emgrep'`, `'[g]h-pages'`. Scanner names and `gh` are monitored too, so
+  read a path holding one (`.github/workflows/gh-pages.yml`) with the file read tool, not `cat`.
 - For a literal dot in a pattern use `[.]`, not a backslash (backslashes are denied).
 - If the guard blocks a read command for its shape, rewrite it once: quote it, split it, drop
   the redirect.

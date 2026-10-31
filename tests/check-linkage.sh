@@ -53,6 +53,19 @@ for t in osv-scanner 'Blind spot'; do
   check "app-security-review contains: $t" grep -qF -- "$t" "$app"
 done
 check "app-security-review is 120 lines or fewer" test "$(wc -l < "$app")" -le 120
+# gitleaks dir reads ignored files too: only tracked hits count, in a form the guard allows.
+for f in "$sc" skills/app-security-review/references/checklist.md; do
+  check "$(basename "$f"): gitleaks hits filtered to tracked files" grep -qF 'git ls-files -- .' "$f"
+done
+check "scanners.md: findings exit non-zero, not a failure" grep -qF 'not a failure' "$sc"
+check "scanners.md: osv-scanner offline is not clean" grep -qF 'Offline,' "$sc"
+check "app-security-review: osv and npm/composer counted once" grep -qF 'count a package once' "$app"
+# Contract lists every tokenizer rule agents hit: ^, # anywhere, gh as a monitored name.
+# shellcheck disable=SC2016  # backticks are literal
+for t in '< > { } ^`' 'unquoted `#` anywhere' "git show 'HEAD^'" "'[g]h-pages'" 'Scanner names and `gh` are monitored'; do
+  check "contract contains: $t" grep -qF -- "$t" "$rc"
+done
+check "README names the scanners the guard checks" grep -qF 'The six' README.md
 for t in 'Security logging' 'Secret scan' 'Code scan'; do
   check "app-security checklist contains: $t" grep -qF -- "$t" skills/app-security-review/references/checklist.md
 done
@@ -86,6 +99,9 @@ if [ -f "$ps" ]; then
     'raystack/references/scanners.md' 'reviews/YYYY-MM-DD-pipeline-security-review.md' 'Worth hardening' 'Commands for you to run' \
     'gh api repos/OWNER/REPO/branches/BRANCH/protection'; do
     check "pipeline-security-review contains: $t" grep -qF -- "$t" "$ps"
+  done
+  for t in 'not logged in (exit 4)' 'not GitHub'; do
+    check "pipeline-security-review: gh fallback for $t" grep -qF -- "$t" "$ps"
   done
 else
   fail "missing $ps"
@@ -185,6 +201,13 @@ if [ -f "$entry" ]; then
   for s in database-review infra-review performance-review pipeline-security-review app-security-review; do
     check "$s skips what the router passed" grep -qF 'unless the router passed' "skills/$s/SKILL.md"
   done
+  check "scans.md: a scan that runs nothing writes no summary" grep -qF 'If no review runs' "$scans"
+  check "scans.md: scan aws offers AWS setup" grep -qF 'or the type is aws' "$scans"
+  for t in '"scan"' '"scan all"' 'performance' 'N+1' 'CI/CD security' 'GitHub Actions security'; do
+    check "router description triggers on $t" bash -c 'sed -n 3p "$1" | grep -qF -- "$2"' _ "$entry" "$t"
+  done
+  check "router is 105 lines or fewer" test "$(wc -l < "$entry")" -le 105
+  check "CHANGELOG 0.7.0 notes routed reviews skip only what was asked" grep -qF 'skip only the questions the router asked' CHANGELOG.md
   check "scans.md has no em-dash" bash -c '! grep -q "—" "$1"' _ "$scans"
   check "router has no em-dash" bash -c '! grep -q "—" "$1"' _ "$entry"
 fi

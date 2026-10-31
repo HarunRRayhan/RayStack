@@ -27,7 +27,7 @@ Skip step 2's review pick. Make ONE question-tool call with only what the mapped
    performance, and "Other" for the rest (scalability, infra, aws, database). When this is
    asked, size questions 2 to 4 for the reviews `all` would run here.
 2. "Live access" as in step 2 item 4 (at most 4 options). Only offer AWS setup when AWS signals
-   are found.
+   are found or the type is aws.
 3. "Network scanners" (multi-select): dependency audits + osv-scanner, semgrep, `gh api` with
    the OWNER/REPO and branch from `git remote` and the default branch. In a scan this is the
    only place app-security-review's dependency audits are asked.
@@ -45,7 +45,9 @@ section 2).
 
 A mapped review with no signals is skipped, not run. Record each skip with its reason, e.g.
 "aws-security-review: no AWS files or profile found". If only one review runs, put the skips in
-the chat reply; no combined summary is written.
+the chat reply; no combined summary is written. If no review runs (e.g. `scan all` on a
+docs-only repo), write no summary: reply with the skip list and the reasons, and suggest a
+single review if one fits.
 
 ## Combined summary
 

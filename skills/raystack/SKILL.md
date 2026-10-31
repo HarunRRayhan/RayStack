@@ -1,6 +1,6 @@
 ---
 name: raystack
-description: Entry point for everything in RayStack. Use for "/raystack", "what can RayStack do", development work ("start a project", "write a PRD", "plan this", "build this", "fix this bug properly") and read-only reviews ("review my AWS", "review my database", "audit my stack", "which review should I run", cloud cost, security, bottlenecks, deploys, scaling, databases or app code security).
+description: Entry point for everything in RayStack. Use for "/raystack", "what can RayStack do", development work ("start a project", "write a PRD", "plan this", "build this", "fix this bug properly") and read-only reviews ("review my AWS", "review my database", "audit my stack", "which review should I run", cloud cost, security, bottlenecks, deploys, scaling, databases, app code security, performance, N+1 queries, CI/CD security or GitHub Actions security), and scans that run several reviews as one job ("scan", "scan all", "scan security").
 ---
 
 # RayStack

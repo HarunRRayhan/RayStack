@@ -69,8 +69,10 @@ Use the forms in `../raystack/references/scanners.md` exactly. Never install a s
   - `trivy image IMAGE:TAG` for each image the repo builds
 
 `gh api`: only after consent, run only the `gh api` reads in checklist items 4, 6 and 18
-(`gh api repos/OWNER/REPO/branches/BRANCH/protection` and the rest); if one is denied, or
-still 403 after the item's fallback, list it under "Commands for you to run".
+(`gh api repos/OWNER/REPO/branches/BRANCH/protection` and the rest). If `gh` is not installed
+("command not found"), not logged in (exit 4), the remote is missing or not GitHub, or a read
+is denied or still 403 after the item's fallback, list those reads under "Commands for you to
+run" and say so under "Inputs used / missing".
 
 ## 5. Work the checklist
 

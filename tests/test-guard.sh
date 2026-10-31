@@ -1106,6 +1106,13 @@ while IFS= read -r c; do
   if guard_check "$c" 2>/dev/null; then pass "documented command allowed: $c"; else fail "documented command denied: $c (${GUARD_REASON:-})"; fi
 done < <(grep -ohE '`(grep|git ls-files|gh api) [^`]*`' skills/*/references/checklist.md skills/*/SKILL.md | sed 's/^`//;s/`$//' | sort -u)
 if [ "$n" -ge 40 ]; then pass "documented commands found ($n)"; else fail "documented commands found ($n)"; fi
+# Contract section 3 examples: the quoted forms pass, the unquoted forms it warns about deny.
+for c in "git show 'HEAD^'" "grep -c '^FROM' Dockerfile" "grep -rn '[g]h-pages' ." 'git ls-files -- .'; do
+  if guard_check "$c" 2>/dev/null; then pass "contract example allowed: $c"; else fail "contract example denied: $c (${GUARD_REASON:-})"; fi
+done
+for c in 'git show HEAD^' 'grep -c ^FROM Dockerfile' 'echo a#b' "grep -rn 'gh-pages' ." 'cat .github/workflows/gh-pages.yml'; do
+  if guard_check "$c" 2>/dev/null; then fail "contract example should deny: $c"; else pass "contract example denied: $c"; fi
+done
 for c in 'osv-scanner scan --no-call-analysis=go -r --format json .' 'zizmor --offline .' 'hadolint Dockerfile' "grep -rl '[g]itleaks:allow' ."; do
   if guard_check "$c" 2>/dev/null; then pass "allows: $c"; else fail "should allow: $c (${GUARD_REASON:-})"; fi
 done

@@ -151,7 +151,10 @@ forms that run no repo code: `npm audit`, `composer audit --no-plugins --no-scri
 `bundle-audit check`, and `pip-audit` (with `-r`, also `--disable-pip` and `--no-deps` or
 `--require-hashes`), with read flags only and no `fix`. They run only with your live consent;
 without it, the review lists the commands for you to run. Reads that return env vars or user data
-(Lambda configs, ECS task definitions, launch templates) are left for you to run.
+(Lambda configs, ECS task definitions, launch templates) are left for you to run. The six
+scanners (`gitleaks`, `semgrep`, `osv-scanner`, `zizmor`, `actionlint`, `hadolint`) are checked
+too and run only in the read forms in `skills/raystack/references/scanners.md`; `gh` runs on
+your GitHub token, so it gets a read allow-list.
 
 Everything else is not checked: other tools, the agent's own file Read tool, and scripts in
 the repo (a `make` target can do anything). The guard is a seatbelt, not a

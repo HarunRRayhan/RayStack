@@ -9,8 +9,9 @@
 #   [NAME=literal ...] <cli> args... [| <filter> args ...]...
 # and the CLI's verb must be on that CLI's read allow-list. Everything else is denied.
 # SQL: one statement per command, no comments (--, /*, and # for MySQL/usql); every `name(` must be on a read-only function list.
-# Unquoted glob/redirect chars ([ ] ( ) * ? ! < >), braces and a word-start # deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq,
+# Unquoted glob/redirect chars ([ ] ( ) * ? ! < > ^), braces and # deny anywhere; mongosh/cqlsh/clickhouse/snowsql/sqlcmd/bq,
 #   deploy tools and pg_dump/pg_restore always deny. Names match on `-`/`/` boundaries too (aws-cdk, amazon/aws-cli).
+# python/pypy/py -m <monitored name>[.sub] denies (`.` is not a name boundary elsewhere).
 # Any word that is a shell, env, ssh/scp/sftp/mosh, or a package runner (npx pnpx bunx uvx) denies.
 # Allow-lists, checked on every word: npm ls/list/view/outdated/audit (no fix)/why/explain; yarn/pnpm/bun --version;
 #   composer audit --no-plugins --no-scripts, bundle-audit check, pip-audit (-r needs --disable-pip plus --no-deps or

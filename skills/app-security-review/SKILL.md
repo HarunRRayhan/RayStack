@@ -46,6 +46,9 @@ area, using the notes for the stacks that match.
 | `Gemfile.lock` | `bundle-audit check` |
 | `yarn.lock`, `pnpm-lock.yaml`, `poetry.lock`, `uv.lock`, `go.sum`, `Cargo.lock` | `osv-scanner scan --no-call-analysis=go -r --format json .` |
 
+`osv-scanner -r .` also reads the npm and composer lockfiles: count a package once when both
+report it.
+
 Also read `README`, `docs/`, `SECURITY.md` and any `CLAUDE.md`/`AGENTS.md` for the roles, the
 trust model (who is anonymous, who is a user, who is an admin) and known incidents.
 
