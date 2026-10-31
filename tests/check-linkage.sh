@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Each review skill links the shared contract, its checklist and the guard hook.
-# The entry skill names all seven reviews. The router hands development to dev.
+# The entry skill names all nine reviews and the scan types. The router hands development to dev.
 cd "$(dirname "$0")/.." || exit 1
 # shellcheck source=/dev/null
 . ./tests/lib.sh
 
-REVIEWS=(aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review)
+REVIEWS=(aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review)
 CONTRACT='../raystack/references/review-contract.md'
 # shellcheck disable=SC2016  # literal text expected in the frontmatter
 HOOK='for f in "${CLAUDE_PLUGIN_ROOT}/skills/raystack/hooks/readonly-guard.sh" "${CLAUDE_PLUGIN_ROOT}/../raystack/hooks/readonly-guard.sh" "$HOME/.claude/skills/raystack/hooks/readonly-guard.sh"; do [ -x "$f" ] && exec "$f"; done; echo "RayStack review is read-only: guard missing" >&2; exit 2'
@@ -61,10 +61,6 @@ done
 pf=skills/performance-review/SKILL.md
 pc=skills/performance-review/references/checklist.md
 if [ -f "$pf" ]; then
-  check "performance-review links the contract" grep -qF "$CONTRACT" "$pf"
-  check "performance-review contract path resolves" test -f "skills/performance-review/$CONTRACT"
-  check "performance-review links references/checklist.md" grep -qF 'references/checklist.md' "$pf"
-  check "performance-review has the guard hook command" grep -qF "$HOOK" "$pf"
   check "performance-review is 120 lines or fewer" test "$(wc -l < "$pf")" -le 120
   for t in database-review scaling-review aws-bottleneck-review; do
     check "performance-review names $t" grep -qF -- "$t" "$pf"
@@ -85,10 +81,6 @@ check "scaling checklist names performance-review" grep -qF 'performance-review'
 ps=skills/pipeline-security-review/SKILL.md
 psc=skills/pipeline-security-review/references/checklist.md
 if [ -f "$ps" ]; then
-  check "pipeline-security-review links the contract" grep -qF "$CONTRACT" "$ps"
-  check "pipeline-security-review contract path resolves" test -f "skills/pipeline-security-review/$CONTRACT"
-  check "pipeline-security-review links references/checklist.md" grep -qF 'references/checklist.md' "$ps"
-  check "pipeline-security-review has the guard hook command" grep -qF "$HOOK" "$ps"
   check "pipeline-security-review is 120 lines or fewer" test "$(wc -l < "$ps")" -le 120
   for t in zizmor actionlint hadolint osv-scanner checkov trivy aws-security-review infra-review app-security-review \
     'raystack/references/scanners.md' 'reviews/YYYY-MM-DD-pipeline-security-review.md' 'Worth hardening' 'Commands for you to run' \
@@ -133,6 +125,25 @@ if [ -f "$entry" ]; then
   check "raystack names dev" grep -qF '`dev`' "$entry"
 else
   fail "missing $entry"
+fi
+
+# scan: the router names the command, every type, the summary skill name and the skipped list.
+# shellcheck disable=SC2016  # literal backticks
+if [ -f "$entry" ]; then
+  for t in 'scan <type>' 'scan-<type>' skipped security performance scalability infra aws database all; do
+    check "raystack scan contains: $t" grep -qF -- "$t" "$entry"
+  done
+  scans=skills/raystack/references/scans.md
+  check "raystack links references/scans.md" grep -qF 'references/scans.md' "$entry"
+  check "scans.md exists" test -f "$scans"
+  for t in 'security-review*' 'aws-bottleneck-review*' 'database-review*' 'infra-review*' 'one merged entry' 'see <report>' 'skipped'; do
+    check "scans.md contains: $t" grep -qF -- "$t" "$scans"
+  done
+  for s in "${REVIEWS[@]}"; do
+    check "scans.md names $s" grep -qF "$s" "$scans"
+  done
+  check "scans.md has no em-dash" bash -c '! grep -q "—" "$1"' _ "$scans"
+  check "router has no em-dash" bash -c '! grep -q "—" "$1"' _ "$entry"
 fi
 
 # local-verify never touches .env, uses throwaway data, and does not fake a browser check.
