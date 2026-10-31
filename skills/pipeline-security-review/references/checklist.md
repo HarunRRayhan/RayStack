@@ -25,7 +25,7 @@ installed (forms in the scanners file), then confirm each hit by reading the wor
 
 - **`pull_request_target`, `workflow_run` or `issue_comment` never checks out and runs the PR's code.**
   Evidence: `grep -rlE 'pull_request_target|workflow_run|issue_comment' .github/workflows`, then in each file
-  `grep -nE 'github[.]event[.]pull_request[.]head[.](sha|ref)|github[.]head_ref|workflow_run[.]head_(sha|branch)|refs/pull/|pull/[^ /]+/head|g[h] pr checkout' FILE`.
+  `grep -nE 'github[.]event[.]pull_request[.]head[.](sha|ref)|github[.]head_ref|workflow_run[.]head_(sha|branch)|refs/pull/|pull/[^/]*/head|g[h] pr checkout' FILE`.
   Read the job: a checkout of `github.event.pull_request.head.sha` or `.head.ref`, a `gh pr checkout`
   or a fetch of `pull/N/head`, followed by any build, install, test or script step, runs the fork's code. Attack path: anyone opens a fork PR that edits `package.json` scripts
   or a test; the job runs it with repo secrets and a write `GITHUB_TOKEN`. Fix: use
@@ -105,7 +105,7 @@ installed (forms in the scanners file), then confirm each hit by reading the wor
 
 - **The cloud role trusts one repo and branch only.** Look for a wildcard in
   `token.actions.githubusercontent.com:sub`, or no `sub` condition at all. Evidence (IaC):
-  `grep -rnE 'token[.]actions[.]githubusercontent[.]com|repo:[^ "]*[*]' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git --exclude-dir=node_modules .`,
+  `grep -rnE 'token[.]actions[.]githubusercontent[.]com|repo:[^ "]*[*]|subjects *= *[[][^]]*[*]' --exclude='.env*' --exclude-dir=.secrets --exclude-dir=.git --exclude-dir=node_modules .`,
   then read each trust: `repo:ORG/*`, `repo:ORG/REPO:*`, `StringLike` with `*`, a module input
   such as `subjects = ["repo:ORG/*"]`, or only an `aud` condition and no `sub`. Attack path: any branch, fork PR environment or other repo in the org
   runs a workflow that assumes the deploy role. Fix: `StringEquals` on
@@ -155,10 +155,11 @@ reading every `Dockerfile*` and `Containerfile`.
 
 ### 12. Remote code at build time
 
-- **No `ADD` from a URL and no `curl | sh`.** Evidence: `grep -nE '^ADD +(--[^ ]+ +)*https?://' FILE`
-  (`ADD --chown=... https://` too) and
-  `grep -nwE '(curl|wget)[^|]*[|] *(sudo +(-[A-Za-z]+ +)*)?(ba|z)?sh|(ba|z)?sh +(-c +)?[^ ]*(curl|wget)' FILE`
-  (`| sudo -E bash`, `bash -c "$(curl ...)"`; `-w` skips `sha256sum`). Also run the second on
+- **No `ADD` from a URL and no `curl | sh`.** Evidence:
+  `grep -niE '^ *ADD +(--[^ ]+ +)*([[] *")?https?://' FILE | grep -viE -- '--checksum='`
+  (`ADD --chown=... https://` and `ADD ["https://..."]` too; `--checksum=` is verified) and
+  `grep -nwE '(curl|wget)[^|]*[|] *(tee +[^|]*[|] *)?(sudo +(-[A-Za-z]+ +)*)?(ba|z)?sh|(ba|z)?sh +(-c +)?[^ ]*(curl|wget)' FILE`
+  (`| tee f | sh`, `| sudo -E bash`, `bash -c "$(curl ...)"`; `-w` skips `sha256sum`). Also run the second on
   `.github/workflows` with `-rnwE`. Attack path: whoever controls that URL or its DNS, or sits
   on the path, runs code in the build, often with build secrets. Fix: download a pinned
   version, check `sha256sum -c`, then run it.
@@ -191,7 +192,7 @@ IaC, manifests or images are found (see SKILL.md). Read the files instead.
 - **RBAC is narrow.** Evidence: `cluster-admin` bindings, `verbs: ["*"]` or `resources: ["*"]`
   for app service accounts, `automountServiceAccountToken` left on. Attack path: a pod RCE
   uses the mounted token to read every Secret. Fix: one role per app with named verbs.
-- **No plain secrets in manifests.** Evidence: `grep -rlxE 'kind: *Secret *' --include='*.yaml' --include='*.yml' .`
+- **No plain secrets in manifests.** Evidence: `grep -rlxE ' *kind: *"?Secret"? *(#.*)?' --include='*.yaml' --include='*.yml' .`
   (names only) with `data:` or `stringData:` committed. Fix: sealed or external secrets.
 - **Images are pinned.** `image:` with `latest` or no tag, as item 10.
 - The running cluster belongs to `infra-review`.
@@ -226,7 +227,8 @@ IaC, manifests or images are found (see SKILL.md). Read the files instead.
 - **Private package names cannot resolve on the public registry.** Evidence: scoped names in
   `package.json` (`@ORG/`) and `grep -oE '^@[a-z0-9-]+:registry' .npmrc` (scope only; the file
   can hold a token); `grep -rnE 'extra-index-url' --include='*.txt' --include='*.toml' --include='*.cfg' --include='*.ini' .`
-  for pip; Composer `repositories` with `canonical: false` (Composer 2 makes them canonical by
+  for pip; Composer `repositories` with `canonical: false`
+  (`grep -nE '"canonical" *: *false' composer.json`; Composer 2 makes them canonical by
   default; Composer 1 never does). Attack path: an attacker
   publishes the private name on the public registry with a higher version; the build installs
   it (dependency confusion). Fix: a scope-to-registry line, `--index-url` instead of

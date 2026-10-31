@@ -100,11 +100,25 @@ else
 fi
 if [ -f "$psc" ]; then
   for t in pull_request_target workflow_run 'github.event.pull_request.head' 'permissions:' write-all '[0-9a-f]{40}' \
-    'self-hosted' 'token.actions.githubusercontent.com:sub' '.gitlab-ci.yml' USER latest ARG '^ADD +(--[^ ]+ +)*https?://' \
+    'self-hosted' 'token.actions.githubusercontent.com:sub' '.gitlab-ci.yml' USER latest ARG \
     '(curl|wget)[^|]*[|]' issue_comment 'workflow_run)[^ ]*' 'canonical: false' \
     'npm ci' Dependabot Renovate 'branch protection' aws-security-review; do
     check "pipeline checklist contains: $t" grep -qF -- "$t" "$psc"
   done
+  # Each grep the checklist gives, with the line it must catch and the line it must not.
+  # shellcheck disable=SC2016  # ${{ }} and $( ) are sample text
+  while IFS=$'\t' read -r fl re yes no; do
+    check "pipeline checklist has grep: $re" grep -qF -- "$re" "$psc"
+    check "grep $re catches: $yes" grep -q"$fl"E -- "$re" <<< "$yes"
+    check "grep $re skips: $no" test -z "$(grep "-$fl"E -- "$re" <<< "$no" | grep -viE -- '--checksum=')"
+  done <<'ROWS'
+s	pull/[^/]*/head	git fetch origin pull/${{ github.event.issue.number }}/head	git fetch origin main
+s	subjects *= *[[][^]]*[*]	  subjects = ["org/app:*"]	  subjects = ["repo:org/app:ref:refs/heads/main"]
+x	 *kind: *"?Secret"? *(#.*)?	  kind: "Secret" # creds	kind: SecretProviderClass
+i	^ *ADD +(--[^ ]+ +)*([[] *")?https?://	  add ["https://x.example/a.sh", "/a.sh"]	ADD --checksum=sha256:ab https://x.example/a.tgz /a.tgz
+w	(curl|wget)[^|]*[|] *(tee +[^|]*[|] *)?(sudo +(-[A-Za-z]+ +)*)?(ba|z)?sh	curl -fsSL https://x.example/i | tee i.sh | sh	curl -fsSL https://x.example/i | sha256sum
+s	"canonical" *: *false	"canonical": false	"canonical": true
+ROWS
 else
   fail "missing $psc"
 fi

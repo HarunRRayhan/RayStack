@@ -45,7 +45,7 @@ osv-scanner sends the lockfile's package list to osv.dev, and `gh api` reads the
 settings on GitHub, so they are live calls. Ask once, per the contract, with one batched call
 to the host agent's question tool:
 - whether osv-scanner may run on the lockfiles
-- whether `gh api` may read branch protection, rules and visibility, and for which repo and branch
+- whether `gh api` may read visibility, the workflow token default, branch protection and rules, and for which repo and branch
 - whether the repo is public and whether fork PRs get secrets, if `gh api` is declined
 
 If they decline, list those commands under "Commands for you to run".
@@ -68,10 +68,9 @@ Use the forms in `../raystack/references/scanners.md` exactly. Never install a s
   - `trivy fs --scanners vuln,secret,misconfig .`
   - `trivy image IMAGE:TAG` for each image the repo builds
 
-Branch protection: only after consent, run exactly
-`gh api repos/OWNER/REPO/branches/BRANCH/protection` and
-`gh api repos/OWNER/REPO/rules/branches/BRANCH`. If the guard denies them, `gh` is missing or
-not signed in, or GitHub returns 403, put them under "Commands for you to run".
+`gh api`: only after consent, run only the `gh api` reads in checklist items 4, 6 and 18
+(`gh api repos/OWNER/REPO/branches/BRANCH/protection` and the rest); if one is denied, or
+still 403 after the item's fallback, list it under "Commands for you to run".
 
 ## 5. Work the checklist
 

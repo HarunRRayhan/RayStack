@@ -1098,6 +1098,14 @@ while IFS= read -r c; do
   if guard_check "$c" 2>/dev/null; then pass "documented scanner allowed: $c"; else fail "documented scanner denied: $c (${GUARD_REASON:-})"; fi
 done < <(awk '/^```scanner$/{f=1;next} /^```$/{f=0} f' skills/raystack/references/scanners.md skills/*/references/checklist.md skills/*/SKILL.md 2>/dev/null)
 if [ "$n" -ge 7 ]; then pass "scanner doc blocks found ($n)"; else fail "scanner doc blocks found ($n)"; fi
+# Every inline grep, git ls-files and gh api the checklists and skills show must pass too (no `$`, no backslash).
+n=0
+# shellcheck disable=SC2016  # backticks are literal
+while IFS= read -r c; do
+  n=$((n + 1))
+  if guard_check "$c" 2>/dev/null; then pass "documented command allowed: $c"; else fail "documented command denied: $c (${GUARD_REASON:-})"; fi
+done < <(grep -ohE '`(grep|git ls-files|gh api) [^`]*`' skills/*/references/checklist.md skills/*/SKILL.md | sed 's/^`//;s/`$//' | sort -u)
+if [ "$n" -ge 40 ]; then pass "documented commands found ($n)"; else fail "documented commands found ($n)"; fi
 for c in 'osv-scanner scan --no-call-analysis=go -r --format json .' 'zizmor --offline .' 'hadolint Dockerfile' "grep -rl '[g]itleaks:allow' ."; do
   if guard_check "$c" 2>/dev/null; then pass "allows: $c"; else fail "should allow: $c (${GUARD_REASON:-})"; fi
 done
