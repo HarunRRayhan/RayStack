@@ -17,7 +17,7 @@
 #   --require-hashes), each with listed flags only (no repo plugins, scripts or package builds). Any audit
 #   (npm audit too) takes the cloud-CLI shape below: one call, only filters after a pipe, no ; && || or redirects.
 #   Scanners take the same shape, as the bare name, with listed flags only: gitleaks dir|git (--redact and
-#   -c <this skill>/references/gitleaks.toml required, -f json, -r - only, --log-level info|warn|error|fatal), semgrep scan (--metrics off --disable-version-check, --config p/ or r/ only),
+#   -c <this skill>/references/gitleaks.toml required, -f json, -r - only, --log-level info|warn|error|fatal), semgrep scan (--metrics off --disable-version-check, --config p/ or r/ only, --json into a listed jq filter),
 #   osv-scanner scan (--no-call-analysis=go required, --format json, no image), zizmor --offline, actionlint -shellcheck= -pyflakes= (flags
 #   before files), hadolint (-f json). No output files, fixes or repo configs. checkov and trivy deny in every form.
 #   docker/podman/nerdctl ps, images, image ls, version, info, system df, stats --no-stream,
@@ -44,6 +44,8 @@ _secret_op() {
   _deny "$1 may print secrets or credentials"; return 0
 }
 _in() { case " $2 " in *" $1 "*) return 0 ;; esac; return 1; }
+# _in_list <word> <newline-separated list>: exact whole-line match.
+_in_list() { local l; while IFS= read -r l; do [ "$1" = "$l" ] && return 0; done <<< "$2"; return 1; }
 # Lower-case only names/verbs/SQL; flags keep their case (-S vs -s, -X vs -x).
 _lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
@@ -53,6 +55,9 @@ _MENTION="(^|[^a-z0-9_.])(${_NAMES// /|})([^a-z0-9_.]|\$)"
 _SQL_CLIS=' psql mysql mariadb sqlite3 usql pgcli mycli '
 _UNSUPPORTED=' mongosh cqlsh clickhouse-client snowsql sqlcmd bq pulumi cdk sam serverless sls eksctl flyctl fly doctl heroku vercel netlify supabase dropdb createdb mysqladmin vc ntl cdktf dropuser createuser pg_restore pg_dump pg_dumpall sst amplify copilot '
 _FILTERS=' jq head tail grep sort uniq wc cut column tr '
+# The only jq filters semgrep JSON may go through (references/scanners.md): rule, file and line, never the matched text.
+_SEMGREP_JQ='{errors: (.errors|length), results: [.results[] | {check_id, path, line: .start.line}]}
+.results[] | [.check_id,.path,.start.line] | @tsv'
 _LONGFLAGS=' --raw-output --compact-output --count --ignore-case --unique --reverse --numeric-sort '
 # No KUBECONFIG (or --kubeconfig): a kubeconfig can run exec credential plugins.
 _ENV_OK=' AWS_PROFILE AWS_REGION AWS_DEFAULT_REGION AWS_PAGER PGOPTIONS PGHOST PGPORT PGUSER PGDATABASE PGSSLMODE CLOUDSDK_CORE_PROJECT CLOUDSDK_CONFIG NO_COLOR '
@@ -433,7 +438,7 @@ _filter_ok() {
 }
 
 guard_check() {
-  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w vf bf seen audit=0 LATE=0
+  local lc strip q="" ch tok="" intok=0 ops=0 tilde=0 i j n base name f w vf bf seen audit=0 LATE=0 sgjq=0
   local -a TOK ARGS SF SP
   GUARD_REASON=""
   case "$1" in
@@ -583,7 +588,10 @@ guard_check() {
           # No --config means repo .semgrep.yml; metrics or version checks phone home.
           # A local p/ or r/ dir would be read as rules: data, not code.
           semgrep) { _has --config= && _vals --config '[pr]/[A-Za-z0-9._-]+' && _has --metrics=off && _vals --metrics off && _has --disable-version-check; } ||
-            { _deny "semgrep scan only with --config p/ or r/, --metrics off and --disable-version-check"; return 1; } ;;
+            { _deny "semgrep scan only with --config p/ or r/, --metrics off and --disable-version-check"; return 1; }
+            # Plain text and raw JSON print the matched line, which can be a secret: --json into the documented jq only.
+            _has --json || { _deny "semgrep scan only with --json piped to the documented jq filter"; return 1; }
+            sgjq=1 ;;
           # `scan image` pulls and unpacks container images.
           # Go call analysis is on by default and needs the go toolchain; --call-analysis is not listed.
           osv-scanner) { _vals --format json && _has --no-call-analysis= && _vals --no-call-analysis go && [ "$(_lc "${SP[0]:-}")" != image ]; } ||
@@ -651,6 +659,12 @@ guard_check() {
   case "$base" in npm|composer|bundle|bundle-audit|pip-audit|gitleaks|semgrep|osv-scanner|zizmor|actionlint|hadolint) ;; *) _eval_cli "$base" "${ARGS[@]}" || return 1 ;; esac
   if [ $KEYS_ONLY = 1 ] && { [ "$(_lc "${TOK[i + 1]:-}")" != jq ] || [ "${TOK[i + 2]:-}" != keys ] || { [ $((i + 3)) -lt "$n" ] && [ "${TOK[i + 3]}" != "$PIPE" ]; }; }; then
     _deny "railway variables only as: railway variables --json | jq 'keys'"; return 1
+  fi
+  if [ $sgjq = 1 ]; then
+    j=$((i + 2)); [ "${TOK[j]:-}" = -r ] && j=$((j + 1))
+    if [ "$(_lc "${TOK[i + 1]:-}")" != jq ] || ! _in_list "${TOK[j]:-}" "$_SEMGREP_JQ" || { [ $((j + 1)) -lt "$n" ] && [ "${TOK[j + 1]}" != "$PIPE" ]; }; then
+      _deny "semgrep output only through the documented jq filter (references/scanners.md)"; return 1
+    fi
   fi
 
   # Remaining segments: each must be `| <filter> args` with vetted args and no further CLI mention.

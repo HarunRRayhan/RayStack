@@ -915,9 +915,6 @@ ALLOW=(
   'pip-audit -r requirements.txt --strict -f json --disable-pip --no-deps'
   'NO_COLOR=1 npm audit'
   # v0.7: scanners in their read forms
-  'semgrep scan --config p/default --metrics off --disable-version-check'
-  'semgrep scan --config p/default --metrics off --disable-version-check --json --quiet .'
-  'semgrep scan --config=r/python.lang.security --metrics=off --disable-version-check --severity ERROR src'
   'zizmor --offline .'
   'zizmor --offline --format json --no-config .github/workflows'
   'actionlint -shellcheck= -pyflakes='
@@ -933,7 +930,29 @@ ALLOW=(
   'python3 -m json.tool x.json'
 )
 
+# semgrep output only through the documented jq filter: plain text and raw JSON print matched lines.
+SGJQ='{errors: (.errors|length), results: [.results[] | {check_id, path, line: .start.line}]}'
+SG='semgrep scan --config p/default --metrics off --disable-version-check'
+BLOCK+=(
+  "$SG"
+  "$SG ."
+  "$SG --json ."
+  "$SG --json --quiet ."
+  "$SG --json . | jq ."
+  "$SG --json . | jq '.results'"
+  "$SG --json . | jq '.results[].extra.lines'"
+  "$SG . | jq '$SGJQ'"
+  "$SG --json . | head -n 5"
+  "$SG --json . | grep check_id | jq '$SGJQ'"
+  "$SG --json . | jq -S '$SGJQ'"
+  "$SG --json . | jq '$SGJQ' x.json"
+)
+
 ALLOW+=(
+  "$SG --json | jq '$SGJQ'"
+  "$SG --json --quiet . | jq '$SGJQ'"
+  "semgrep scan --config=r/python.lang.security --metrics=off --disable-version-check --severity ERROR --json src | jq '$SGJQ'"
+  "$SG --json . | jq -r '$SGJQ' | head -n 50"
   "gitleaks dir . --redact --no-banner -f json -r - -c $GLC"
   "gitleaks git . --redact --no-banner -f json -r - --config $GLC"
   "gitleaks dir . --redact --no-banner -f=json -r=- --config=$GLC | jq length"

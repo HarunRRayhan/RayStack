@@ -99,7 +99,8 @@ Use what is available, in this order:
 ### Scanners
 
 Six scanners (gitleaks, semgrep, osv-scanner, zizmor, actionlint, hadolint) are allowed only
-in the exact forms in `references/scanners.md`: one bare command, the same pipe filters.
+in the exact forms in `references/scanners.md` (in the raystack skill folder): one bare
+command, the same pipe filters.
 - semgrep and osv-scanner go online: live consent first. The others are local.
 - Never print a secret: gitleaks keeps `--redact`, semgrep goes through `jq` (see the file).
 - Missing tool: say so under "Inputs used / missing", give the install command under

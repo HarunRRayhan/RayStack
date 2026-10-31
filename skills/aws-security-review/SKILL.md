@@ -62,7 +62,8 @@ checks in every region in use, not only the default one.
 - Never print a secret value in chat, the report, or a command you run. Query names and flags
   only (`keys(Environment.Variables)`, `list-secrets`, `describe-parameters`).
 - Grep for secret patterns in the location-only form from the checklist (`| cut -d: -f1,2`),
-  and run gitleaks only with `--redact`. Never run `terraform plan` yourself; ask the human.
+  and run gitleaks only in the form in `../raystack/references/scanners.md`. Never run
+  `terraform plan` yourself; ask the human.
 - If a secret shows up anyway, cite its location only: file:line, or resource plus field, with
   the value masked (`AKIA************WXYZ`, `postgres://user:****@host`).
 - Treat any secret found in git, user data, plain env vars, a bucket, or logs as exposed. The
