@@ -174,6 +174,44 @@ patterns, and never open `.env*` files other than `.env.example`, `.env.sample` 
   from Git URLs, abandoned packages, frontend libraries copied into `public/`. Fix: pin and
   update.
 
+## 12. Security logging and monitoring
+
+Findings here use a **Blind spot** line (the attack that would go unseen) in place of
+**Exploit**, and rank at most Medium.
+
+- **Auth events are logged.** Evidence: sign-in success and failure, password reset, MFA and
+  role changes reach a log call (`Log::`, `logger.`, `logging.`, an audit table). Blind spot:
+  credential stuffing or a privilege change leaves no trace. Fix: log who, what, when and the
+  source IP for each.
+- **Secrets and tokens are not logged.** Evidence: `grep -rn` for log calls that take a
+  request body, headers, `password`, `token` or a whole user object. Blind spot: a log reader
+  or log vendor gets live credentials. Fix: log ids, never the values; scrub the fields.
+- **Logs leave the box and are kept.** Evidence: a log driver or agent that ships to a central
+  store, with a retention setting. Blind spot: an attacker who owns the server erases the only
+  copy, or old logs expire before an incident is found. Fix: ship logs off the host and set a
+  retention period.
+- **Errors reach an error tracker.** Evidence: Sentry, Bugsnag, Rollbar or similar wired into
+  the exception handler. Blind spot: probing that causes 500s goes unseen. Fix: add one and
+  alert on spikes.
+
+## 13. Secret scan
+
+- **Scan tracked files and history.** Installed: run `gitleaks dir` and `gitleaks git` in the
+  exact form in the contract (section 3, Scanners), with `--redact`. Report rule, file and
+  line only. Not installed: say so, give the install command, and use the `grep -l` and
+  `grep -c` patterns from area 6 over tracked files. Never print matched lines.
+  Exploit: anyone with repo access, or a leaked clone, gets the key. Fix: rotate first, then
+  remove it; history still holds the old value.
+- **Hidden findings.** Evidence: `.gitleaksignore` or `gitleaks:allow` comments. Mention them
+  in the report.
+
+## 14. Code scan
+
+- **Run semgrep when installed and consented.** Use the exact form in the contract (section 3,
+  Scanners), with `--config p/default`. Not installed or declined: say so and read the code.
+- **Confirm each hit.** Open the code and trace it. Confirmed with a concrete exploit: a
+  finding. Not confirmed: "Worth hardening".
+
 ## Framework notes
 
 ### Laravel

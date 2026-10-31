@@ -556,7 +556,7 @@ guard_check() {
         [ "${TOK[i]}" = "$name" ] || { _deny "$name only as the bare command name"; return 1; }
         j=$((i + 1))
         case "$name $(_lc "${TOK[j]:-}")" in
-          "gitleaks dir"|"gitleaks git") j=$((j + 1)); vf='-f -r --log-level -c --config'; bf='--redact --no-banner -v' ;;
+          "gitleaks dir"|"gitleaks git") j=$((j + 1)); vf='-f -r --log-level -c --config'; bf='--redact --no-banner' ;;
           "semgrep scan") j=$((j + 1)); vf='--config --metrics --severity'; bf='--disable-version-check --json --quiet' ;;
           "osv-scanner scan") j=$((j + 1)); vf='--format --no-call-analysis'; bf='-r --no-resolve --offline --download-offline-databases' ;;
           "zizmor "*) vf='--format'; bf='--offline --no-config' ;;

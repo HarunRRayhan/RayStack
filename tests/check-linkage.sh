@@ -36,6 +36,19 @@ if [ -f "$app" ]; then
   check "app-security-review skips audits with no lockfile" grep -qF 'no lockfile' "$app"
 fi
 
+# scanner rules (contract) and app-security extensions
+rc=skills/raystack/references/review-contract.md
+for t in Scanners 'never install' '--redact' '--metrics off' checkov 'osv-scanner scan --no-call-analysis=go' 'zizmor --offline' 'realpath'; do
+  check "contract contains: $t" grep -qF -- "$t" "$rc"
+done
+for t in osv-scanner 'Blind spot'; do
+  check "app-security-review contains: $t" grep -qF -- "$t" "$app"
+done
+check "app-security-review is 120 lines or fewer" test "$(wc -l < "$app")" -le 120
+for t in 'Security logging' 'Secret scan' 'Code scan'; do
+  check "app-security checklist contains: $t" grep -qF -- "$t" skills/app-security-review/references/checklist.md
+done
+
 entry=skills/raystack/SKILL.md
 if [ -f "$entry" ]; then
   for s in "${REVIEWS[@]}"; do

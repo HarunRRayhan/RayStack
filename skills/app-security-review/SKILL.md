@@ -44,23 +44,24 @@ area, using the notes for the stacks that match.
 | `composer.lock` | `composer audit --no-plugins --no-scripts` |
 | `requirements*.txt` (pinned) | `pip-audit -r requirements.txt --disable-pip --no-deps` (or `--require-hashes` when hashed) |
 | `Gemfile.lock` | `bundle-audit check` |
+| `yarn.lock`, `pnpm-lock.yaml`, `poetry.lock`, `uv.lock`, `go.sum`, `Cargo.lock` | `osv-scanner scan --no-call-analysis=go -r --format json .` |
 
 Also read `README`, `docs/`, `SECURITY.md` and any `CLAUDE.md`/`AGENTS.md` for the roles, the
 trust model (who is anonymous, who is a user, who is an admin) and known incidents.
 
 ## 3. Ask for consent
 
-Dependency audits send the lockfile's package list to public advisory registries, so they are
-live calls. Ask once, per the contract, with one batched call to the host agent's question
+Dependency audits and osv-scanner send the lockfile's package list to public advisory
+registries, and semgrep fetches its rules from the registry, so they are live calls. Ask once, per the contract, with one batched call to the host agent's question
 tool:
-- whether the dependency audits listed above may run
+- whether the dependency audits listed above, osv-scanner and semgrep may run
 - which roles exist and which data must never cross between users, if the repo does not say
 
 If they decline, list the audit commands under "Commands for you to run". Run the audits only
 in the exact forms above, never `audit fix`, `bundle audit` or another verb. If there is
 no lockfile for an ecosystem, or the tool is not installed ("command not found"), skip that
-audit and say so in "Inputs used / missing". Never fail the review over it. For `yarn.lock`,
-`pnpm-lock.yaml`, `poetry.lock` or `uv.lock`, list the matching audit for the user to run.
+audit and say so in "Inputs used / missing". Never fail the review over it. The checklist
+has the secret and code scan commands.
 
 ## 4. Work the checklist
 
@@ -77,6 +78,8 @@ Work through `references/checklist.md`, every area, with the framework notes tha
   code shows them disabled or bypassed.
 - Dependency CVEs: confirm the app's own code reaches the vulnerable function before ranking
   it. Otherwise it goes under "Worth hardening" with the upgrade.
+- Logging findings (area 12) use a **Blind spot** line (the attack that would go unseen)
+  instead of **Exploit**, and rank at most Medium.
 - Go past the checklist when the code shows a risk it does not list.
 - Cloud and deploy exposure belong to the sibling skills. Note it briefly and point to
   `aws-security-review` or `infra-review`.

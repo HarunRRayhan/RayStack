@@ -70,6 +70,24 @@ Use what is available, in this order:
   blocked. Use the bare command name: a path such as `./vendor/bin/composer` is denied. The
   guard watches only these names, so `python -m pip_audit` is not checked; don't use it.
 - `bundle-audit check` may download its advisory DB to the user's data dir on first run.
+### Scanners
+
+Allowed only in these forms, one bare command each, same pipe filters. `<skills>` is the
+`realpath` of `<this review's base directory>/../raystack`.
+- `gitleaks dir . --redact --no-banner -f json -r - -c <skills>/references/gitleaks.toml`
+  (or `gitleaks git ...` for history); `--redact` and that exact `-c` are required
+- `semgrep scan --config p/default --metrics off --disable-version-check` (opt. `--json`)
+- `osv-scanner scan --no-call-analysis=go` (opt. `-r`, `--format json`, `--no-resolve`, paths)
+- `zizmor --offline`; `actionlint -shellcheck= -pyflakes=`; `hadolint` (opt. `-f json`)
+
+- semgrep (registry rules) and osv-scanner (package lists to osv.dev) go online: live consent
+  first. gitleaks, zizmor `--offline`, actionlint and hadolint are local.
+- Installed: run it. Not installed: say so under "Inputs used / missing", put the install
+  command under "Commands for you to run", read the code instead, and never install it.
+- `checkov` and `trivy` are never run: list their commands for the human.
+- Confirm each hit by reading the code. `.gitleaksignore`, `gitleaks:allow` comments and
+  `osv-scanner.toml` can hide findings: mention them in the report if present.
+
 - The guard also denies any command that mentions a shell, `env`, `ssh` or `scp`, a package
   runner (`npx`, `uv run`, `npm test` or other scripts, `yarn`, `pnpm` and `bun` except
   `--version`), a container lifecycle command (`docker compose up`, `docker run`), a docker flag

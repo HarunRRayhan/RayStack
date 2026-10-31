@@ -717,6 +717,7 @@ BLOCK=(
   "GITLEAKS_CONFIG=x gitleaks dir . --redact -c $GLC"
   "GITLEAKS_CONFIG_TOML=x gitleaks git . --redact -c $GLC"
   "export GITLEAKS_CONFIG=x; gitleaks dir . --redact -c $GLC"
+  "gitleaks git . --redact -v --log-level warn -c $GLC"
   # osv-scanner Go call analysis (on by default) needs the go toolchain
   'osv-scanner scan'
   'osv-scanner scan -r --format json .'
@@ -936,7 +937,6 @@ ALLOW+=(
   "gitleaks dir . --redact --no-banner -f json -r - -c $GLC"
   "gitleaks git . --redact --no-banner -f json -r - --config $GLC"
   "gitleaks dir . --redact --no-banner -f=json -r=- --config=$GLC | jq length"
-  "gitleaks git . --redact -v --log-level warn -c $GLC"
   "gitleaks dir '#x' --redact -c $GLC"
   "gitleaks dir . --redact --log-level=error -c $GLC"
   'osv-scanner scan --no-call-analysis=go'
