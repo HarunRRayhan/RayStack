@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install (or remove) the twenty-six RayStack skills for any agent that reads SKILL.md folders.
+# Install (or remove) the thirty RayStack skills for any agent that reads SKILL.md folders.
 set -eu
 
 # Resolve symlinks to this script so ROOT is the real checkout.
@@ -11,17 +11,17 @@ done
 ROOT=$(cd "$(dirname "$self")" && pwd -P)
 # Skills earlier versions shipped; removed from the target only when RayStack installed them.
 RETIRED="blog blog-topics blog-draft humanize blog-cover"
-SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build dev-gaps dev-review dev-migrate"
+SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build dev-gaps dev-review dev-migrate architecture-review frontend-review reliability-review codebase-review"
 
 usage() {
   cat <<'USAGE'
 Usage: install.sh [--agent claude|cursor|codex|grok|opencode|custom] [--dir <skills-dir>]
                   [--link] [--uninstall] [--dry-run] [--force] [-h|--help]
 
-Copies the twenty-six RayStack skills into the agent's skills directory (default agent: claude).
+Copies the thirty RayStack skills into the agent's skills directory (default agent: claude).
   --dir        skills directory; required with --agent custom, overrides the agent default
   --link       symlink to this checkout instead of copying
-  --uninstall  remove exactly the twenty-six RayStack skills from the target
+  --uninstall  remove exactly the thirty RayStack skills from the target
   --dry-run    print what would happen, change nothing
   --force      also replace/remove same-named folders RayStack did not install
 Same-named folders without the .raystack-installed marker (or a link into this checkout)

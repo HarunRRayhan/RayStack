@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.0 (2026-11-02)
+
+- New `architecture-review`: detects MVC, layered, CQRS, hexagonal/DDD, modular monolith or
+  microservices and checks the code follows it.
+- New `frontend-review`: components, state and data fetching, re-renders, accessibility, forms,
+  bundle and SEO basics for React, Next, Vue, Svelte, Angular and Inertia.
+- New `reliability-review`: reliability and availability (timeouts, retries, idempotency,
+  queues, degradation, health checks, single points of failure, backups, rollback, SLOs).
+- New `codebase-review`: test gaps, complexity hot spots, dead code, duplication, swallowed
+  errors, outdated dependencies.
+- Plain review commands (`/raystack review architecture`, `review cqrs`, `review frontend`,
+  `review reliability`...) and scan types `reliability`, `architecture`, `code`, `frontend`;
+  `scan all` includes the new reviews. "review the plan" goes to `dev-review`.
+- 30 skills.
+
 ## 0.8.0 (2026-11-02)
 
 - Project commands: `/raystack project new|update|gaps|review|migrate`.

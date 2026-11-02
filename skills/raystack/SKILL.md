@@ -1,6 +1,6 @@
 ---
 name: raystack
-description: Entry point for everything in RayStack. Use for "/raystack", "what can RayStack do", development work ("new project", "project new", "project update", "project gaps", "project review", "project migrate", "start a project", "write a PRD", "plan this", "build this", "fix this bug properly") and read-only reviews ("review my AWS", "review my database", "audit my stack", "which review should I run", cloud cost, security, bottlenecks, deploys, scaling, databases, app code security, performance, N+1 queries, CI/CD security or GitHub Actions security), and scans that run several reviews as one job ("scan", "scan all", "scan security").
+description: Entry point for everything in RayStack. Use for "/raystack", "what can RayStack do", development work ("new project", "project new", "project update", "project gaps", "project review", "project migrate", "start a project", "write a PRD", "plan this", "build this", "fix this bug properly") and read-only reviews ("review my AWS", "review my database", "audit my stack", "which review should I run", cloud cost, security, bottlenecks, deploys, scaling, databases, app code security, performance, N+1 queries, CI/CD security or GitHub Actions security, architecture, CQRS, MVC, frontend, reliability, availability, code quality or tech debt), and scans that run several reviews as one job ("scan", "scan all", "scan security").
 ---
 
 # RayStack
@@ -13,6 +13,7 @@ door: it works out what the user wants and runs the right skills.
 | Build: idea, PRD, spec, plan, reviewed build, ship | `dev` (it picks Quick, Standard or Full) |
 | Review AWS spend, security, bottlenecks | `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review` |
 | Review deploys, scaling, databases, app code, speed, CI | `infra-review`, `scaling-review`, `database-review`, `app-security-review`, `performance-review`, `pipeline-security-review` |
+| Review architecture (MVC, CQRS, layers), frontend, reliability and availability, code health | `architecture-review`, `frontend-review`, `reliability-review`, `codebase-review` |
 | Scan: a set of reviews in one job (`scan <type>`) | Scan step below |
 | Read-only AWS access for the reviews | `aws-readonly-setup` |
 | Check a change in a real browser | `local-verify` |
@@ -23,9 +24,11 @@ Four principle skills load on their own; this router never runs them: `principle
 ## 0. Pick the job (in this order; the first match wins)
 
 - The request starts with "scan" (`/raystack scan all`), or uses a scan phrase ("security scan", "performance scan", "scan and fix", "full audit", "check everything"; the last two mean `all`): Scan. "scan" elsewhere in a request ("build a barcode scan screen") is not this rule.
-- `project new|update|gaps|review|migrate` or `new project`: `dev`, project commands.
-  Words about making or changing something ("start", "PRD", "plan", "build", "fix", "where are we"): hand off to `dev` and stop here, even when told to do the least possible (see `dev`).
-- Other words about auditing, cost, security, speed, scaling or the database: step 1.
+- `project new|update|gaps|review|migrate`, `new project`, or "review the plan" or "review the
+  spec": `dev`, project commands (`dev-review` for the last two).
+- Any other request that starts with "review" or "audit" (`/raystack review architecture`): step 1.
+- Words about making or changing something ("start", "PRD", "plan", "build", "fix", "where are we"): hand off to `dev` and stop here, even when told to do the least possible (see `dev`).
+- Other words about auditing, cost, security, speed, scaling, the database, architecture, CQRS, MVC, frontend, reliability, availability or code quality: step 1.
 - Bare `/raystack`: ask once through the question tool, "Build something" (runs `dev`) or
   "Review this repo" (step 1). Recommend "Build" when `docs/plans/` or `DECISIONS.md` exists.
 - An unfinished ledger in `docs/plans/`, and words not clearly a review or scan: `dev`, as above.
@@ -43,6 +46,9 @@ names only and are fine), `*.tfstate*`, kubeconfigs or credential files.
 - App code (routes, controllers, an ORM): `app-security-review`; with an ORM or a frontend
   build also `performance-review`.
 - CI workflows, a `Dockerfile`, IaC or k8s: `pipeline-security-review`.
+- App code: also `architecture-review` and `codebase-review`. A frontend build (React, Vue,
+  Svelte, Angular, Next, Nuxt, Inertia): `frontend-review`. App code with outbound calls,
+  queues, jobs or deploy config: `reliability-review`.
 
 Then read the user's words:
 
@@ -51,21 +57,29 @@ Then read the user's words:
 - "slow page", "slow endpoint", "N+1": `performance-review`. "10x", "launch", "will it scale":
   `scaling-review`.
 - "security audit of my app", "IDOR", "XSS", "SQL injection": `app-security-review`.
+- "architecture", "CQRS", "MVC", "layers", "god class", "coupling": `architecture-review`.
+  "frontend", "React", "Vue", "accessibility", "re-renders": `frontend-review`. "reliability",
+  "availability", "uptime", "SLO", "retries", "failover": `reliability-review`. "code quality",
+  "tech debt", "codebase", "dead code", "test coverage": `codebase-review`. "database",
+  "indexes", "slow queries": `database-review`.
 - AWS with no IaC: if the user mentions AWS or names a profile, recommend the AWS reviews.
   No signals at all: recommend `infra-review` (not in a scan).
 
 ## 2. Ask once
 
-If the user names or clearly means one of the nine, skip the pick, but still ask the consent
+If the user names or clearly means one of the thirteen reviews, skip the pick, but still ask the consent
 question below if that review may make live calls.
 
 Otherwise make ONE call to the host agent's question tool (AskUserQuestion in Claude Code).
 Use plain text only without such a tool. It allows up to 4 questions with up to 4 options each:
 
-1. "AWS reviews" (multi-select): the three `aws-*` reviews.
-2. "App reviews" (multi-select): `app-security-review`, `performance-review`,
-   `pipeline-security-review`.
-3. "Platform reviews" (multi-select): `infra-review`, `scaling-review`, `database-review`.
+1. "AWS and CI reviews" (multi-select): the three `aws-*` reviews, `pipeline-security-review`.
+2. "Code reviews" (multi-select): `app-security-review`, `performance-review`,
+   `architecture-review`, `codebase-review`, `frontend-review`.
+3. "Platform reviews" (multi-select): `infra-review`, `scaling-review`, `database-review`,
+   `reliability-review`.
+
+   Over 4 in a group: drop reviews with no signals; still over, name the cut one for "Other".
 4. "Live access": read-only yes or no, and which profile, account, project or region. Outside a
    scan it also covers `app-security-review`'s audits (in a scan, scans.md question 3 asks instead).
    Offer at most 2 found profiles (e.g. `~/.aws/config`; others in "Other"), "No, IaC and exports
@@ -99,7 +113,8 @@ reference, not a second entry". Run `database-review` before `infra-review`.
 
 ## Scan
 
-`scan <type>` (security, performance, scalability, infra, aws, database, all) runs steps 1, 3 and 4 on
+`scan <type>` (security, performance, scalability, reliability, architecture, code, frontend,
+infra, aws, database, all) runs steps 1, 3 and 4 on
 the type's review list. Type and consent: [references/scans.md](references/scans.md), which replaces
 step 2 (no review pick) with one question-tool call. It also has the table, skipped reviews and the
 combined `reviews/YYYY-MM-DD-scan-<type>.md` (skill `scan-<type>`).
