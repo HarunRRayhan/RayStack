@@ -50,7 +50,7 @@ section. Then write one `docs/tech-spec/<area>.md` per area that has real design
 Add `docs/tech-spec/README.md` as an index: file, then what it covers.
 
 Ask when a choice is real and the answer changes the design. Use the host's question tool,
-at most 5 per round, recommended option first. Record each answer as a `D-` row. Write a
+one question per call, recommended option first. Record each answer as a `D-` row. Write a
 separate ADR only when options were weighed.
 
 ## 4. Write each area spec

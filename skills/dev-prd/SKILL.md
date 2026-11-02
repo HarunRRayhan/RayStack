@@ -14,16 +14,16 @@ Read `AGENTS.md`, `DECISIONS.md`, `docs/research/` and any existing PRD. Do not 
 they already answer, and do not ask what you can decide yourself. Note what is still
 unknown: goal, user, scope, limits, failure cases, success measure.
 
-## 2. Interview in rounds
+## 2. Interview one question at a time
 
-- Ask through the host's question tool, at most 5 questions per round, recommended option
-  first, each question self-contained.
+- Ask through the host's question tool, one question per call, recommended option first,
+  each question self-contained. Let each answer shape the next question.
 - Start with the biggest unknowns: who it is for, the problem, what v1 must do, what it
   must never do.
-- After each round, write every answer to `DECISIONS.md` as a `D-` row (next free ID, today's
+- After each answer, write it to `DECISIONS.md` as a `D-` row (next free ID, today's
   date, `Decided`, a way to confirm). Never edit a `Decided` row; supersede it.
 - Stop when you could write every section below without guessing. Do not ask for the sake
-  of asking. Three rounds is plenty for most products.
+  of asking. Most products need 10 to 15 questions.
 - When the user cannot answer or says to skip, do not guess. Mark the gap in the PRD as
   `[NEEDS CLARIFICATION: <the exact question>]` and move on. Also add an `Open` row to
   `DECISIONS.md`.

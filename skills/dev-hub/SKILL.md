@@ -28,7 +28,7 @@ Ask once, through the question tool, with the recommended option first:
 
 ## 3. Hub mode
 
-1. Ask through the question tool for the product name, the hub folder path and the code repos (name and path).
+1. Ask through the question tool, one call each: the product name, the hub folder path, then the code repos (name and path).
 2. Create the hub folder. Run `git init` there. It is a local repo with no remote. Add a
    remote or a GitHub repo only if the user asks.
 3. Put the same files in it as in single-repo mode, but keep the `hub-only` blocks (delete

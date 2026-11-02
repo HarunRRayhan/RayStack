@@ -80,8 +80,10 @@ suppressions, principles) is `../../dev-build/references/reviewer.md`.
 
 ## Questions
 
-Ask through the host's question tool (AskUserQuestion in Claude Code). Ask at most 5 per
-round, put the recommended option first, and make each question self-contained. Plain text
+Ask through the host's question tool (AskUserQuestion in Claude Code). Ask one question
+per call: wait for the answer, log it, then pick the next question from what you now know.
+Put the recommended option first and make each question self-contained. In the dev flow
+this overrides the batching in `principle-ask-with-question-tool`. Plain text
 only when the host has no question tool. Each answer becomes a `D-` row in `DECISIONS.md`.
 
 ## Session start
