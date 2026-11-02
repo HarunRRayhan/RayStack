@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1 (2026-11-02)
+
+- `docs/guide.md`: how to use RayStack, with a cheat sheet of every command, the new-project,
+  existing-project and review flows, scans, what it writes, cost and safety. Linked from the README.
+- Router: "CI"/"pipeline", "infra"/"deploys" and "security" route to their reviews.
+
 ## 0.9.0 (2026-11-02)
 
 - New `architecture-review`: detects MVC, layered, CQRS, hexagonal/DDD, modular monolith or
