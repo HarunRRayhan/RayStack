@@ -214,7 +214,8 @@ the deploy is live: a workflow name, a URL or a health check.
 ## Development
 
 RayStack also carries a development flow, from research to a shipped build. Type `/raystack` and pick
-"Build something", say "start a new project" or "build this", or call `/dev` directly. It picks a track by size:
+"Build something", run `/raystack new project` (or `/raystack project new`) to start a new
+product on the Full track, say "build this", or call `/dev` directly. It picks a track by size:
 
 - **Quick**: a bug or small change. No PRD. Fix it, test it, ship it.
 - **Standard**: one slice of work. Spec if missing, then a plan, then a reviewed build.

@@ -1,6 +1,6 @@
 ---
 name: raystack
-description: Entry point for everything in RayStack. Use for "/raystack", "what can RayStack do", development work ("start a project", "write a PRD", "plan this", "build this", "fix this bug properly") and read-only reviews ("review my AWS", "review my database", "audit my stack", "which review should I run", cloud cost, security, bottlenecks, deploys, scaling, databases, app code security, performance, N+1 queries, CI/CD security or GitHub Actions security), and scans that run several reviews as one job ("scan", "scan all", "scan security").
+description: Entry point for everything in RayStack. Use for "/raystack", "what can RayStack do", development work ("new project", "project new", "start a project", "write a PRD", "plan this", "build this", "fix this bug properly") and read-only reviews ("review my AWS", "review my database", "audit my stack", "which review should I run", cloud cost, security, bottlenecks, deploys, scaling, databases, app code security, performance, N+1 queries, CI/CD security or GitHub Actions security), and scans that run several reviews as one job ("scan", "scan all", "scan security").
 ---
 
 # RayStack
@@ -23,8 +23,8 @@ Four principle skills load on their own; this router never runs them: `principle
 ## 0. Pick the job (in this order; the first match wins)
 
 - The request starts with "scan" (`/raystack scan all`), or uses a scan phrase ("security scan", "performance scan", "scan and fix", "full audit", "check everything"; the last two mean `all`): Scan. "scan" elsewhere in a request ("build a barcode scan screen") is not this rule.
-- Words about making or changing something ("start", "PRD", "plan", "build", "fix", "where are
-  we"): hand off to `dev` and stop here, even when told to do the least possible (see `dev`).
+- `new project` or `project new` (`/raystack new project`): `dev` on the Full track.
+  Words about making or changing something ("start", "PRD", "plan", "build", "fix", "where are we"): hand off to `dev` and stop here, even when told to do the least possible (see `dev`).
 - Other words about auditing, cost, security, speed, scaling or the database: step 1.
 - Bare `/raystack`: ask once through the question tool, "Build something" (runs `dev`) or
   "Review this repo" (step 1). Recommend "Build" when `docs/plans/` or `DECISIONS.md` exists.
