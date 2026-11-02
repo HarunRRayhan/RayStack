@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.0 (2026-11-02)
+
+- Project commands: `/raystack project new|update|gaps|review|migrate`.
+- `project new` opens with an intake questionnaire (what, who, problem, v1, never, limits,
+  competitors, success), one question per call, before research.
+- New `dev-gaps` (`project update`, `project gaps`): lists which of research, PRD,
+  architecture, tech specs, plan and decisions an existing project lacks or has drifted from,
+  then fills them from the code and the user's answers.
+- New `dev-review` (`project review`): read-only mid-build review of architecture, specs, plan
+  and ledger against the code, with a ranked report.
+- New `dev-migrate` (`project migrate`): moves part of a project to another stack with a
+  strangler approach, parity tests and a step-by-step plan.
+- 26 skills.
+
 ## 0.7.3 (2026-11-02)
 
 - `/raystack new project` and `/raystack project new` start the dev flow on the Full track

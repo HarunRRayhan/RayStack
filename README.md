@@ -23,7 +23,7 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack && ~/.raystack/install.sh
 ```
 
-This clones RayStack to `~/.raystack` and copies all twenty-three skills into `~/.claude/skills`.
+This clones RayStack to `~/.raystack` and copies all twenty-six skills into `~/.claude/skills`.
 For another agent add `--agent codex`, `--agent cursor` or `--agent grok`. To update, run
 `git -C ~/.raystack pull && ~/.raystack/install.sh`. `--uninstall` removes them again.
 
@@ -83,7 +83,7 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ./install.sh --agent custom --dir /path/to/skills
 ```
 
-`--dry-run` shows what it would do and `--uninstall` removes exactly the twenty-three RayStack skills.
+`--dry-run` shows what it would do and `--uninstall` removes exactly the twenty-six RayStack skills.
 Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 
 ## Run a review
@@ -214,12 +214,23 @@ the deploy is live: a workflow name, a URL or a health check.
 ## Development
 
 RayStack also carries a development flow, from research to a shipped build. Type `/raystack` and pick
-"Build something", run `/raystack new project` (or `/raystack project new`) to start a new
-product on the Full track, say "build this", or call `/dev` directly. It picks a track by size:
+"Build something", say "build this", or call `/dev` directly. It picks a track by size:
 
 - **Quick**: a bug or small change. No PRD. Fix it, test it, ship it.
 - **Standard**: one slice of work. Spec if missing, then a plan, then a reviewed build.
 - **Full**: a new product. Project layout, research, PRD, specs, plan, build.
+
+Project commands:
+
+| Command | What it does |
+| --- | --- |
+| `/raystack project new` (or `new project`) | Asks what you are building, one question at a time, then research, PRD, stack and architecture, tech specs, plan and build |
+| `/raystack project update` (or `project gaps`) | In an existing project: lists the missing research, PRD, architecture, specs and plan, then writes them from the code and your answers |
+| `/raystack project review` | Mid-build, read-only: checks the architecture, specs and plan against the code (drift, unserved behaviours, over-design, stale tasks) |
+| `/raystack project migrate` | Moves part of a project to another stack (say a service to Rust) step by step, with parity tests and the old code kept until the new one is proven |
+
+For N+1 queries and database health, use `performance-review` and `database-review` (or
+`/raystack scan performance`).
 
 Decisions land in `DECISIONS.md` and are never asked twice. The build keeps a ledger, so a
 stopped run can resume.
@@ -233,6 +244,9 @@ stopped run can resume.
 | `dev-spec` | Architecture and per-area tech specs from the PRD (on Standard with no PRD, it writes the slice's `## Behaviours` B-IDs), plus the default principles |
 | `dev-plan` | A plan for one slice, checked for gaps before the build starts |
 | `dev-build` | Builds the plan task by task with a fresh implementer and reviewer for each |
+| `dev-gaps` | Finds the dev-flow documents an existing project is missing and fills them |
+| `dev-review` | Read-only review of the architecture, specs and plan against the code |
+| `dev-migrate` | Moves part of a project to another language, framework or database, step by step |
 
 ## Credits
 

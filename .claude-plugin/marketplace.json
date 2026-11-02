@@ -4,13 +4,13 @@
     "name": "Harun R. Rayhan",
     "url": "https://harun.dev"
   },
-  "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only scans and reviews (security, performance, scalability, CI/CD pipelines, AWS, infrastructure, databases), working principles and local browser verification.",
+  "description": "Skills by Harun R. Rayhan: a full development flow (new project intake, research, PRD, specs, plans, reviewed builds, ship; gap-fill, design review and migration for existing projects), read-only scans and reviews (security, performance, scalability, CI/CD pipelines, AWS, infrastructure, databases), working principles and local browser verification.",
   "plugins": [
     {
       "name": "raystack",
       "source": "./",
-      "version": "0.7.3",
-      "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only scans and reviews (security, performance, scalability, CI/CD pipelines, AWS, infrastructure, databases), working principles and local browser verification.",
+      "version": "0.8.0",
+      "description": "Skills by Harun R. Rayhan: a full development flow (new project intake, research, PRD, specs, plans, reviewed builds, ship; gap-fill, design review and migration for existing projects), read-only scans and reviews (security, performance, scalability, CI/CD pipelines, AWS, infrastructure, databases), working principles and local browser verification.",
       "category": "devops"
     }
   ]

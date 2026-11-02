@@ -1,6 +1,6 @@
 ---
 name: dev
-description: Entry point for the RayStack development flow. Use for "/dev", "/raystack new project", "/raystack project new", "start a new project", "plan this feature", "build this", "fix this bug properly", "where are we", or any request to take work from idea to shipped code.
+description: Entry point for the RayStack development flow. Use for "/dev", "/raystack new project", "/raystack project new", "/raystack project update", "/raystack project gaps", "/raystack project review", "/raystack project migrate", "start a new project", "plan this feature", "build this", "fix this bug properly", "where are we", or any request to take work from idea to shipped code.
 ---
 
 # Dev
@@ -23,6 +23,18 @@ a step, by saying so.
 | `dev-spec` | Writes the tech spec and architecture |
 | `dev-plan` | Turns the spec into a task plan |
 | `dev-build` | Creates the ledger and builds the plan task by task |
+| `dev-gaps` | Finds and fills missing documents in an existing project |
+| `dev-review` | Read-only review of architecture, specs and plan against the code |
+| `dev-migrate` | Moves part of a project to another stack, step by step |
+
+**Project commands** (`/raystack project <verb>`, or `new project`) go straight to:
+
+| Verb | Runs |
+| --- | --- |
+| `new` | `references/intake.md` (one question per call), then the Full track |
+| `update`, `gaps` | `dev-gaps` |
+| `review` | `dev-review` |
+| `migrate` | `dev-migrate` |
 
 ## 1. Detect state
 
@@ -34,7 +46,8 @@ Look for these, in this order, and say what you found:
   `docs/architecture/`;
 - a plan in `docs/plans/` and its ledger.
 
-Resume `dev-build` on the newest ledger in `docs/plans/` whose log has no `Shipped:` or
+A project command skips this resume and runs its own skill. Otherwise resume `dev-build`
+on the newest ledger in `docs/plans/` whose log has no `Shipped:` or
 `Committed:` line (the contract's session start). Never restart the plan. Read
 `DECISIONS.md` first so settled questions are not asked again. If it is missing, see
 section 2: Standard runs `dev-hub`'s single-repo steps first, Full starts with `dev-hub`,
@@ -54,9 +67,9 @@ Pick the smallest track that fits. Say which one and why.
   4. Ship with `principle-ship`. With no git remote, say so and stop at the commit.
 - **Standard** (one slice of work): run `dev-spec` if no spec serves the slice (with no
   PRD it writes the slice's B-IDs), then `dev-plan`, then `dev-build`.
-- **Full** (a new product, or `new project` / `project new`): run `dev-hub`,
-  `dev-research`, `dev-prd`, `dev-spec`, `dev-plan`, `dev-build`, in that order. Research covers the market and the technical
-  options for the stack, so `dev-spec` can settle its Stack table from sources.
+- **Full** (a new product, or `project new`, after the intake): run `dev-hub`,
+  `dev-research`, `dev-prd`, `dev-spec`, `dev-plan`, `dev-build`, in that order. Research
+  covers the market and the technical options for the stack, so `dev-spec` can settle its Stack table from sources.
 
 If the work grows past its track, say so and move it up one track. Do not carry on
 quietly.
