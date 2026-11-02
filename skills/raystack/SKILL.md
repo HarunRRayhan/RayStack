@@ -1,6 +1,6 @@
 ---
 name: raystack
-description: Entry point for everything in RayStack. Use for "/raystack", "what can RayStack do", development work ("new project", "project new", "project update", "project gaps", "project review", "project migrate", "start a project", "write a PRD", "plan this", "build this", "fix this bug properly") and read-only reviews ("review my AWS", "review my database", "audit my stack", "which review should I run", cloud cost, security, bottlenecks, deploys, scaling, databases, app code security, performance, N+1 queries, CI/CD security or GitHub Actions security, architecture, CQRS, MVC, frontend, reliability, availability, code quality or tech debt), and scans that run several reviews as one job ("scan", "scan all", "scan security").
+description: Entry point for everything in RayStack. Use for "/raystack", "what can RayStack do", development work ("new project", "project new", "project update", "project gaps", "project review", "project migrate", "start a project", "write a PRD", "plan this", "build this", "fix this bug properly") and read-only reviews ("review my AWS", "review my database", "audit my stack", "which review should I run", cloud cost, security, bottlenecks, deploys, scaling, databases, app code security, performance, N+1 queries, CI/CD security or GitHub Actions security, architecture, CQRS, MVC, frontend, reliability, availability, code quality or tech debt), and scans that run several reviews as one job ("scan", "scan all", "scan security"), and updating RayStack ("update raystack").
 ---
 
 # RayStack
@@ -24,8 +24,8 @@ Four principle skills load on their own; this router never runs them: `principle
 ## 0. Pick the job (in this order; the first match wins)
 
 - The request starts with "scan" (`/raystack scan all`), or uses a scan phrase ("security scan", "performance scan", "scan and fix", "full audit", "check everything"; the last two mean `all`): Scan. "scan" elsewhere in a request ("build a barcode scan screen") is not this rule.
-- `project new|update|gaps|review|migrate`, `new project`, or "review the plan" or "review the
-  spec": `dev`, project commands (`dev-review` for the last two).
+- `project new|update|gaps|review|migrate`, `new project`, or "review the plan" or "review the spec": `dev`, project commands (`dev-review` for the last two).
+- `/raystack update`, "update raystack", "which version": follow [references/update.md](references/update.md).
 - Any other request that starts with "review" or "audit" (`/raystack review architecture`): step 1.
 - Words about making or changing something ("start", "PRD", "plan", "build", "fix", "where are we"): hand off to `dev` and stop here, even when told to do the least possible (see `dev`).
 - Other words about auditing, cost, security, speed, scaling, the database, architecture, CQRS, MVC, frontend, reliability, availability or code quality: step 1.
