@@ -26,9 +26,27 @@ what the build checks the code against.
 
 ## 3. Choose the structure
 
-Write `docs/architecture/system-overview.md` first: the parts, how they talk, where data
-lives, where the I/O boundaries are. Then one `docs/tech-spec/<area>.md` per area that has
-real design in it (data model, API, jobs, auth, delivery). Skip areas with nothing to say.
+**Stack (Full track only):** settle each row below that is not already `Decided` in
+`DECISIONS.md`, from the PRD's limits and the research's technical options. On Standard,
+read the stack from the code and `DECISIONS.md`, and never decide it again.
+
+| Decide | Default unless the PRD or research says otherwise |
+| --- | --- |
+| Language and framework | what the team already ships; else the most mature fit |
+| Shape | one deployable (modular monolith); services only with a Complexity row |
+| Data store | one relational database; add another only for a named B-ID |
+| Hosting and deploy | a managed platform; Kubernetes only with a Complexity row |
+| Auth, jobs, cache | the framework's built-ins first |
+| Repo layout | one repo |
+
+Ask the user about a row only when the choice is real (question rules below). Record each
+row as a `D-` row with the options and the reason; write an ADR only for a close call.
+
+Then write `docs/architecture/system-overview.md`, starting with a `## Stack` table
+(choice, why, `D-` ID), then the parts, how they talk, where data lives, where the I/O
+boundaries are. A Complexity row for the stack goes in the overview's `## Complexity`
+section. Then write one `docs/tech-spec/<area>.md` per area that has real design in it
+(data model, API, jobs, auth, delivery). Skip areas with nothing to say.
 Add `docs/tech-spec/README.md` as an index: file, then what it covers.
 
 Ask when a choice is real and the answer changes the design. Use the host's question tool,
@@ -73,6 +91,6 @@ gate is not breached, leave the section out.
 
 ## 6. Finish
 
-Tell the user the file paths, the B-IDs served per file, any B-ID not yet served, the
-count of open markers and the count of Complexity rows. Ask them to review. Do not start
+Tell the user the file paths, the stack `D-` IDs, the B-IDs served per file, any B-ID
+not yet served, the count of open markers and the count of Complexity rows. Ask them to review. Do not start
 the next step until they approve. Then hand back to `dev`, usually for `dev-plan`.

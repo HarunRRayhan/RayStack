@@ -55,7 +55,8 @@ Pick the smallest track that fits. Say which one and why.
 - **Standard** (one slice of work): run `dev-spec` if no spec serves the slice (with no
   PRD it writes the slice's B-IDs), then `dev-plan`, then `dev-build`.
 - **Full** (a new product): run `dev-hub`, `dev-research`, `dev-prd`, `dev-spec`,
-  `dev-plan`, `dev-build`, in that order.
+  `dev-plan`, `dev-build`, in that order. Research covers the market and the technical
+  options for the stack, so `dev-spec` can settle its Stack table from sources.
 
 If the work grows past its track, say so and move it up one track. Do not carry on
 quietly.

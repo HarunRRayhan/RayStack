@@ -9,7 +9,7 @@
     {
       "name": "raystack",
       "source": "./",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "description": "Skills by Harun R. Rayhan: a full development flow (research, PRD, specs, plans, reviewed builds, ship), read-only scans and reviews (security, performance, scalability, CI/CD pipelines, AWS, infrastructure, databases), working principles and local browser verification.",
       "category": "devops"
     }
