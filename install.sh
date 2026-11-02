@@ -16,10 +16,15 @@ SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review in
 usage() {
   cat <<'USAGE'
 Usage: install.sh [--agent claude|cursor|codex|grok|opencode|custom] [--dir <skills-dir>]
-                  [--link] [--uninstall] [--dry-run] [--force] [-h|--help]
+                  [--project [<repo>]] [--link] [--uninstall] [--update] [--dry-run]
+                  [--force] [-h|--help]
 
 Copies the thirty RayStack skills into the agent's skills directory (default agent: claude).
   --dir        skills directory; required with --agent custom, overrides the agent default
+  --project    install into a repo (default: the current folder) for that agent, e.g.
+               <repo>/.claude/skills, so everyone who clones the repo gets RayStack
+  --update     pull the latest RayStack into this checkout, then reinstall every place
+               this checkout installed to (global and project); other flags are ignored
   --link       symlink to this checkout instead of copying
   --uninstall  remove exactly the thirty RayStack skills from the target
   --dry-run    print what would happen, change nothing
@@ -31,11 +36,17 @@ USAGE
 
 die() { echo "install.sh: $*" >&2; exit 1; }
 
-agent=claude dir="" dir_set=0 link=0 uninstall=0 dry=0 force=0 skipped=0
+agent=claude dir="" dir_set=0 link=0 uninstall=0 dry=0 force=0 skipped=0 project="" update=0
+# Every target installed from this checkout, one per line: <dir><TAB><link 0|1>. --update reads it.
+REGISTRY=${RAYSTACK_REGISTRY:-$HOME/.raystack-installs}
 while [ $# -gt 0 ]; do
   case "$1" in
     --agent) [ $# -ge 2 ] || die "--agent needs a value"; agent=$2; shift 2 ;;
     --dir) [ $# -ge 2 ] || die "--dir needs a value"; dir=$2; dir_set=1; shift 2 ;;
+    --project)
+      if [ $# -ge 2 ] && [ "${2#-}" = "$2" ]; then project=$2; shift 2; else project=$PWD; shift; fi
+      [ -d "$project" ] || die "--project: no such folder: $project" ;;
+    --update) update=1; shift ;;
     --link) link=1; shift ;;
     --uninstall) uninstall=1; shift ;;
     --dry-run) dry=1; shift ;;
@@ -44,6 +55,28 @@ while [ $# -gt 0 ]; do
     *) usage >&2; die "unknown argument: $1" ;;
   esac
 done
+
+if [ "$update" = 1 ]; then
+  [ -d "$ROOT/.git" ] || die "--update needs a git checkout (clone it, see the README)"
+  [ "$dry" = 0 ] || die "--update does not support --dry-run"
+  [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=no)" ] || die "$ROOT has local changes; commit or discard them first"
+  git -C "$ROOT" pull --ff-only --quiet || die "git pull failed in $ROOT"
+  echo "RayStack $(cat "$ROOT/VERSION")"
+  rc=0 n=0
+  if [ -f "$REGISTRY" ]; then
+    while IFS="$(printf '\t')" read -r d l; do
+      if [ -z "$d" ] || [ ! -d "$d" ]; then continue; fi
+      # only targets this checkout installed: a link into it, or a copy whose marker names it
+      if [ -L "$d/raystack" ]; then [ "$(readlink "$d/raystack")" = "$ROOT/skills/raystack" ] || continue
+      else grep -qxF "source=$ROOT" "$d/raystack/.raystack-installed" 2>/dev/null || continue; fi
+      n=$((n + 1))
+      if [ "$l" = 1 ]; then "$ROOT/install.sh" --dir "$d" --link || rc=1
+      else "$ROOT/install.sh" --dir "$d" || rc=1; fi
+    done < "$REGISTRY"
+  fi
+  [ "$n" -gt 0 ] || "$ROOT/install.sh" || rc=1  # nothing recorded yet: the default global install
+  exit "$rc"
+fi
 
 hint=""
 case "$agent" in
@@ -55,6 +88,20 @@ case "$agent" in
   custom)   default="" ;;
   *) die "unknown agent: $agent" ;;
 esac
+if [ -n "$project" ]; then
+  [ "$dir_set" = 0 ] || die "use --project or --dir, not both"
+  [ "$link" = 0 ] || die "--project copies the skills so they can be committed; --link is not allowed"
+  project=$(cd "$project" && pwd -P)
+  case "$agent" in
+    claude)   dir="$project/.claude/skills" ;;
+    cursor)   dir="$project/.cursor/skills" ;;
+    codex)    dir="$project/.agents/skills" ;;
+    grok)     dir="$project/.claude/skills" ;;  # Grok reads .claude/skills (see docs/agents.md)
+    opencode) dir="$project/.opencode/skills" ;; # shortcut: unverified, pass --dir if yours differs
+    custom)   die "--project needs a named --agent; use --dir for a custom path" ;;
+  esac
+  dir_set=1 hint=""
+fi
 if [ "$dir_set" = 0 ]; then
   [ "$agent" != custom ] || die "--agent custom requires --dir"
   dir=$default
@@ -104,6 +151,9 @@ if [ "$uninstall" = 1 ]; then
       run rm -rf "${dir:?}/${s:?}"
     fi
   done
+  if [ "$dry" = 0 ] && [ -f "$REGISTRY" ]; then
+    rtmp=$(mktemp "$REGISTRY.XXXXXX") && awk -F'\t' -v d="$dir" '$1 != d' "$REGISTRY" > "$rtmp" && mv "$rtmp" "$REGISTRY"
+  fi
   exit "$skipped"
 fi
 
@@ -130,13 +180,20 @@ for s in $SKILLS; do
     tmp="$dir/.raystack-tmp.$$.$s"
     rm -rf "$tmp"
     cp -R "$ROOT/skills/$s" "$tmp" || { rm -rf "$tmp"; die "copy failed for $s"; }
-    cat "$ROOT/VERSION" > "$tmp/.raystack-installed" || { rm -rf "$tmp"; die "marker failed for $s"; }
+    { cat "$ROOT/VERSION"; echo "source=$ROOT"; } > "$tmp/.raystack-installed" || { rm -rf "$tmp"; die "marker failed for $s"; }
   fi
   rm -rf "$dest"
   mv "$tmp" "$dest"
 done
 
 remove_retired
+if [ "$dry" = 0 ]; then
+  line="$dir$(printf '\t')$link"
+  if touch "$REGISTRY" 2>/dev/null && ! grep -qxF "$line" "$REGISTRY"; then
+    rtmp=$(mktemp "$REGISTRY.XXXXXX") && { awk -F'\t' -v d="$dir" '$1 != d' "$REGISTRY"; echo "$line"; } > "$rtmp" && mv "$rtmp" "$REGISTRY"
+  fi
+fi
+echo "RayStack $(cat "$ROOT/VERSION") installed in $dir. Update later with: $ROOT/install.sh --update"
 [ -z "$hint" ] || echo "Tip: $agent also has a native plugin install: $hint"
 echo "Note: the read-only guard hook is enforced automatically only in Claude Code."
 echo "On other agents, pair reviews with read-only credentials. See docs/agents.md."

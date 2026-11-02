@@ -1,6 +1,22 @@
 # RayStack guide
 
-How to use RayStack day to day. For install options see the [README](../README.md#install).
+How to use RayStack day to day.
+
+## Install and update
+
+Paste this into your coding agent (change `claude` to `codex`, `cursor`, `grok` or
+`opencode`). Add `--project .` at the end of the second command to install into the current
+repo instead of globally.
+
+```text
+Install RayStack for claude. Run these two commands, then tell me the version it printed:
+git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack 2>/dev/null || git -C ~/.raystack pull --ff-only
+~/.raystack/install.sh --agent claude
+```
+
+To update after a release, type `/raystack update`, or run `~/.raystack/install.sh --update`.
+That refreshes every global and project install made from `~/.raystack`. More options
+(plugins, per-agent folders) are in the [README](../README.md#install).
 
 RayStack has one front door: `/raystack`. Type it with a few words and it routes you. There
 are three things you can do:
@@ -34,6 +50,7 @@ are three things you can do:
 | Review AWS cost, security or bottlenecks | `/raystack review my AWS bill` (or `AWS security`, `AWS bottlenecks`) |
 | Run several reviews as one job | `/raystack scan <type>` (see [Scans](#scans)) |
 | Let RayStack suggest reviews for this repo | `/raystack` |
+| Update RayStack to the latest release | `/raystack update` |
 
 With a plugin install, a single skill is `/raystack:<name>`, e.g. `/raystack:frontend-review`.
 With `install.sh` it is the bare name, e.g. `/frontend-review`.
@@ -175,14 +192,6 @@ start, skips reviews with nothing to look at, and writes one ranked summary,
 | `docs/tech-spec/` | One spec per area, plus migration specs |
 | `docs/plans/` | Plans and their ledgers |
 | `reviews/` | Review and scan reports |
-
-## Cost and time
-
-Rough figures from test runs on a small repo with Claude's default model. Bigger repos cost more.
-
-- A single review: about $0.30 to $0.70.
-- `project update` on a small app: a few dollars for the documents.
-- `project new` up to an approved plan: about $15 to $25. The build adds to that.
 
 ## Safety
 

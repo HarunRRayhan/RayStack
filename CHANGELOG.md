@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.2 (2026-11-02)
+
+- `install.sh --project [<repo>]` installs into a repo's agent folder (`.claude/skills`,
+  `.agents/skills`, `.cursor/skills`...) so the team gets RayStack with the repo.
+- `install.sh --update` pulls the latest release and refreshes every global and project
+  install made from that checkout (recorded in `~/.raystack-installs`).
+- `/raystack update` shows the installed and latest version and runs the right update for how
+  RayStack was installed (install.sh, plugin, npx skills).
+- README and guide: copy-paste install prompts for each agent, global and per project, and an
+  update prompt.
+- Guide: dropped the cost section; the agent runs on your own plan.
+
 ## 0.9.1 (2026-11-02)
 
 - `docs/guide.md`: how to use RayStack, with a cheat sheet of every command, the new-project,

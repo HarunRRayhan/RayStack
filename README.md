@@ -9,7 +9,7 @@ I build and what I check when I audit someone's stack, written down as agent ski
 By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com/harundotdev)).
 Product page: [harun.dev/raystack](https://harun.dev/raystack).
 
-**New here? Read the [guide](docs/guide.md):** every command, what each flow does, what it writes, cost and safety.
+**New here? Read the [guide](docs/guide.md):** every command, what each flow does, what it writes, and safety.
 
 ## Requirements
 
@@ -19,6 +19,36 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 
 ## Install
 
+### Install with a prompt
+
+Paste one of these into your coding agent and it installs RayStack for you.
+
+**Global** (every project on this machine). Set the agent name: `claude`, `codex`, `cursor`,
+`grok` or `opencode`.
+
+```text
+Install RayStack globally for claude. Run these two commands, then tell me the version it printed:
+git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack 2>/dev/null || git -C ~/.raystack pull --ff-only
+~/.raystack/install.sh --agent claude
+```
+
+**This project only** (the skills go in the repo, so everyone who clones it gets them):
+
+```text
+Install RayStack into this project for claude. Run these two commands, then show me the new folder:
+git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack 2>/dev/null || git -C ~/.raystack pull --ff-only
+~/.raystack/install.sh --agent claude --project .
+```
+
+**Update** (after a new release):
+
+```text
+Update RayStack: run ~/.raystack/install.sh --update and tell me the new version.
+```
+
+Or, with RayStack installed, type `/raystack update`. It checks the latest release and runs
+the right update for how you installed it.
+
 ### Global install (one command)
 
 ```bash
@@ -26,8 +56,37 @@ git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack && 
 ```
 
 This clones RayStack to `~/.raystack` and copies all thirty skills into `~/.claude/skills`.
-For another agent add `--agent codex`, `--agent cursor` or `--agent grok`. To update, run
-`git -C ~/.raystack pull && ~/.raystack/install.sh`. `--uninstall` removes them again.
+For another agent add `--agent codex`, `--agent cursor`, `--agent grok` or `--agent opencode`.
+`--uninstall` removes them again.
+
+| Agent | Global folder | Project folder (`--project`) |
+| --- | --- | --- |
+| `claude` (default) | `~/.claude/skills` | `<repo>/.claude/skills` |
+| `codex` | `~/.agents/skills` | `<repo>/.agents/skills` |
+| `cursor` | `~/.cursor/skills` | `<repo>/.cursor/skills` |
+| `grok` | `~/.grok/skills` | `<repo>/.claude/skills` (Grok reads it) |
+| `opencode` | `~/.config/opencode/skills` | `<repo>/.opencode/skills` (unverified) |
+
+### Install into an existing project
+
+```bash
+cd your-project
+~/.raystack/install.sh --project            # Claude Code: ./.claude/skills
+~/.raystack/install.sh --agent codex --project /path/to/repo
+```
+
+Commit the new folder so the whole team gets RayStack with the repo.
+
+### Update
+
+```bash
+~/.raystack/install.sh --update
+```
+
+It pulls the latest release into `~/.raystack`, then refreshes every place that checkout
+installed to, global and project alike (they are listed in `~/.raystack-installs`). Plugin
+installs update through the agent: `claude plugin marketplace update raystack` and
+`claude plugin update raystack@raystack`. Start a new agent session afterwards.
 
 Or use the [skills CLI](https://skills.sh): `npx skills add HarunRRayhan/RayStack -g -a claude-code`.
 

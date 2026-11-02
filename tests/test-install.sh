@@ -9,6 +9,7 @@ if [ ! -f "$INSTALL" ]; then fail "install.sh missing"; exit 1; fi
 SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build dev-gaps dev-review dev-migrate architecture-review frontend-review reliability-review codebase-review"
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
+export RAYSTACK_REGISTRY="$T/registry"
 
 count() { n=0; for s in $SKILLS; do [ -e "$1/$s/SKILL.md" ] && n=$((n + 1)); done; echo "$n"; }
 
@@ -137,5 +138,34 @@ bash "$INSTALL" --dir "$T/bad\"dir" >/dev/null 2>&1; assert_eq "$?" 1 "refuses q
 # symlinked install.sh still finds the checkout
 mkdir -p "$T/bin"; ln -s "$PWD/install.sh" "$T/bin/install.sh"
 bash "$T/bin/install.sh" --dir "$T/viaLink" >/dev/null; assert_eq "$(count "$T/viaLink")" 30 "works via symlinked install.sh"
+
+# --project installs into the repo's agent folder (default: current folder)
+P="$T/repo"; mkdir -p "$P"
+bash "$INSTALL" --project "$P" >/dev/null; assert_eq "$(count "$P/.claude/skills")" 30 "--project installs to .claude/skills"
+bash "$INSTALL" --agent codex --project "$P" >/dev/null; assert_eq "$(count "$P/.agents/skills")" 30 "--agent codex --project installs to .agents/skills"
+P2="$T/repo2"; mkdir -p "$P2"; I=$PWD/install.sh
+(cd "$P2" && bash "$I" --project >/dev/null); assert_eq "$(count "$P2/.claude/skills")" 30 "--project with no path uses the current folder"
+bash "$INSTALL" --project "$T/missing" >/dev/null 2>&1; assert_eq "$?" 1 "--project refuses a missing folder"
+grep -q "^$(cd "$P" && pwd -P)/.claude/skills	0$" "$RAYSTACK_REGISTRY" && pass "registry records the project target" || fail "registry missing project target"
+bash "$INSTALL" --project "$P" --uninstall >/dev/null
+grep -q "^$(cd "$P" && pwd -P)/.claude/skills	" "$RAYSTACK_REGISTRY" && fail "uninstall left the registry line" || pass "uninstall drops the registry line"
+
+# --update pulls a newer version and reinstalls every recorded target
+S="$T/src"; mkdir -p "$S"
+git ls-files -z -co --exclude-standard | xargs -0 tar cf - | tar xf - -C "$S"
+git -C "$S" init -q -b main && git -C "$S" add -A && git -C "$S" -c user.email=t@t -c user.name=t -c core.hooksPath=/dev/null commit -qm v1
+git clone -q "$S" "$T/co"
+export RAYSTACK_REGISTRY="$T/registry-update"
+bash "$T/co/install.sh" --dir "$T/u1" >/dev/null; bash "$T/co/install.sh" --project "$P" >/dev/null
+echo 9.9.9 > "$S/VERSION"; git -C "$S" -c user.email=t@t -c user.name=t -c core.hooksPath=/dev/null commit -qam v2
+bash "$T/co/install.sh" --update >/dev/null 2>&1; assert_eq "$?" 0 "--update exits 0"
+assert_eq "$(head -1 "$T/u1/raystack/.raystack-installed")" 9.9.9 "--update refreshed the global target"
+assert_eq "$(head -1 "$P/.claude/skills/raystack/.raystack-installed")" 9.9.9 "--update refreshed the project target"
+bash "$T/co/install.sh" --update --dry-run >/dev/null 2>&1; assert_eq "$?" 1 "--update refuses --dry-run"
+bash "$INSTALL" --project "$P" --link >/dev/null 2>&1; assert_eq "$?" 1 "--project refuses --link"
+bash "$INSTALL" --project "$P" --dir "$T/x" >/dev/null 2>&1; assert_eq "$?" 1 "--project refuses --dir"
+echo dirty >> "$T/co/README.md"; bash "$T/co/install.sh" --update >/dev/null 2>&1; assert_eq "$?" 1 "--update refuses a dirty checkout"
+git -C "$T/co" checkout -q README.md
+grep -q "^source=$T/co$\|^source=$(cd "$T/co" && pwd -P)$" "$T/u1/raystack/.raystack-installed" && pass "marker records the source checkout" || fail "marker lacks source"
 
 exit "$FAILED"

@@ -206,7 +206,15 @@ if [ -f "$entry" ]; then
   for t in '"scan"' '"scan all"' 'performance' 'N+1' 'CI/CD security' 'GitHub Actions security'; do
     check "router description triggers on $t" bash -c 'sed -n 3p "$1" | grep -qF -- "$2"' _ "$entry" "$t"
   done
-  check "README links the guide" grep -qF "docs/guide.md" README.md
+  check "router routes update to update.md" grep -qF 'references/update.md' skills/raystack/SKILL.md
+check "update.md exists" test -f skills/raystack/references/update.md
+for c in 'install.sh --update' 'claude plugin update raystack@raystack' 'source='; do
+  check "update.md covers $c" grep -qF -- "$c" skills/raystack/references/update.md
+done
+for c in 'Install with a prompt' '--project .' 'install.sh --update' 'Install into an existing project'; do
+  check "README install covers $c" grep -qF -- "$c" README.md
+done
+check "README links the guide" grep -qF "docs/guide.md" README.md
 for c in "project new" "project update" "project review" "project migrate" "review cqrs" "review reliability" "scan <type>"; do
   check "guide covers $c" grep -qF -- "$c" docs/guide.md
 done
