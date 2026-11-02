@@ -1,6 +1,6 @@
 ---
 name: dev
-description: Entry point for the RayStack development flow. Use for "/dev", "start a new project", "plan this feature", "build this", "fix this bug properly", "where are we", or any request to take work from idea to shipped code.
+description: Entry point for the RayStack development flow. Use for "/dev", "/raystack new project", "/raystack project new", "start a new project", "plan this feature", "build this", "fix this bug properly", "where are we", or any request to take work from idea to shipped code.
 ---
 
 # Dev
@@ -54,8 +54,8 @@ Pick the smallest track that fits. Say which one and why.
   4. Ship with `principle-ship`. With no git remote, say so and stop at the commit.
 - **Standard** (one slice of work): run `dev-spec` if no spec serves the slice (with no
   PRD it writes the slice's B-IDs), then `dev-plan`, then `dev-build`.
-- **Full** (a new product): run `dev-hub`, `dev-research`, `dev-prd`, `dev-spec`,
-  `dev-plan`, `dev-build`, in that order. Research covers the market and the technical
+- **Full** (a new product, or `new project` / `project new`): run `dev-hub`,
+  `dev-research`, `dev-prd`, `dev-spec`, `dev-plan`, `dev-build`, in that order. Research covers the market and the technical
   options for the stack, so `dev-spec` can settle its Stack table from sources.
 
 If the work grows past its track, say so and move it up one track. Do not carry on

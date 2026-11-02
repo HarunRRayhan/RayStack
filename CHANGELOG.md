@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.3 (2026-11-02)
+
+- `/raystack new project` and `/raystack project new` start the dev flow on the Full track
+  (research, PRD, stack and architecture, spec, plan, build).
+
 ## 0.7.2 (2026-11-02)
 
 - Dev flow asks one question per call through the host's question tool (AskUserQuestion in
