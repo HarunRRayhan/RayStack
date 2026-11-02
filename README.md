@@ -23,7 +23,7 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack && ~/.raystack/install.sh
 ```
 
-This clones RayStack to `~/.raystack` and copies all twenty-six skills into `~/.claude/skills`.
+This clones RayStack to `~/.raystack` and copies all thirty skills into `~/.claude/skills`.
 For another agent add `--agent codex`, `--agent cursor` or `--agent grok`. To update, run
 `git -C ~/.raystack pull && ~/.raystack/install.sh`. `--uninstall` removes them again.
 
@@ -83,7 +83,7 @@ Clone the repo and copy (or `--link`) the skills into your agent's skills folder
 ./install.sh --agent custom --dir /path/to/skills
 ```
 
-`--dry-run` shows what it would do and `--uninstall` removes exactly the twenty-six RayStack skills.
+`--dry-run` shows what it would do and `--uninstall` removes exactly the thirty RayStack skills.
 Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 
 ## Run a review
@@ -91,6 +91,11 @@ Per-agent details and sources are in [docs/agents.md](docs/agents.md).
 Type `/raystack` in the repo you want reviewed. It looks at the file names (Terraform,
 `railway.json`, migrations and so on), recommends reviews, and asks you once which ones to run
 and whether it may make read-only live calls. Then it runs them one at a time.
+
+Or just say what you want reviewed: `/raystack review architecture`, `review cqrs`,
+`review mvc`, `review frontend`, `review n+1`, `review database`, `review reliability`,
+`review availability`, `review scalability`, `review codebase`. Every finding comes with a
+suggested fix.
 
 Or skip the router and name a review: "run database-review", `/raystack:aws-billing-review`
 (plugin) or `/aws-billing-review` (`install.sh`), or just "why is my AWS bill so high".
@@ -107,6 +112,10 @@ Or skip the router and name a review: "run database-review", `/raystack:aws-bill
 | `app-security-review` | App code: authz, injection, secrets, sessions, dependency risk. Code only, never calls a running app. Dependency audits run only with your live consent; without it, the review lists the commands for you to run |
 | `performance-review` | App speed: N+1 queries, hot paths, blocking calls, caching, payload and bundle weight |
 | `pipeline-security-review` | CI/CD pipelines: workflow permissions, untrusted input, pinned actions, Dockerfile and supply chain |
+| `architecture-review` | Detects MVC, layered, CQRS, hexagonal/DDD, modular monolith or microservices and checks the code follows it: fat controllers, CQRS sides mixed, layer leaks, cycles, god classes |
+| `frontend-review` | React, Next, Vue, Svelte, Angular, Inertia: components, state and data fetching, re-renders, accessibility, forms, bundle, SEO basics |
+| `reliability-review` | Reliability and availability: timeouts, retries, idempotency, queues and dead letters, degradation, health checks, single points of failure, backups, rollback, SLOs |
+| `codebase-review` | Code health: test gaps, complexity hot spots, dead code, duplication, swallowed errors, outdated dependencies |
 
 With no live access, a review still works from your IaC and code. It marks those findings
 `(unconfirmed)` and lists the exports or commands it needs from you.
@@ -124,6 +133,10 @@ access, network scanners and targets. Reviews with no signals in the repo are li
 | `infra` | `infra-review`, `pipeline-security-review`, `aws-security-review`, `aws-bottleneck-review` |
 | `aws` | `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review` |
 | `database` | `database-review` |
+| `reliability` | `reliability-review`, `database-review`, `scaling-review`, `infra-review` |
+| `architecture` | `architecture-review`, `codebase-review` |
+| `code` | `codebase-review`, `architecture-review`, `frontend-review` |
+| `frontend` | `frontend-review`, `performance-review` |
 | `all` | every review above whose signals are found |
 
 When 2 or more reviews run, `reviews/YYYY-MM-DD-scan-<type>.md` merges them: one ranked list,

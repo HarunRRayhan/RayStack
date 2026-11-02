@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.." || exit 1
 # shellcheck source=/dev/null
 . ./tests/lib.sh
 
-REVIEWS=(aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review)
+REVIEWS=(aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review architecture-review frontend-review reliability-review codebase-review)
 CONTRACT='../raystack/references/review-contract.md'
 # shellcheck disable=SC2016  # literal text expected in the frontmatter
 HOOK='for f in "${CLAUDE_PLUGIN_ROOT}/skills/raystack/hooks/readonly-guard.sh" "${CLAUDE_PLUGIN_ROOT}/../raystack/hooks/readonly-guard.sh" "$HOME/.claude/skills/raystack/hooks/readonly-guard.sh"; do [ -x "$f" ] && exec "$f"; done; echo "RayStack review is read-only: guard missing" >&2; exit 2'
@@ -136,7 +136,7 @@ if [ -f "$entry" ]; then
   for s in "${REVIEWS[@]}"; do
     check "raystack names $s" grep -qF "$s" "$entry"
   done
-  check "raystack is 105 lines or fewer" test "$(wc -l < "$entry")" -le 105
+  check "raystack is 120 lines or fewer" test "$(wc -l < "$entry")" -le 120
   # shellcheck disable=SC2016  # literal backticks, not a command substitution
   check "raystack names dev" grep -qF '`dev`' "$entry"
 else
@@ -198,7 +198,7 @@ if [ -f "$entry" ]; then
   check "router: wrap-up offers dev to fix scan findings" grep -qF 'offer `dev` to fix' "$entry"
   check "router: bare rule comes before the ledger rule" test "$(grep -n 'Bare `/raystack`' "$entry" | cut -d: -f1)" -lt "$(grep -n 'unfinished ledger' "$entry" | cut -d: -f1)"
   check "database-review: Targets needs live access Yes too" grep -qF 'only when live access was also Yes' skills/database-review/SKILL.md
-  for s in database-review infra-review performance-review pipeline-security-review app-security-review; do
+  for s in database-review infra-review performance-review pipeline-security-review app-security-review architecture-review frontend-review reliability-review codebase-review; do
     check "$s skips what the router passed" grep -qF 'unless the router passed' "skills/$s/SKILL.md"
   done
   check "scans.md: a scan that runs nothing writes no summary" grep -qF 'If no review runs' "$scans"
@@ -206,7 +206,7 @@ if [ -f "$entry" ]; then
   for t in '"scan"' '"scan all"' 'performance' 'N+1' 'CI/CD security' 'GitHub Actions security'; do
     check "router description triggers on $t" bash -c 'sed -n 3p "$1" | grep -qF -- "$2"' _ "$entry" "$t"
   done
-  check "router is 105 lines or fewer" test "$(wc -l < "$entry")" -le 105
+  check "router is 120 lines or fewer" test "$(wc -l < "$entry")" -le 120
   check "CHANGELOG 0.7.0 notes routed reviews skip only what was asked" grep -qF 'skip only the questions the router asked' CHANGELOG.md
   check "scans.md has no em-dash" bash -c '! grep -q "—" "$1"' _ "$scans"
   check "router has no em-dash" bash -c '! grep -q "—" "$1"' _ "$entry"
@@ -372,5 +372,12 @@ done
 for s in dev-gaps dev-review dev-migrate references/intake.md; do
   check "dev maps project command to $s" grep -qF "$s" skills/dev/SKILL.md
 done
-check "router is 105 lines or fewer" test "$(wc -l < "$rt")" -le 105
+for v in reliability architecture code frontend; do
+  check "scans.md has type $v" grep -qE "^\| $v \|" "$scans"
+done
+for r in architecture-review frontend-review reliability-review codebase-review; do
+  check "router names $r" grep -qF "$r" "$rt"
+  check "scan all includes $r" grep -qF "\`$r*\`" <(grep -E '^\| all \|' "$scans")
+done
+check "router is 120 lines or fewer" test "$(wc -l < "$rt")" -le 120
 exit "$FAILED"

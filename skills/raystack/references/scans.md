@@ -11,7 +11,11 @@ when its signals are found (router step 1). Run the reviews in this order.
 | infra | `infra-review`, `pipeline-security-review*`, `aws-security-review*`, `aws-bottleneck-review*` |
 | aws | `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review` |
 | database | `database-review` |
-| all | `app-security-review*`, `pipeline-security-review*`, `performance-review*`, `database-review*`, `scaling-review*`, `infra-review*`, `aws-security-review*`, `aws-bottleneck-review*`, `aws-billing-review*` |
+| reliability | `reliability-review`, `database-review*`, `scaling-review*`, `infra-review*` |
+| architecture | `architecture-review`, `codebase-review` |
+| code | `codebase-review`, `architecture-review`, `frontend-review*` |
+| frontend | `frontend-review`, `performance-review*` |
+| all | `app-security-review*`, `pipeline-security-review*`, `architecture-review*`, `codebase-review*`, `frontend-review*`, `performance-review*`, `database-review*`, `scaling-review*`, `reliability-review*`, `infra-review*`, `aws-security-review*`, `aws-bottleneck-review*`, `aws-billing-review*` |
 
 For `all`, every review is conditional: those with no signals are listed as skipped.
 Scaling signals: queues, workers, schedulers, autoscaling or replica-count config (step 1).
@@ -24,11 +28,13 @@ Skip step 2's review pick. Make ONE question-tool call with only what the mapped
 (drop a question no mapped review uses):
 
 1. "Scan type", only when the type is missing or unknown: `all` (Recommended), security,
-   performance, and "Other" for the rest (scalability, infra, aws, database). When this is
+   performance, and "Other" for the rest (scalability, reliability, architecture, code,
+   frontend, infra, aws, database). When this is
    asked, size questions 2 to 4 for the reviews `all` would run here.
 2. "Live access" as in step 2 item 4 (at most 4 options). Only offer AWS setup when AWS signals
    are found or the type is aws.
-3. "Network scanners" (multi-select): dependency audits + osv-scanner, semgrep, `gh api` with
+3. "Network scanners" (multi-select): dependency audits + osv-scanner, registry lookups
+   (`npm outdated` and the like, for codebase-review), semgrep, `gh api` with
    the OWNER/REPO and branch from `git remote` and the default branch. In a scan this is the
    only place app-security-review's dependency audits are asked.
 4. "Targets": what was found (e.g. a `DATABASE_URL`-style name from `.env.example`, DB or app

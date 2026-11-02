@@ -1,6 +1,6 @@
 ---
 name: dev-review
-description: Read-only mid-build review of a project's architecture, tech specs and plan against the code, with a ranked findings report. Use for "/raystack project review", "review the architecture", "review the plan", "does the code match the spec", "are we over-engineering", "is the plan still right".
+description: Read-only mid-build review of a project's architecture, tech specs and plan against the code, with a ranked findings report. Use for "/raystack project review", "review the architecture against the docs", "review the plan", "does the code match the spec", "is the plan still right".
 hooks:
   PreToolUse:
     - matcher: Bash

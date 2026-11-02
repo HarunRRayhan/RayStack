@@ -65,7 +65,7 @@ Use what is available, in this order:
 - Do not run repo scripts, Makefile targets, package scripts (`npm run`, `composer`, etc.) or
   test suites during a review. The guard does not check what they do.
 - One exception: dependency audits, only in forms that run no repo code. The guard allows:
-  - `npm audit`
+  - `npm audit`; `npm outdated` and `npm view <pkg>` (registry lookups, for codebase-review)
   - `composer audit --no-plugins --no-scripts` (both flags required)
   - `bundle-audit check` (not `bundle audit`: Bundler loads the repo's plugin index)
   - `pip-audit`; with `-r`/`--requirement` it also needs `--disable-pip` and either
