@@ -65,7 +65,7 @@ if [ "$update" = 1 ]; then
   rc=0 n=0
   if [ -f "$REGISTRY" ]; then
     while IFS="$(printf '\t')" read -r d l; do
-      [ -n "$d" ] && [ -d "$d" ] || continue
+      if [ -z "$d" ] || [ ! -d "$d" ]; then continue; fi
       # only targets this checkout installed: a link into it, or a copy whose marker names it
       if [ -L "$d/raystack" ]; then [ "$(readlink "$d/raystack")" = "$ROOT/skills/raystack" ] || continue
       else grep -qxF "source=$ROOT" "$d/raystack/.raystack-installed" 2>/dev/null || continue; fi
