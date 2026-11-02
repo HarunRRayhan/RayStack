@@ -52,7 +52,7 @@ End the plan with `## Analyze` and run it. The plan is not ready until every lin
 
 Fix the plan and run it again. Record the result in the `## Analyze` section as a table
 of check, result, note. If something cannot be fixed without the user, ask through the
-question tool (at most 5 per round) and record the answer as a `D-` row.
+question tool (one question per call) and record the answer as a `D-` row.
 
 ## 4. Finish
 

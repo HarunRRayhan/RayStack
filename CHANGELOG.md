@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.2 (2026-11-02)
+
+- Dev flow asks one question per call through the host's question tool (AskUserQuestion in
+  Claude Code), logs each answer, then picks the next question from it. Replaces "at most 5
+  per round" in research, PRD, spec, plan and hub.
+
 ## 0.7.1 (2026-11-02)
 
 - `dev-spec` settles the stack on the Full track (language and framework, monolith or

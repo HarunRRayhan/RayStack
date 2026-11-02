@@ -17,7 +17,7 @@ Offer to resume when the user can pass in pages, files or links to read.
 ## 2. Scope the question
 
 Read `DECISIONS.md` and the existing `docs/research/` first. Do not redo a settled
-question. If the topic is unclear, ask through the question tool, at most 5 questions,
+question. If the topic is unclear, ask through the question tool, one question per call,
 recommended option first. Typical scopes:
 
 - **Market**: who buys, what they pay, what they use now.

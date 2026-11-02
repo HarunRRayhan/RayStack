@@ -241,7 +241,7 @@ if [ -f "$dc" ]; then
     check "dev-contract has H2 $h" grep -qxF "## $h" "$dc"
   done
   for t in 'ID | Date | Decision | Status | Supersedes | How to confirm' 'never asked again' 'Superseded by' \
-    todo in-progress 'done' done-with-concerns needs-context blocked WHEN 'THE SYSTEM SHALL' B-001 'inline review' 'at most 5' 'Shipped:' 'Committed:' 'least possible'; do
+    todo in-progress 'done' done-with-concerns needs-context blocked WHEN 'THE SYSTEM SHALL' B-001 'inline review' 'one question' 'Shipped:' 'Committed:' 'least possible'; do
     check "dev-contract contains: $t" grep -qF -- "$t" "$dc"
   done
   check "dev-contract links the reviewer checklist" grep -qF '../../dev-build/references/reviewer.md' "$dc"
@@ -301,7 +301,7 @@ done
 for t in 'source beside every fact' unverified; do
   check "dev-research contains: $t" grep -qF -- "$t" skills/dev-research/SKILL.md
 done
-for t in 'NEEDS CLARIFICATION' 'at most 5' 'DECISIONS.md'; do
+for t in 'NEEDS CLARIFICATION' 'one question per call' 'DECISIONS.md'; do
   check "dev-prd contains: $t" grep -qF -- "$t" skills/dev-prd/SKILL.md
 done
 prd=skills/dev-prd/assets/PRD.md
