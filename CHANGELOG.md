@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1 (2026-11-02)
+
+- `dev-spec` settles the stack on the Full track (language and framework, monolith or
+  services, data store, hosting, auth/jobs/cache, repo layout), logs each choice as a `D-` row
+  and opens the architecture overview with a `## Stack` table. Defaults lean simple: one
+  modular monolith, one relational database, a managed platform. Standard never re-decides it.
+- `dev` Full track: research covers the market and the stack options.
+
 ## 0.7.0 (2026-10-31)
 
 - `/raystack scan <type>` runs a set of reviews as one job (security, performance, scalability,

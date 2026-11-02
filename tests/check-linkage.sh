@@ -319,7 +319,7 @@ for sk in dev-spec dev-plan; do
     fail "missing $f"
   fi
 done
-for t in 'Serves:' '## Complexity' 'docs/principles.md' '## Behaviours'; do
+for t in 'Serves:' '## Complexity' 'docs/principles.md' '## Behaviours' '## Stack' 'modular monolith' 'Data store' 'Hosting and deploy'; do
   check "dev-spec contains: $t" grep -qF -- "$t" skills/dev-spec/SKILL.md
 done
 for t in analyze 'NEEDS CLARIFICATION' 'Every task covers' 'vertical slice'; do
