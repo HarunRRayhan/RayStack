@@ -193,14 +193,6 @@ start, skips reviews with nothing to look at, and writes one ranked summary,
 | `docs/plans/` | Plans and their ledgers |
 | `reviews/` | Review and scan reports |
 
-## Cost and time
-
-Rough figures from test runs on a small repo with Claude's default model. Bigger repos cost more.
-
-- A single review: about $0.30 to $0.70.
-- `project update` on a small app: a few dollars for the documents.
-- `project new` up to an approved plan: about $15 to $25. The build adds to that.
-
 ## Safety
 
 - Reviews run behind a guard (in Claude Code) that blocks any shell command that could

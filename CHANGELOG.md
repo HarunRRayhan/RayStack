@@ -10,6 +10,7 @@
   RayStack was installed (install.sh, plugin, npx skills).
 - README and guide: copy-paste install prompts for each agent, global and per project, and an
   update prompt.
+- Guide: dropped the cost section; the agent runs on your own plan.
 
 ## 0.9.1 (2026-11-02)
 

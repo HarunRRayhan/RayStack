@@ -9,7 +9,7 @@ I build and what I check when I audit someone's stack, written down as agent ski
 By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com/harundotdev)).
 Product page: [harun.dev/raystack](https://harun.dev/raystack).
 
-**New here? Read the [guide](docs/guide.md):** every command, what each flow does, what it writes, cost and safety.
+**New here? Read the [guide](docs/guide.md):** every command, what each flow does, what it writes, and safety.
 
 ## Requirements
 
