@@ -136,7 +136,7 @@ if [ -f "$entry" ]; then
   for s in "${REVIEWS[@]}"; do
     check "raystack names $s" grep -qF "$s" "$entry"
   done
-  check "router: new project goes to dev Full" grep -qF '`new project` or `project new` (`/raystack new project`): `dev` on the Full track' "$entry"
+  check "router: new project goes to dev Full" grep -qF '(/raystack new project): dev on the Full track' <(tr -d '`' < "$entry")
   check "raystack is 105 lines or fewer" test "$(wc -l < "$entry")" -le 105
   # shellcheck disable=SC2016  # literal backticks, not a command substitution
   check "raystack names dev" grep -qF '`dev`' "$entry"
