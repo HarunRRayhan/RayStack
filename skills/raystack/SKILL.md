@@ -61,7 +61,7 @@ Then read the user's words:
   "frontend", "React", "Vue", "accessibility", "re-renders": `frontend-review`. "reliability",
   "availability", "uptime", "SLO", "retries", "failover": `reliability-review`. "code quality",
   "tech debt", "codebase", "dead code", "test coverage": `codebase-review`. "database",
-  "indexes", "slow queries": `database-review`.
+  "indexes", "slow queries": `database-review`. "CI", "pipeline": `pipeline-security-review`. "infra", "deploys": `infra-review`. "security" with no AWS: `app-security-review`.
 - AWS with no IaC: if the user mentions AWS or names a profile, recommend the AWS reviews.
   No signals at all: recommend `infra-review` (not in a scan).
 

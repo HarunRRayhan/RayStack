@@ -206,7 +206,11 @@ if [ -f "$entry" ]; then
   for t in '"scan"' '"scan all"' 'performance' 'N+1' 'CI/CD security' 'GitHub Actions security'; do
     check "router description triggers on $t" bash -c 'sed -n 3p "$1" | grep -qF -- "$2"' _ "$entry" "$t"
   done
-  check "router is 120 lines or fewer" test "$(wc -l < "$entry")" -le 120
+  check "README links the guide" grep -qF "docs/guide.md" README.md
+for c in "project new" "project update" "project review" "project migrate" "review cqrs" "review reliability" "scan <type>"; do
+  check "guide covers $c" grep -qF -- "$c" docs/guide.md
+done
+check "router is 120 lines or fewer" test "$(wc -l < "$entry")" -le 120
   check "CHANGELOG 0.7.0 notes routed reviews skip only what was asked" grep -qF 'skip only the questions the router asked' CHANGELOG.md
   check "scans.md has no em-dash" bash -c '! grep -q "—" "$1"' _ "$scans"
   check "router has no em-dash" bash -c '! grep -q "—" "$1"' _ "$entry"
