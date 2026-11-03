@@ -30,7 +30,7 @@ plus General.
 | `*.tf`, `cdk.json`, `template.yaml`, `serverless.yml`, `samconfig.toml`, `buildspec.yml`, `appspec.yml`, `.aws/` | AWS |
 | `app.yaml`, `cloudbuild.yaml`, `service.yaml` (Cloud Run), `*.tf` with `google` provider | GCP |
 | `*.bicep`, `azuredeploy.json`, `azure-pipelines.yml`, `.azure/`, `*.tf` with `azurerm` provider | Azure |
-| `railway.json`, `railway.toml`, `nixpacks.toml` | Railway |
+| `railway*.json`, `railway*.toml` (one per service, e.g. `railway.web.json`), `nixpacks.toml` | Railway |
 | `wrangler.toml`, `wrangler.json`, `wrangler.jsonc`, `_headers`, `_redirects`, `purge` calls in workflows | Cloudflare |
 | `Dockerfile*`, `docker-compose*.yml`, `compose*.yml`, `Caddyfile`, `nginx*.conf`, `traefik*`, systemd units, `deploy.sh` | VPS/Docker |
 | `fly.toml`, `render.yaml`, `vercel.json`, `netlify.toml`, `Procfile` | General only, note the platform |

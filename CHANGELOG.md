@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.9 (2026-11-03)
+
+From running `/raystack scan security` on a real Laravel app on Railway and Cloudflare:
+
+- infra-review finds per-service Railway config (`railway.web.json`, any `railway*.json` or
+  `railway*.toml`). It had reported the config as missing.
+- app-security-review checks whether a client can set its own IP through
+  `X-Forwarded-For`. Its fix covers apps behind a platform edge such as Railway, where
+  trusting the CDN's IP ranges does not work.
+
 ## 0.9.8 (2026-11-03)
 
 From running the dev flow end to end on a small local repo, through plan, build and ship:
