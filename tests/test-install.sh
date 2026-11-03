@@ -73,6 +73,17 @@ case "$out" in *"grok plugin marketplace"*) fail "stale grok tip";; *) pass "no 
 # A checkout under $HOME is recorded as ~/..., so a committed project install carries no home path.
 mkdir -p "$H/rs" && cp -R install.sh skills VERSION "$H/rs/" && HOME="$H" bash "$H/rs/install.sh" --dir "$T/portable" >/dev/null 2>&1
 assert_eq "$(sed -n 2p "$T/portable/raystack/.raystack-installed")" "source=~/rs" "marker uses ~ for home"
+# --agent all installs for each agent found in $HOME; Grok only when it has no Claude or Cursor folder to read.
+HA="$T/homeall"; mkdir -p "$HA/.claude" "$HA/.codex" "$HA/.grok"
+outall=$(HOME="$HA" bash ./install.sh --agent all 2>&1)
+assert_eq "$(count "$HA/.claude/skills")" 30 "all: claude"
+assert_eq "$(count "$HA/.agents/skills")" 30 "all: codex"
+[ ! -d "$HA/.grok/skills" ] && pass "all: grok reads ~/.claude/skills" || fail "all: grok got its own copy"
+case "$outall" in *"Installed for: claude codex."*) pass "all: summary";; *) fail "all: summary (got $outall)";; esac
+HN="$T/homenone"; mkdir -p "$HN"; HOME="$HN" bash ./install.sh --agent all >/dev/null 2>&1
+assert_eq "$(count "$HN/.claude/skills")" 30 "all: claude when no agent found"
+bash -n get.sh && pass "get.sh parses" || fail "get.sh syntax"
+[ "$(tail -1 get.sh | cut -c1-10)" = 'main "$@" ' ] && pass "get.sh runs main last" || fail "get.sh must end with main"
 case "$out" in *"codex plugin"*) pass "prints plugin hint";; *) fail "no plugin hint";; esac
 
 # foreign same-named dir is never deleted
