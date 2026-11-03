@@ -84,7 +84,13 @@ Ask through the host's question tool (AskUserQuestion in Claude Code). Ask one q
 per call: wait for the answer, log it, then pick the next question from what you now know.
 Put the recommended option first and make each question self-contained. In the dev flow
 this overrides the batching in `principle-ask-with-question-tool`. Plain text
-only when the host has no question tool. Each answer becomes a `D-` row in `DECISIONS.md`.
+only when the host has no question tool, and then one question per message too: end the
+turn after it. Status, blockers and notes in the same message are fine; a second question
+is not. Each answer becomes a `D-` row in `DECISIONS.md`.
+
+An approval gate ("approve the PRD?") is a question of its own, with options like Approve
+and Request changes. Do not add open `D-` questions to it: ask those one per call before
+the gate, or name them in the gate question as open rows the user may leave open.
 
 ## Session start
 

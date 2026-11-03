@@ -57,5 +57,5 @@ question tool (one question per call) and record the answer as a `D-` row.
 ## 4. Finish
 
 Tell the user the plan path, the task count, the B-ID coverage and the analyze result.
-Ask them to review. Do not start the build until they approve. Then hand back to `dev`,
+Ask them to review, as one approval question with nothing else in it. Do not start the build until they approve. Then hand back to `dev`,
 usually for `dev-build`.

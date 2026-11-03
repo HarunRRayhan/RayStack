@@ -92,5 +92,5 @@ gate is not breached, leave the section out.
 ## 6. Finish
 
 Tell the user the file paths, the stack `D-` IDs, the B-IDs served per file, any B-ID
-not yet served, the count of open markers and the count of Complexity rows. Ask them to review. Do not start
+not yet served, the count of open markers and the count of Complexity rows. Ask them to review, as one approval question with nothing else in it. Do not start
 the next step until they approve. Then hand back to `dev`, usually for `dev-plan`.
