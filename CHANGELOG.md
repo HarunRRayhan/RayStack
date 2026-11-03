@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.0.0 (2026-11-03)
+
+First stable release. Every flow has now run end to end on real codebases: a new project, a
+planned and reviewed build to a merge, filling a project's missing docs, and the security,
+performance, reliability, frontend, architecture and codebase reviews.
+
+Docs:
+- The README opens with a three-step quick start and a table of what to type first.
+- New [docs/safety.md](docs/safety.md): what the guard checks and what it doesn't,
+  read-only credentials per database and platform, and privacy.
+- The guide no longer overstates the guard. It says the guard stays on after a review, and
+  adds a glossary.
+- Uninstall, project uninstall and plugin updates are documented in one place.
+
+Installer:
+- After an install it prints the next step: start a new session and type `/raystack`.
+- It warns when `jq` is missing.
+- The Grok tip uses the install command that works.
+- Project installs record the checkout as `~/...`, so a committed `.claude/skills` no longer
+  carries your home path.
+- `--uninstall` prints a summary, and `--update` prints its tips once instead of once per
+  target.
+
 ## 0.9.9 (2026-11-03)
 
 From running `/raystack scan security` on a real Laravel app on Railway and Cloudflare:

@@ -163,8 +163,8 @@ read-only profile.
 ## Scans
 
 `/raystack scan <type>` runs several reviews as one job. It asks its questions once at the
-start, skips reviews with nothing to look at, and writes one ranked summary,
-`reviews/YYYY-MM-DD-scan-<type>.md`, next to each review's own report.
+start and skips reviews with nothing to look at. Each review writes its own report; when two
+or more ran, it also writes one merged, ranked summary, `reviews/YYYY-MM-DD-scan-<type>.md`.
 
 | Type | Runs |
 | --- | --- |
@@ -195,16 +195,40 @@ start, skips reviews with nothing to look at, and writes one ranked summary,
 
 ## Safety
 
-- Reviews run behind a guard (in Claude Code) that blocks any shell command that could
-  change something: only read forms of git, cloud CLIs, database clients and scanners pass.
+- In Claude Code, reviews run behind a guard that checks cloud CLIs, database clients, deploy
+  tools, package runners and scanners, and lets only their read forms through. It does not
+  check other tools, the agent's file reads or repo scripts, and other agents don't enforce
+  it, so give reviews read-only credentials.
+- The guard stays on for the rest of the session after a review. Start a new session before
+  you build or run tests.
 - Scanners (gitleaks, semgrep, osv-scanner, zizmor, actionlint, hadolint) run only when you
   have installed them. RayStack never installs anything.
-- Secrets: reviews never open `.env` files or print secret values.
+- Secrets: reviews are told never to open `.env` files or print secret values. That is a rule
+  they follow, not something the guard enforces.
+- What is checked and what isn't, read-only credentials per platform, and privacy:
+  [safety.md](safety.md).
 
 ## Troubleshooting
 
 - **"guard missing" or every command blocked:** install `jq`; the guard needs it.
+- **`npm test`, `$` or a redirect is blocked after a review:** the guard stays on for the
+  session. Start a new session.
+- **`/raystack` is not found right after install:** start a new agent session; skills load at
+  startup.
 - **A command is not found:** with a plugin install, prefix skills with `raystack:`.
 - **It asked the same question twice:** check `DECISIONS.md`. A settled row is never asked
   again; if it is missing there, the answer was not logged.
 - **A build stopped:** run `/raystack where are we`. It resumes from the ledger.
+
+## Words used here
+
+| Word | Meaning |
+| --- | --- |
+| PRD | Product requirements document: what to build, for whom, and what it must never do |
+| Behaviour, `B-001` | One numbered, testable thing the product must do. Specs, tasks and tests name them |
+| Slice | One piece of a feature that can be built, tested and shipped on its own |
+| Track | How much process a piece of work gets: Quick, Standard or Full |
+| Ledger | The build's progress table in `docs/plans/`, so a stopped build can resume |
+| Hub | The folder holding `AGENTS.md`, `DECISIONS.md` and `docs/`; a code-free hub serves several repos |
+| Guard | The hook that checks shell commands during a review (Claude Code only) |
+| `(unconfirmed)` | A finding drawn from code or config that needs live data to prove |
