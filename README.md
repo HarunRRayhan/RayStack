@@ -1,4 +1,5 @@
-<h1><img src="assets/logo.svg" alt="" width="40" height="40" align="center"> RayStack</h1>
+<p align="center"><img src="assets/logo.svg" alt="RayStack logo" width="88" height="88"></p>
+<h1 align="center">RayStack</h1>
 
 RayStack is a skill pack for coding agents that builds and reviews software. Type `/raystack`
 in a repo and it works out what you want: take a product from idea to shipped code with
@@ -11,13 +12,21 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
 
 ## Quick start
 
-1. Install it for every coding agent on your machine (Claude Code, Codex, Cursor, Grok,
-   OpenCode):
+1. Install RayStack for the coding agents on your machine. It finds them (Claude Code, Codex,
+   Cursor, Grok, Antigravity, Gemini CLI, Copilot, Windsurf and more) and asks, for each one,
+   whether to install there:
 
    ```bash
    curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash
    ```
 
+   Or paste this into your coding agent, and it installs for every agent it finds:
+
+   ```text
+   Install RayStack globally: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --yes`, then tell me which agents it installed for.
+   ```
+
+   For one agent only, or one project, see [Install](#install).
 2. Start a new agent session, so it loads the skills.
 3. In any repo, type one of these:
 
@@ -29,8 +38,7 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
    | Get a read-only review of this repo | `/raystack` (it suggests reviews) or `/raystack review security` |
    | Run several reviews as one job | `/raystack scan all` |
 
-Every command and flow is explained in the **[guide](docs/guide.md)**. Only one agent, or
-installing into a single repo? See [Install](#install).
+Every command and flow is explained in the **[guide](docs/guide.md)**.
 
 Requirements: `git`, `bash` and `jq`. In Claude Code the review guard needs `jq`: without it
 every shell command is blocked during a review. PDF export also needs Chrome or Chromium and
@@ -98,97 +106,178 @@ Details, read-only credentials per database and platform, and privacy:
 
 ## Install
 
-### Every agent at once
+Use a prompt (paste it into your agent) or the same command in a terminal. Either way it keeps
+a checkout in `~/.raystack` that updates use later.
+
+### Every agent on your machine (global)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash
 ```
 
-[`get.sh`](get.sh) clones RayStack to `~/.raystack` (or updates it), then runs
-`install.sh --agent all`. That installs the thirty skills for each agent it finds in your home
-folder: `~/.claude`, `~/.codex`, `~/.cursor`, `~/.grok`, `~/.config/opencode`. With none
-found, it installs for Claude Code. Grok gets no copy of its own when Claude Code or Cursor is
-there, because it reads their skills folders.
+[`get.sh`](get.sh) clones RayStack to `~/.raystack` (or updates it) and runs
+`install.sh --agent all`. That looks in your home folder for each agent below and, at a
+terminal, asks for each one it finds: `Install RayStack for Codex (~/.agents/skills)? [Y/n]`.
+Run by an agent, or with `-s -- --yes`, it installs for all of them without asking. With none
+found, it installs for Claude Code. Agents that read the same folder (Codex, Cline, Warp and
+Zed all read `~/.agents/skills`) get one copy.
 
-Arguments after `bash -s --` go to `install.sh`:
+Prompt version:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --project .         # this repo, for every agent found
-curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent codex      # one agent
+```text
+Install RayStack globally: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --yes`, then tell me which agents it installed for.
 ```
 
-Rather not pipe a script into bash? Same result:
+The same for this project only, for every agent found (commit the new folders and everyone
+who clones the repo gets RayStack):
+
+```text
+Install RayStack into this project: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --yes --project .`, then show me the new skills folders.
+```
+
+Rather not pipe a script into bash? Clone it and run the installer:
 
 ```bash
 git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack
 ~/.raystack/install.sh --agent all
 ```
 
-Or paste this into any coding agent:
-
-```text
-Install RayStack: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash`, then tell me which agents it installed for.
-```
-
-A project install (`--project`) puts the skills in the repo. Commit that folder and everyone
-who clones the repo gets RayStack. A global install also makes the four principle skills
-(below) apply in every project on the machine; use `--project` if you want RayStack only in
-some repos.
+A global install also makes the four principle skills (below) apply in every project on the
+machine. Use the project install if you want RayStack only in some repos.
 
 ### One agent
 
-Each agent can use the script (copies the skills into its folder) or, for most, its own plugin
-system. Use one or the other, not both. As a plugin, single skills are namespaced: `/raystack`
-still works, but a review is `/raystack:frontend-review` instead of `/frontend-review`.
+Each prompt runs the same installer for one agent. In a terminal, run the command inside the
+backticks. Use the script or the agent's plugin, not both. As a plugin, single skills are
+namespaced: `/raystack` still works, but a review is `/raystack:frontend-review` instead of
+`/frontend-review`.
 
-**Claude Code**
+#### Claude Code
 
-- Script: `~/.raystack/install.sh --agent claude` puts the skills in `~/.claude/skills`; with
-  `--project` in `<repo>/.claude/skills`.
-- Plugin: `claude plugin marketplace add HarunRRayhan/RayStack`, then
-  `claude plugin install raystack@raystack`. Update with `claude plugin marketplace update
-  raystack` and `claude plugin update raystack@raystack`.
-- Only Claude Code enforces the review guard.
+```text
+Install RayStack globally for Claude Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent claude`, then tell me what it printed.
+```
 
-**Codex**
+```text
+Install RayStack into this project for Claude Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent claude --project .`, then show me the new .claude/skills folder.
+```
 
-- Script: `~/.raystack/install.sh --agent codex` puts the skills in `~/.agents/skills`; with
-  `--project` in `<repo>/.agents/skills`.
-- Plugin: `codex plugin marketplace add HarunRRayhan/RayStack`, then
-  `codex plugin add raystack@raystack`. Update with `codex plugin marketplace upgrade raystack`
-  and the `add` line again.
+Global folder `~/.claude/skills`, project folder `.claude/skills`. Plugin instead: `claude plugin marketplace add HarunRRayhan/RayStack`, then `claude plugin install raystack@raystack` (update with `claude plugin marketplace update raystack` and `claude plugin update raystack@raystack`). Only Claude Code enforces the review guard.
 
-**Cursor**
+#### Codex
 
-- Script: `~/.raystack/install.sh --agent cursor` puts the skills in `~/.cursor/skills`; with
-  `--project` in `<repo>/.cursor/skills`.
-- Plugin: `cursor-agent plugin marketplace add <gitUrl>` (unverified; see
-  [docs/agents.md](docs/agents.md)).
+```text
+Install RayStack globally for Codex: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent codex`, then tell me what it printed.
+```
 
-**Grok Build**
+```text
+Install RayStack into this project for Codex: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent codex --project .`, then show me the new .agents/skills folder.
+```
 
-- Script: Grok reads `~/.claude/skills` and `~/.cursor/skills`, so a Claude Code or Cursor
-  install already covers it. Otherwise `~/.raystack/install.sh --agent grok` puts the skills in
-  `~/.grok/skills`; with `--project` in `<repo>/.claude/skills`.
-- Plugin: `grok plugin install HarunRRayhan/RayStack --trust`. Update with
-  `grok plugin update raystack`.
+Global folder `~/.agents/skills`, project folder `.agents/skills`. Plugin instead: `codex plugin marketplace add HarunRRayhan/RayStack`, then `codex plugin add raystack@raystack` (update with `codex plugin marketplace upgrade raystack` and the `add` line again).
 
-**OpenCode**
+#### Cursor
 
-- Script: `~/.raystack/install.sh --agent opencode` puts the skills in
-  `~/.config/opencode/skills`; with `--project` in `<repo>/.opencode/skills` (unverified).
+```text
+Install RayStack globally for Cursor: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent cursor`, then tell me what it printed.
+```
 
-**Any other agent**
+```text
+Install RayStack into this project for Cursor: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent cursor --project .`, then show me the new .cursor/skills folder.
+```
 
-- `~/.raystack/install.sh --agent custom --dir /path/to/its/skills`
-- Or the [skills CLI](https://skills.sh): `npx skills add HarunRRayhan/RayStack -g -a claude-code`
-  (change the agent name).
+Global folder `~/.cursor/skills`, project folder `.cursor/skills`. Plugin instead: `cursor-agent plugin marketplace add <gitUrl>` (unverified, see [docs/agents.md](docs/agents.md)).
 
-The `~/.raystack/install.sh` lines need the checkout: run the one-line install first, or
-`git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack`.
-Other options: `--dry-run` shows what would happen, `--link` symlinks to the checkout
-instead of copying, and `--help` lists the rest. Per-agent details and sources:
-[docs/agents.md](docs/agents.md).
+#### Grok Build
+
+```text
+Install RayStack globally for Grok Build: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent grok`, then tell me what it printed.
+```
+
+```text
+Install RayStack into this project for Grok Build: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent grok --project .`, then show me the new .claude/skills folder.
+```
+
+Global folder `~/.grok/skills`, project folder `.claude/skills`. Grok also reads `~/.claude/skills` and `~/.cursor/skills`, so a Claude Code or Cursor install already covers it. Plugin instead: `grok plugin install HarunRRayhan/RayStack --trust` (update with `grok plugin update raystack`).
+
+#### Antigravity
+
+```text
+Install RayStack globally for Antigravity: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent antigravity`, then tell me what it printed.
+```
+
+```text
+Install RayStack into this project for Antigravity: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent antigravity --project .`, then show me the new .agents/skills folder.
+```
+
+Global folder `~/.gemini/antigravity/skills`, project folder `.agents/skills`.
+
+#### Gemini CLI
+
+```text
+Install RayStack globally for Gemini CLI: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent gemini`, then tell me what it printed.
+```
+
+```text
+Install RayStack into this project for Gemini CLI: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent gemini --project .`, then show me the new .agents/skills folder.
+```
+
+Global folder `~/.gemini/skills`, project folder `.agents/skills`.
+
+#### GitHub Copilot
+
+```text
+Install RayStack globally for GitHub Copilot: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent copilot`, then tell me what it printed.
+```
+
+```text
+Install RayStack into this project for GitHub Copilot: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent copilot --project .`, then show me the new .agents/skills folder.
+```
+
+Global folder `~/.copilot/skills`, project folder `.agents/skills`.
+
+#### Windsurf
+
+```text
+Install RayStack globally for Windsurf: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent windsurf`, then tell me what it printed.
+```
+
+```text
+Install RayStack into this project for Windsurf: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent windsurf --project .`, then show me the new .windsurf/skills folder.
+```
+
+Global folder `~/.codeium/windsurf/skills`, project folder `.windsurf/skills`.
+
+#### Other agents
+
+Same prompts with the agent's `--agent` name:
+
+| Agent | `--agent` | Global folder | Project folder |
+| --- | --- | --- | --- |
+| Cline | `cline` | `~/.agents/skills` | `.agents/skills` |
+| Kiro | `kiro` | `~/.kiro/skills` | `.kiro/skills` |
+| Roo Code | `roo` | `~/.roo/skills` | `.roo/skills` |
+| Kilo Code | `kilo` | `~/.kilo/skills` | `.agents/skills` |
+| Amp | `amp` | `~/.config/agents/skills` | `.agents/skills` |
+| Goose | `goose` | `~/.config/goose/skills` | `.goose/skills` |
+| OpenCode | `opencode` | `~/.config/opencode/skills` | `.opencode/skills` |
+| Qwen Code | `qwen` | `~/.qwen/skills` | `.qwen/skills` |
+| Trae | `trae` | `~/.trae/skills` | `.trae/skills` |
+| Junie | `junie` | `~/.junie/skills` | `.junie/skills` |
+| Augment | `augment` | `~/.augment/skills` | `.augment/skills` |
+| Warp | `warp` | `~/.agents/skills` | `.agents/skills` |
+| Zed | `zed` | `~/.agents/skills` | `.agents/skills` |
+| OpenHands | `openhands` | `~/.openhands/skills` | `.openhands/skills` |
+| Continue | `continue` | `~/.continue/skills` | `.continue/skills` |
+
+Not listed? `~/.raystack/install.sh --agent custom --dir /path/to/its/skills`, or the
+[skills CLI](https://skills.sh): `npx skills add HarunRRayhan/RayStack -g -a <agent>`.
+
+Claude Code, Codex, Cursor and Grok are tested with RayStack. The other folders come from the
+skills CLI's agent table and are not tested here. The read-only review guard runs only in
+Claude Code; on any other agent, give reviews read-only credentials. Other options:
+`--dry-run` shows what would happen, `--link` symlinks to the checkout, and `--help` lists the
+rest. Per-agent details and sources: [docs/agents.md](docs/agents.md).
 
 ### Update
 
@@ -206,7 +295,7 @@ above). Start a new agent session afterwards.
 ### Uninstall
 
 ```bash
-~/.raystack/install.sh --uninstall --agent all          # every agent's global folder
+~/.raystack/install.sh --uninstall --agent all          # every agent found
 ~/.raystack/install.sh --uninstall --project .          # this project (Claude Code)
 rm -rf ~/.raystack ~/.raystack-installs                 # then the checkout and its list
 ```

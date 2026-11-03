@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.2 (2026-11-03)
+
+- The installer knows 23 agents: Claude Code, Codex, Cursor, Grok Build, Antigravity, Gemini
+  CLI, GitHub Copilot, Windsurf, Cline, Kiro, Roo Code, Kilo Code, Amp, Goose, OpenCode, Qwen
+  Code, Trae, Junie, Augment, Warp, Zed, OpenHands and Continue. The folders for agents
+  RayStack hasn't tested come from the skills CLI's agent table.
+- `--agent all` asks at a terminal, for each agent it finds, whether to install there.
+  `--yes` skips the questions; agents and CI get every agent found. Agents that read the
+  same folder get one copy.
+- The README has a global prompt and, for each main agent, a global and a project prompt.
+- The README logo and title are centered together.
+
 ## 1.0.1 (2026-11-03)
 
 - One install command for everyone:

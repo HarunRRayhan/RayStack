@@ -4,15 +4,17 @@ How to use RayStack day to day.
 
 ## Install and update
 
-Install for every coding agent on your machine (Claude Code, Codex, Cursor, Grok, OpenCode):
+Install for the coding agents on your machine. It finds them and asks, for each one, whether
+to install there:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash
 ```
 
-Then start a new agent session. Add `-s -- --project .` after `bash` to install into the
-current repo instead, or `-s -- --agent codex` for one agent. Plugin installs and per-agent
-folders are in the [README](../README.md#install).
+Then start a new agent session. Add `-s -- --yes` after `bash` to install for every agent
+found without asking (what a prompt should use, since an agent can't answer), `-s -- --agent
+codex` for one agent, or `--project .` to install into the current repo. Prompts for each agent
+and all supported agents are in the [README](../README.md#install).
 
 To update after a release, type `/raystack update`, or run `~/.raystack/install.sh --update`.
 That refreshes every global and project install made from `~/.raystack`.

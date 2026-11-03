@@ -189,3 +189,13 @@ turn on automatically during a Grok review.
 Only Claude Code turns the guard on by itself. In Cursor, Codex and Grok the review still
 follows the contract's read-only rules, but nothing enforces them. Run reviews there with
 read-only credentials, which the contract asks for anyway.
+
+## Other agents
+
+`install.sh` also knows Antigravity, Gemini CLI, GitHub Copilot, Windsurf, Cline, Kiro, Roo
+Code, Kilo Code, Amp, Goose, Qwen Code, Trae, Junie, Augment, Warp, Zed, OpenHands and
+Continue. Their global and project skills folders, and the folder that shows an agent is
+installed, come from the agent table of the [skills CLI](https://github.com/vercel-labs/skills)
+(`src/agents.ts`). RayStack has not tested them. None of them run the review guard, so pair
+reviews with read-only credentials. If an agent reads a different folder on your machine, use
+`--agent custom --dir <folder>`.
