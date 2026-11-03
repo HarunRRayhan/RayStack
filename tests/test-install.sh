@@ -75,13 +75,23 @@ mkdir -p "$H/rs" && cp -R install.sh skills VERSION "$H/rs/" && HOME="$H" bash "
 assert_eq "$(sed -n 2p "$T/portable/raystack/.raystack-installed")" "source=~/rs" "marker uses ~ for home"
 # --agent all installs for each agent found in $HOME; Grok only when it has no Claude or Cursor folder to read.
 HA="$T/homeall"; mkdir -p "$HA/.claude" "$HA/.codex" "$HA/.grok"
-outall=$(HOME="$HA" bash ./install.sh --agent all 2>&1)
+outall=$(HOME="$HA" bash ./install.sh --agent all --yes 2>&1)
 assert_eq "$(count "$HA/.claude/skills")" 30 "all: claude"
 assert_eq "$(count "$HA/.agents/skills")" 30 "all: codex"
 [ ! -d "$HA/.grok/skills" ] && pass "all: grok reads ~/.claude/skills" || fail "all: grok got its own copy"
-case "$outall" in *"Installed for: claude codex."*) pass "all: summary";; *) fail "all: summary (got $outall)";; esac
-HN="$T/homenone"; mkdir -p "$HN"; HOME="$HN" bash ./install.sh --agent all >/dev/null 2>&1
+case "$outall" in *"Installed for: Claude Code, Codex."*) pass "all: summary";; *) fail "all: summary (got $outall)";; esac
+HN="$T/homenone"; mkdir -p "$HN"; HOME="$HN" bash ./install.sh --agent all --yes >/dev/null 2>&1
 assert_eq "$(count "$HN/.claude/skills")" 30 "all: claude when no agent found"
+# Agents that share a folder get one copy; each agent maps to its own global folder.
+HS="$T/homeshared"; mkdir -p "$HS/.codex" "$HS/.cline" "$HS/.codeium/windsurf" "$HS/.gemini/antigravity"
+outs=$(HOME="$HS" bash ./install.sh --agent all --yes 2>&1)
+assert_eq "$(count "$HS/.codeium/windsurf/skills")" 30 "all: windsurf folder"
+assert_eq "$(count "$HS/.gemini/antigravity/skills")" 30 "all: antigravity folder"
+assert_eq "$(count "$HS/.gemini/skills")" 30 "all: gemini folder"
+case "$outs" in *"same folder: Cline"*) pass "all: shared folder named";; *) fail "all: shared folder not named";; esac
+HOME="$T/x" bash ./install.sh --agent nosuch >/dev/null 2>&1 && fail "unknown agent accepted" || pass "unknown agent rejected"
+P="$T/projgem"; mkdir -p "$P"; HOME="$T/x" bash ./install.sh --agent gemini --project "$P" >/dev/null 2>&1
+assert_eq "$(count "$P/.agents/skills")" 30 "gemini project folder"
 bash -n get.sh && pass "get.sh parses" || fail "get.sh syntax"
 [ "$(tail -1 get.sh | cut -c1-10)" = 'main "$@" ' ] && pass "get.sh runs main last" || fail "get.sh must end with main"
 case "$out" in *"codex plugin"*) pass "prints plugin hint";; *) fail "no plugin hint";; esac

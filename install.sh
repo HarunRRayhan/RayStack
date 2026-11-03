@@ -15,12 +15,14 @@ SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review in
 
 usage() {
   cat <<'USAGE'
-Usage: install.sh [--agent all|claude|cursor|codex|grok|opencode|custom] [--dir <skills-dir>]
-                  [--project [<repo>]] [--link] [--uninstall] [--update] [--dry-run]
-                  [--force] [-h|--help]
+Usage: install.sh [--agent all|<agent>|custom] [--dir <skills-dir>] [--project [<repo>]]
+                  [--link] [--uninstall] [--update] [--dry-run] [--yes] [--force] [-h|--help]
 
-Copies the thirty RayStack skills into the agent's skills directory (default agent: claude;
---agent all installs for every agent found: claude, codex, cursor, grok, opencode).
+Copies the thirty RayStack skills into an agent's skills directory (default agent: claude).
+Agents: claude codex cursor grok antigravity gemini copilot windsurf cline kiro roo kilo amp
+goose opencode qwen trae junie augment warp zed openhands continue.
+  --agent all  every agent found in your home folder; asks per agent at a terminal
+  --yes        with --agent all, install for every agent found without asking
   --dir        skills directory; required with --agent custom, overrides the agent default
   --project    install into a repo (default: the current folder) for that agent, e.g.
                <repo>/.claude/skills, so everyone who clones the repo gets RayStack
@@ -38,7 +40,7 @@ USAGE
 die() { echo "install.sh: $*" >&2; exit 1; }
 
 all_args=("$@")
-agent=claude dir="" dir_set=0 link=0 uninstall=0 dry=0 force=0 skipped=0 project="" update=0
+agent=claude dir="" dir_set=0 link=0 uninstall=0 dry=0 force=0 skipped=0 project="" update=0 yes=0
 # Every target installed from this checkout, one per line: <dir><TAB><link 0|1>. --update reads it.
 REGISTRY=${RAYSTACK_REGISTRY:-$HOME/.raystack-installs}
 while [ $# -gt 0 ]; do
@@ -53,6 +55,7 @@ while [ $# -gt 0 ]; do
     --uninstall) uninstall=1; shift ;;
     --dry-run) dry=1; shift ;;
     --force) force=1; shift ;;
+    --yes|-y) yes=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; die "unknown argument: $1" ;;
   esac
@@ -85,50 +88,101 @@ if [ "$update" = 1 ]; then
   exit "$rc"
 fi
 
+# One row per agent: name|display name|folder that shows it is installed|global skills folder|
+# project skills folder. Paths are relative to $HOME and to the repo. Claude Code, Codex,
+# Cursor and Grok are tested (docs/agents.md); the rest come from the skills CLI's agent table.
+AGENTS='claude|Claude Code|.claude|.claude/skills|.claude/skills
+codex|Codex|.codex|.agents/skills|.agents/skills
+cursor|Cursor|.cursor|.cursor/skills|.cursor/skills
+grok|Grok Build|.grok|.grok/skills|.claude/skills
+antigravity|Antigravity|.gemini/antigravity|.gemini/antigravity/skills|.agents/skills
+gemini|Gemini CLI|.gemini|.gemini/skills|.agents/skills
+copilot|GitHub Copilot|.copilot|.copilot/skills|.agents/skills
+windsurf|Windsurf|.codeium/windsurf|.codeium/windsurf/skills|.windsurf/skills
+cline|Cline|.cline|.agents/skills|.agents/skills
+kiro|Kiro|.kiro|.kiro/skills|.kiro/skills
+roo|Roo Code|.roo|.roo/skills|.roo/skills
+kilo|Kilo Code|.kilo|.kilo/skills|.agents/skills
+amp|Amp|.config/amp|.config/agents/skills|.agents/skills
+goose|Goose|.config/goose|.config/goose/skills|.goose/skills
+opencode|OpenCode|.config/opencode|.config/opencode/skills|.opencode/skills
+qwen|Qwen Code|.qwen|.qwen/skills|.qwen/skills
+trae|Trae|.trae|.trae/skills|.trae/skills
+junie|Junie|.junie|.junie/skills|.junie/skills
+augment|Augment|.augment|.augment/skills|.augment/skills
+warp|Warp|.warp|.agents/skills|.agents/skills
+zed|Zed|.config/zed|.agents/skills|.agents/skills
+openhands|OpenHands|.openhands|.openhands/skills|.openhands/skills
+continue|Continue|.continue|.continue/skills|.continue/skills'
+# agent_field <name> <column 2-5>
+agent_field() { printf '%s\n' "$AGENTS" | awk -F'|' -v n="$1" -v c="$2" '$1 == n { print $c }'; }
+
 hint=""
-case "$agent" in
-  all)
-    # Every agent found on this machine; Claude Code when none is.
-    [ "$dir_set" = 0 ] || die "--agent all uses each agent's own folder; drop --dir"
-    found=""
-    [ -d "$HOME/.claude" ] && found="$found claude"
-    [ -d "$HOME/.codex" ] && found="$found codex"
-    [ -d "$HOME/.cursor" ] && found="$found cursor"
-    # Grok already reads ~/.claude/skills and ~/.cursor/skills, so it needs its own copy only without them.
-    [ -d "$HOME/.grok" ] && [ ! -d "$HOME/.claude" ] && [ ! -d "$HOME/.cursor" ] && found="$found grok"
-    [ -d "$HOME/.config/opencode" ] && found="$found opencode"
-    [ -n "$found" ] || found=" claude"
-    rest=() i=0
-    while [ "$i" -lt "${#all_args[@]}" ]; do
-      if [ "${all_args[$i]}" = --agent ]; then i=$((i + 2)); else rest+=("${all_args[$i]}"); i=$((i + 1)); fi
+if [ "$agent" = all ]; then
+  [ "$dir_set" = 0 ] || die "--agent all uses each agent's own folder; drop --dir"
+  col=4; [ -z "$project" ] || col=5
+  # Agents found in $HOME, one per target folder (several agents share ~/.agents/skills).
+  found="" seen="" labels="" shared=""
+  while IFS='|' read -r n label mark g p; do
+    [ -d "$HOME/$mark" ] || continue
+    # Grok reads ~/.claude/skills and ~/.cursor/skills, so it needs its own copy only without them.
+    if [ "$n" = grok ] && [ -z "$project" ] && { [ -d "$HOME/.claude" ] || [ -d "$HOME/.cursor" ]; }; then continue; fi
+    t=$g; [ "$col" = 4 ] || t=$p
+    case " $seen " in *" $t "*) shared="$shared, $label"; continue ;; esac
+    seen="$seen $t" found="$found $n" labels="$labels, $label"
+  done <<EOF
+$AGENTS
+EOF
+  [ -n "$found" ] || { found=" claude" labels=", Claude Code"; }
+  # Ask per agent when a person is at a terminal; agents and CI get every one found.
+  if [ "$yes" = 0 ] && [ "$uninstall" = 0 ] && [ "$dry" = 0 ] && { : </dev/tty; } 2>/dev/null; then
+    echo "Found: ${labels#, }."
+    picked=""
+    for n in $found; do
+      t=$(agent_field "$n" "$col")
+      # shellcheck disable=SC2088  # a literal ~ for display
+      [ -n "$project" ] && where="$project/$t" || where='~/'"$t"
+      printf 'Install RayStack for %s (%s)? [Y/n] ' "$(agent_field "$n" 2)" "$where" > /dev/tty
+      read -r reply < /dev/tty || reply=n
+      case "$reply" in [Nn]*) ;; *) picked="$picked $n" ;; esac
     done
-    rc=0
-    for a in $found; do RAYSTACK_QUIET=1 "$ROOT/install.sh" ${rest[@]+"${rest[@]}"} --agent "$a" || rc=1; done
-    [ "$dry" = 1 ] || [ "$uninstall" = 1 ] || [ "$rc" != 0 ] || {
-      command -v jq >/dev/null 2>&1 || echo "Warning: jq is not installed. In Claude Code the review guard blocks every shell command without it. Install jq (brew install jq, apt install jq)."
-      echo "Installed for:$found. Next: start a new agent session and type /raystack. Update later with: $ROOT/install.sh --update"
-    }
-    exit "$rc" ;;
-  claude)   default="$HOME/.claude/skills";   hint="claude plugin marketplace add HarunRRayhan/RayStack && claude plugin install raystack@raystack" ;;
-  cursor)   default="$HOME/.cursor/skills";   hint="cursor-agent plugin marketplace add <gitUrl> (see docs/agents.md)" ;;
-  codex)    default="$HOME/.agents/skills";   hint="codex plugin marketplace add HarunRRayhan/RayStack && codex plugin add raystack@raystack" ;;
-  grok)     default="$HOME/.grok/skills";     hint="grok plugin install HarunRRayhan/RayStack --trust" ;;
-  opencode) default="$HOME/.config/opencode/skills" ;; # shortcut: not in docs/agents.md, unverified; pass --dir if yours differs
-  custom)   default="" ;;
-  *) die "unknown agent: $agent" ;;
+    found=$picked
+    [ -n "$found" ] || { echo "Nothing installed."; exit 0; }
+  fi
+  rest=() i=0
+  while [ "$i" -lt "${#all_args[@]}" ]; do
+    if [ "${all_args[$i]}" = --agent ]; then i=$((i + 2)); else rest+=("${all_args[$i]}"); i=$((i + 1)); fi
+  done
+  rc=0 names=""
+  for a in $found; do
+    RAYSTACK_QUIET=1 "$ROOT/install.sh" ${rest[@]+"${rest[@]}"} --agent "$a" || rc=1
+    names="$names, $(agent_field "$a" 2)"
+  done
+  [ "$dry" = 1 ] || [ "$uninstall" = 1 ] || [ "$rc" != 0 ] || {
+    command -v jq >/dev/null 2>&1 || echo "Warning: jq is not installed. In Claude Code the review guard blocks every shell command without it. Install jq (brew install jq, apt install jq)."
+    [ -z "$shared" ] || echo "Also covered, as they read the same folder: ${shared#, }."
+    echo "Installed for: ${names#, }. Next: start a new agent session and type /raystack. Update later with: $ROOT/install.sh --update"
+  }
+  exit "$rc"
+fi
+case "$agent" in
+  claude) hint="claude plugin marketplace add HarunRRayhan/RayStack && claude plugin install raystack@raystack" ;;
+  cursor) hint="cursor-agent plugin marketplace add <gitUrl> (see docs/agents.md)" ;;
+  codex)  hint="codex plugin marketplace add HarunRRayhan/RayStack && codex plugin add raystack@raystack" ;;
+  grok)   hint="grok plugin install HarunRRayhan/RayStack --trust" ;;
 esac
+if [ "$agent" = custom ]; then default=""
+else
+  g=$(agent_field "$agent" 4)
+  [ -n "$g" ] || die "unknown agent: $agent (known: all custom $(printf '%s\n' "$AGENTS" | cut -d'|' -f1 | tr '\n' ' '))"
+  default="$HOME/$g"
+fi
 if [ -n "$project" ]; then
   [ "$dir_set" = 0 ] || die "use --project or --dir, not both"
   [ "$link" = 0 ] || die "--project copies the skills so they can be committed; --link is not allowed"
+  [ "$agent" != custom ] || die "--project needs a named --agent; use --dir for a custom path"
   project=$(cd "$project" && pwd -P)
-  case "$agent" in
-    claude)   dir="$project/.claude/skills" ;;
-    cursor)   dir="$project/.cursor/skills" ;;
-    codex)    dir="$project/.agents/skills" ;;
-    grok)     dir="$project/.claude/skills" ;;  # Grok reads .claude/skills (see docs/agents.md)
-    opencode) dir="$project/.opencode/skills" ;; # shortcut: unverified, pass --dir if yours differs
-    custom)   die "--project needs a named --agent; use --dir for a custom path" ;;
-  esac
+  dir="$project/$(agent_field "$agent" 5)"
   dir_set=1 hint=""
 fi
 if [ "$dir_set" = 0 ]; then
