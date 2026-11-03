@@ -3,3 +3,4 @@
 reviews/
 *.pdf
 .superpowers/
+dist/
