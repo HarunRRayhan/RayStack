@@ -219,7 +219,7 @@ for secret patterns, and never open `.env*`, `*.tfstate*`, kubeconfigs or creden
 
 - **Pre-deploy writes do not reach runtime.** `preDeployCommand` runs in a separate ephemeral
   container; files it writes (a downloaded DB, generated config) never reach the serving container
-  unless a volume is attached. Evidence: `railway.json`/`railway.toml` `preDeployCommand` that
+  unless a volume is attached. Evidence: `railway*.json`/`railway*.toml` `preDeployCommand` that
   downloads or writes files. Fix: do the work at boot or in the image, or attach a volume. Run
   migrations in pre-deploy (once, before replicas start), not in `CMD`. Est.: n/a.
 - **Separate services share no volume.** A volume attaches to one service only, so web and

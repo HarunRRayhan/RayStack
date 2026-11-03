@@ -93,6 +93,13 @@ patterns, and never open `.env*` files other than `.env.example`, `.env.sample` 
 - **Login, reset, signup, OTP and contact routes are rate limited.** Evidence: throttle
   middleware or limiter config on those routes. Exploit: brute force a 6-digit code, or
   spam reset emails. Fix: per-account and per-IP limits.
+- **The client IP cannot be set by the client.** Evidence: trusted proxies (`trustProxies
+  at: '*'`, Express `trust proxy: true`) with `X-Forwarded-For` trusted. Exploit: a fresh
+  `X-Forwarded-For` per request skips every IP limit. Fix: trust only the real proxy hops.
+  When a platform edge (Railway, Render, Heroku) sits between the CDN and the app, the CDN's
+  ranges never reach the app, so trusting them breaks the IP: read the CDN's client-IP
+  header (`CF-Connecting-IP`) instead, and only while the origin is reachable through the
+  CDN alone.
 - **Account linking and OAuth are tied to verified email.** Evidence: social login that
   matches an existing account by email from a provider that does not verify it; OAuth
   `state` not checked. Exploit: sign in as the victim with an unverified provider email.
