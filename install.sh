@@ -165,19 +165,22 @@ if [ "$link" = 0 ]; then
 fi
 run mkdir -p "$dir"
 [ "$dry" = 1 ] || dir=$(cd "$dir" && pwd -P)
+# Stage one level down: agents scan $dir/*/SKILL.md, so a staged copy is never listed as a skill.
+stage="$dir/.raystack-tmp.$$"
+[ "$dry" = 1 ] || { rm -rf "$stage"; mkdir "$stage"; trap 'rm -rf "$stage"' EXIT; }
 for s in $SKILLS; do
   dest="$dir/$s"
   ! skip_foreign "$dest" "$s" || continue
   if [ "$link" = 1 ]; then
     echo "link $dest -> $ROOT/skills/$s"
     if [ "$dry" = 1 ]; then echo "[dry-run] ln -s"; continue; fi
-    tmp="$dir/.raystack-tmp.$$.$s"
+    tmp="$stage/$s"
     rm -rf "$tmp"
     ln -s "$ROOT/skills/$s" "$tmp"
   else
     echo "copy $ROOT/skills/$s -> $dest"
     if [ "$dry" = 1 ]; then echo "[dry-run] cp -R"; continue; fi
-    tmp="$dir/.raystack-tmp.$$.$s"
+    tmp="$stage/$s"
     rm -rf "$tmp"
     cp -R "$ROOT/skills/$s" "$tmp" || { rm -rf "$tmp"; die "copy failed for $s"; }
     { cat "$ROOT/VERSION"; echo "source=$ROOT"; } > "$tmp/.raystack-installed" || { rm -rf "$tmp"; die "marker failed for $s"; }
