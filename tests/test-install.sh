@@ -18,7 +18,7 @@ D="$T/a"; mkdir -p "$D/other-skill"; echo keep > "$D/other-skill/SKILL.md"
 bash "$INSTALL" --dir "$D" >/dev/null; assert_eq "$?" 0 "install exits 0"
 assert_eq "$(count "$D")" 30 "all thirty skills installed"
 assert_eq "$(cat "$D/other-skill/SKILL.md")" keep "other-skill intact"
-assert_eq "$(ls -A "$D" | grep -c raystack-tmp)" 0 "no staging folder left behind"
+assert_eq "$(find "$D" -maxdepth 1 -name ".raystack-tmp*" | wc -l | tr -d " ")" 0 "no staging folder left behind"
 cp -R "$D" "$T/snap"
 bash "$INSTALL" --dir "$D" >/dev/null
 if diff -r "$T/snap" "$D" >/dev/null; then pass "second run identical"; else fail "second run changed tree"; fi

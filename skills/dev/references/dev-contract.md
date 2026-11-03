@@ -51,8 +51,9 @@ Statuses: `todo`, `in-progress`, `done`, `done-with-concerns`, `needs-context`, 
 
 Below the table is an append-only running log. It holds fix rounds with commit ranges,
 rulings with their cost if wrong, concerns, parked minors, final-review notes and, last,
-`Shipped: <PR or commit>` (one line per repo in hub mode). A repo with no git remote ends
-with `Committed: <commit> on <branch> (no remote, not merged)` instead; `Shipped:` means
+`Shipped: <PR or commit>` (one line per repo in hub mode). A repo with no git remote that
+was merged locally logs `Shipped: <merge commit> (local merge, no remote)`; one left
+unmerged logs `Committed: <commit> on <branch> (no remote, not merged)`. `Shipped:` means
 merged:
 
 ```
@@ -86,7 +87,9 @@ Put the recommended option first and make each question self-contained. In the d
 this overrides the batching in `principle-ask-with-question-tool`. Plain text
 only when the host has no question tool, and then one question per message too: end the
 turn after it. Status, blockers and notes in the same message are fine; a second question
-is not. Each answer becomes a `D-` row in `DECISIONS.md`.
+is not. If you did more work after asking (a hook fired, a review came back), ask the
+open question again at the end: the user may see only your last message. Each answer
+becomes a `D-` row in `DECISIONS.md`.
 
 An approval gate ("approve the PRD?") is a question of its own, with options like Approve
 and Request changes. Do not add open `D-` questions to it: ask those one per call before

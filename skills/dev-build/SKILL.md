@@ -102,8 +102,8 @@ findings count, the fix wave range and the outcome.
    slice touched. Run those confirm commands. Fix drift in its own commit and log it.
 2. Run the full suite and the project checks once more.
 3. Hand off to `principle-ship` (per code repo in hub mode, each with its own PR). Once it
-   confirms the merge (and any deploy), log `Shipped: <PR or commit>` per repo; with no git
-   remote, the contract's `Committed:` line. Else log where it stopped.
+   confirms the merge (and any deploy), log `Shipped: <PR or commit>` per repo (no git remote:
+   the contract's local `Shipped:` or `Committed:` line). Else log where it stopped.
 
 ## Report
 

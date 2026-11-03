@@ -64,7 +64,7 @@ Pick the smallest track that fits. Say which one and why.
   3. Always review it, even for one line: a fresh reviewer subagent checks the diff against
      the expected and unchanged behaviour. Review it yourself only when the host has no
      subagent tool (the contract's inline review). Never skip this step; say which ran.
-  4. Ship with `principle-ship`. With no git remote, say so and stop at the commit.
+  4. Ship with `principle-ship`. With no git remote it offers a local merge.
 - **Standard** (one slice of work): run `dev-spec` if no spec serves the slice (with no
   PRD it writes the slice's B-IDs), then `dev-plan`, then `dev-build`.
 - **Full** (a new product, or `project new`, after the intake): run `dev-hub`,

@@ -25,7 +25,7 @@ Read `.raystack.json` at the repo root, else `~/.raystack.json`. No file or no k
 3. Wait for CI. Every required check must pass.
 4. Merge, or ask first, per `autoMerge`.
 5. Wait for the deploy to finish. Confirm it is live with a fresh request, a health check, or the deployed revision matching the merge commit.
-6. Report what you confirmed and how.
+6. Report what you confirmed and how. No git remote: skip the PR, CI and deploy. Merge into the default branch locally (ask first per `autoMerge`), run the tests there, and report "merged locally, not deployed".
 
 ## Never
 
