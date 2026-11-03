@@ -111,6 +111,10 @@ codex plugin marketplace add HarunRRayhan/RayStack
 codex plugin add raystack@raystack
 ```
 
+To update: `codex plugin marketplace upgrade raystack`, then `codex plugin add raystack@raystack`
+again. The plugin is cached per version under `~/.codex/plugins/cache/raystack/raystack/<version>/`
+(confirmed with a throwaway `CODEX_HOME`, 2026-11-03).
+
 Codex 0.165.0 reads `.claude-plugin/marketplace.json` from this repo and installs the plugin
 (confirmed in a run with a throwaway `CODEX_HOME`). The documented Codex marketplace path is
 `.agents/plugins/marketplace.json`; this repo does not need one.
@@ -151,13 +155,14 @@ the facts below come from the user guide in the open-source repo.
 **Install**
 
 ```bash
-grok plugin marketplace add HarunRRayhan/RayStack
-grok plugin install raystack --trust
+grok plugin install HarunRRayhan/RayStack --trust
+grok plugin update raystack   # later, to update
 ```
 
-Grok reads `.grok-plugin/marketplace.json` and also accepts the `.claude-plugin/` files, so it
-needs no manifest of its own. `grok plugin validate .` passes on this repo (grok 1.0.70). The
-install commands above follow the docs but were not run (**unverified** end to end).
+Installing straight from the repo works and lands in `~/.grok/installed-plugins/` (confirmed
+with a throwaway `HOME`, 2026-11-03). `grok plugin marketplace add HarunRRayhan/RayStack`
+followed by `grok plugin install raystack` does not: the source is added, but Grok finds no
+plugin named `raystack` in it. `grok plugin validate .` passes on this repo (grok 1.0.70).
 
 Without a plugin, Grok scans `~/.grok/skills/`, `.grok/skills/`, and by default
 `~/.claude/skills/` and `~/.cursor/skills/`, so `install.sh` covers it too.
