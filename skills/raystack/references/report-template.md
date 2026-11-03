@@ -9,7 +9,7 @@ Date: YYYY-MM-DD. Skill: `<skill>`.
   1. <risk>
   2. <risk>
   3. <risk>
-- **Total est. $/mo:** <sum of the findings below, or "n/a">
+- **Total est. $/mo:** <sum of the findings below; leave this line out when no finding has one>
 
 ## Inputs used / missing
 
@@ -33,7 +33,7 @@ Date: YYYY-MM-DD. Skill: `<skill>`.
 <diff or IaC change, or a command for the human to run>
 ```
 
-**Est. $/mo**: <amount with arithmetic, e.g. 3 x $30.37 = $91.11, or "n/a">
+**Est. $/mo**: <amount with arithmetic, e.g. 3 x $30.37 = $91.11; leave this line out when there is none>
 
 ## Commands for you to run
 

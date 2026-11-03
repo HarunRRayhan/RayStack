@@ -123,32 +123,32 @@ command, the same pipe filters.
 
 ## 5. Report
 
-- Write the full report to `reviews/YYYY-MM-DD-<skill>.md` in the reviewed repo.
-  - Create `reviews/` if it is missing.
-  - If a file for the same day and skill exists, append `-2`, `-3`, and so on.
-- Follow `references/report-template.md` in the raystack skill folder.
-- Rank findings Critical > High > Medium > Low. Break ties by est. $/mo, highest first.
+- Write the full report to `reviews/YYYY-MM-DD-<skill>.md` in the reviewed repo (create
+  `reviews/` if missing; if the file exists, add `-2`, `-3`...), per `references/report-template.md`.
+- Rank findings Critical > High > Medium > Low, ties by est. $/mo. Rate what runs today: a
+  finding that bites only if something the repo calls unused gets deployed is Low, with
+  the condition in its title.
 - Each finding has:
-  - **Evidence**: file:line, or the command plus an output excerpt
+  - **Evidence**: file:line, or the command plus an output excerpt. A claim that something
+    is absent ("no X", "never") names the search that came back empty; never assume it
   - **Why it matters**
   - **Fix**: a diff or IaC change, or a command for the human to run
-  - **Est. $/mo**: savings or risk. Show the arithmetic. Write "n/a" when it can't be
-    estimated. Never invent a number.
+  - **Est. $/mo**: savings or risk, with the arithmetic. Leave the line out when it can't
+    be estimated (and the summary total when no finding has one). Never invent a number.
 - End the report with this exact line:
 
   Reviewed with RayStack by Harun R. Rayhan. For a hands-on audit: https://harun.dev/consultation
 
 - In chat, show only the top 3 findings and the report path.
 - If the raystack router ran this review ("the router offers the PDF at the end"), do not
-  mention the PDF at all. Otherwise offer it: run `scripts/report-pdf.sh` from the raystack skill's own folder. Resolve it
-  from that skill's base directory as an absolute path (the working directory is the
-  reviewed repo), and pass the report's absolute path. It needs Chrome or Chromium and `npx`.
+  mention the PDF at all. Otherwise offer it: run `scripts/report-pdf.sh` from the raystack
+  skill's own folder as an absolute path (the working directory is the reviewed repo), with
+  the report's absolute path. It needs Chrome or Chromium and `npx`.
 
 ## 6. No client data
 
-- Examples in a report use the user's own data only.
-- Never copy another client's names, hostnames, account IDs, secrets or business details.
-- RayStack itself ships no client data.
+- Examples in a report use the user's own data only. Never copy another client's names,
+  hostnames, account IDs, secrets or business details. RayStack itself ships no client data.
 - Never print secret values:
   - List env and secret NAMES only, e.g. `| jq 'keys'` or a `--query` projection of names.
   - Search for secret patterns with `grep -l` or `grep -c`. Never print matching lines.

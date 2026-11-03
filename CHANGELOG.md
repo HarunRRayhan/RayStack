@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.7 (2026-11-03)
+
+From reviewing a real Laravel codebase and checking each finding by hand:
+
+- A claim that something is missing ("no config file") must name the search that found
+  nothing. One report said a config file was absent when it was there.
+- Findings are rated on what runs today: one that matters only if an unused part gets
+  deployed is Low, with the condition in its title.
+- Reviews with no cost estimate leave out the "Est. $/mo" line instead of writing "n/a".
+- reliability-review checks scheduled commands that post to third parties, not only queued
+  jobs, for duplicates when a response is lost.
+
 ## 0.9.6 (2026-11-03)
 
 - The dev flow no longer stalls between steps: after the hub and research it goes straight

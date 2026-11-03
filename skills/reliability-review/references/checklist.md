@@ -60,9 +60,13 @@ to run", on a disposable environment.
 
 ## 5. Jobs that are not safe to run twice
 
-- **Check**: every queued job gives the same result when it runs twice.
+- **Check**: every queued job, and every scheduled command that retries on its next tick,
+  gives the same result when it runs twice. A command that posts to a third party (social,
+  email, dev.to, Slack) and writes its "sent" row only after the call succeeds posts again
+  when the response is lost.
 - **Evidence**: Grep job classes (`implements ShouldQueue`, `@shared_task`, `perform`,
-  `Worker(`, `queue.process`). Read jobs that send mail, charge, increment counters or call
+  `Worker(`, `queue.process`) and scheduled commands (`routes/console.php`, `crontab`,
+  `schedule:`). Read jobs that send mail, charge, increment counters or call
   APIs. Look for `ShouldBeUnique`, `WithoutOverlapping`, `unique_for`, a "done" flag or status
   check before the side effect.
 - **Fails because**: queues deliver at least once. A worker killed after the side effect and
