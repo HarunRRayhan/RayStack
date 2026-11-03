@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.1 (2026-11-03)
+
+- One install command for everyone:
+  `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash`.
+  It clones or updates `~/.raystack`, then installs for every agent it finds (Claude Code,
+  Codex, Cursor, Grok, OpenCode).
+- `install.sh --agent all` does the same from a checkout, and works with `--project` and
+  `--uninstall`. Grok gets no copy of its own when it can already read Claude Code's or
+  Cursor's skills.
+- The README install section starts with that one command, then has a section per agent with
+  its script and plugin install.
+
 ## 1.0.0 (2026-11-03)
 
 First stable release. Every flow has now run end to end on real codebases: a new project, a

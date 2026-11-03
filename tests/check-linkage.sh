@@ -211,7 +211,7 @@ check "update.md exists" test -f skills/raystack/references/update.md
 for c in 'install.sh --update' 'claude plugin update raystack@raystack' 'source='; do
   check "update.md covers $c" grep -qF -- "$c" skills/raystack/references/update.md
 done
-for c in 'Install with a prompt' '--project .' 'install.sh --update' 'Install into an existing project'; do
+for c in 'get.sh | bash' '--agent all' '--project .' 'install.sh --update' '### One agent' '--uninstall'; do
   check "README install covers $c" grep -qF -- "$c" README.md
 done
 check "README links the guide" grep -qF "docs/guide.md" README.md

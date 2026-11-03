@@ -15,11 +15,12 @@ SKILLS="raystack aws-billing-review aws-security-review aws-bottleneck-review in
 
 usage() {
   cat <<'USAGE'
-Usage: install.sh [--agent claude|cursor|codex|grok|opencode|custom] [--dir <skills-dir>]
+Usage: install.sh [--agent all|claude|cursor|codex|grok|opencode|custom] [--dir <skills-dir>]
                   [--project [<repo>]] [--link] [--uninstall] [--update] [--dry-run]
                   [--force] [-h|--help]
 
-Copies the thirty RayStack skills into the agent's skills directory (default agent: claude).
+Copies the thirty RayStack skills into the agent's skills directory (default agent: claude;
+--agent all installs for every agent found: claude, codex, cursor, grok, opencode).
   --dir        skills directory; required with --agent custom, overrides the agent default
   --project    install into a repo (default: the current folder) for that agent, e.g.
                <repo>/.claude/skills, so everyone who clones the repo gets RayStack
@@ -36,6 +37,7 @@ USAGE
 
 die() { echo "install.sh: $*" >&2; exit 1; }
 
+all_args=("$@")
 agent=claude dir="" dir_set=0 link=0 uninstall=0 dry=0 force=0 skipped=0 project="" update=0
 # Every target installed from this checkout, one per line: <dir><TAB><link 0|1>. --update reads it.
 REGISTRY=${RAYSTACK_REGISTRY:-$HOME/.raystack-installs}
@@ -85,6 +87,28 @@ fi
 
 hint=""
 case "$agent" in
+  all)
+    # Every agent found on this machine; Claude Code when none is.
+    [ "$dir_set" = 0 ] || die "--agent all uses each agent's own folder; drop --dir"
+    found=""
+    [ -d "$HOME/.claude" ] && found="$found claude"
+    [ -d "$HOME/.codex" ] && found="$found codex"
+    [ -d "$HOME/.cursor" ] && found="$found cursor"
+    # Grok already reads ~/.claude/skills and ~/.cursor/skills, so it needs its own copy only without them.
+    [ -d "$HOME/.grok" ] && [ ! -d "$HOME/.claude" ] && [ ! -d "$HOME/.cursor" ] && found="$found grok"
+    [ -d "$HOME/.config/opencode" ] && found="$found opencode"
+    [ -n "$found" ] || found=" claude"
+    rest=() i=0
+    while [ "$i" -lt "${#all_args[@]}" ]; do
+      if [ "${all_args[$i]}" = --agent ]; then i=$((i + 2)); else rest+=("${all_args[$i]}"); i=$((i + 1)); fi
+    done
+    rc=0
+    for a in $found; do RAYSTACK_QUIET=1 "$ROOT/install.sh" ${rest[@]+"${rest[@]}"} --agent "$a" || rc=1; done
+    [ "$dry" = 1 ] || [ "$uninstall" = 1 ] || [ "$rc" != 0 ] || {
+      command -v jq >/dev/null 2>&1 || echo "Warning: jq is not installed. In Claude Code the review guard blocks every shell command without it. Install jq (brew install jq, apt install jq)."
+      echo "Installed for:$found. Next: start a new agent session and type /raystack. Update later with: $ROOT/install.sh --update"
+    }
+    exit "$rc" ;;
   claude)   default="$HOME/.claude/skills";   hint="claude plugin marketplace add HarunRRayhan/RayStack && claude plugin install raystack@raystack" ;;
   cursor)   default="$HOME/.cursor/skills";   hint="cursor-agent plugin marketplace add <gitUrl> (see docs/agents.md)" ;;
   codex)    default="$HOME/.agents/skills";   hint="codex plugin marketplace add HarunRRayhan/RayStack && codex plugin add raystack@raystack" ;;

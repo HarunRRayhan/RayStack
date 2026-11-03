@@ -4,19 +4,18 @@ How to use RayStack day to day.
 
 ## Install and update
 
-Paste this into your coding agent (change `claude` to `codex`, `cursor`, `grok` or
-`opencode`). Add `--project .` at the end of the second command to install into the current
-repo instead of globally.
+Install for every coding agent on your machine (Claude Code, Codex, Cursor, Grok, OpenCode):
 
-```text
-Install RayStack for claude. Run these two commands, then tell me the version it printed:
-git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack 2>/dev/null || git -C ~/.raystack pull --ff-only
-~/.raystack/install.sh --agent claude
+```bash
+curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash
 ```
 
+Then start a new agent session. Add `-s -- --project .` after `bash` to install into the
+current repo instead, or `-s -- --agent codex` for one agent. Plugin installs and per-agent
+folders are in the [README](../README.md#install).
+
 To update after a release, type `/raystack update`, or run `~/.raystack/install.sh --update`.
-That refreshes every global and project install made from `~/.raystack`. More options
-(plugins, per-agent folders) are in the [README](../README.md#install).
+That refreshes every global and project install made from `~/.raystack`.
 
 RayStack has one front door: `/raystack`. Type it with a few words and it routes you. There
 are three things you can do:

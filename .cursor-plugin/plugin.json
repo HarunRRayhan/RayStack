@@ -1,7 +1,7 @@
 {
   "name": "raystack",
   "displayName": "RayStack",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Skills by Harun R. Rayhan: a full development flow (new project intake, research, PRD, specs, plans, reviewed builds, ship; gap-fill, design review and migration for existing projects), read-only scans and reviews (security, performance, scalability, reliability and availability, architecture incl. MVC and CQRS, frontend, code health, CI/CD pipelines, AWS, infrastructure, databases), working principles and local browser verification.",
   "author": {
     "name": "Harun R. Rayhan"
