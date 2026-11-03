@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.5 (2026-11-03)
+
+- `install.sh` stages copies one folder deeper, so an agent session open during an install
+  no longer lists a temporary `.raystack-tmp.*` skill.
+
 ## 0.9.4 (2026-11-03)
 
 - Approval gates (PRD, spec, plan) are one question on their own. Open decisions are asked
