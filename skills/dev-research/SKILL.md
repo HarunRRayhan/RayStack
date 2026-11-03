@@ -63,4 +63,4 @@ Never edit an old note. If a fact changed, write a new dated note and link the o
 
 Tell the user the file path, the three strongest findings and the biggest gap. If a
 finding settles a choice, propose a `D-` row for `DECISIONS.md` and ask before adding it.
-Then hand back to `dev`, usually for `dev-prd`.
+Then hand back to `dev`, which goes straight on to the next step, usually `dev-prd`.

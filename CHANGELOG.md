@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.6 (2026-11-03)
+
+- The dev flow no longer stalls between steps: after the hub and research it goes straight
+  on to the next step's first question instead of ending on "next step: dev-prd". It stops
+  only at a question or an approval gate.
+
 ## 0.9.5 (2026-11-03)
 
 - `install.sh` stages copies one folder deeper, so an agent session open during an install
