@@ -10,8 +10,9 @@ Read `.raystack-installed` in this skill's folder (the folder holding this skill
 
 - It exists: line 1 is the version. A `source=<path>` line names the checkout it came from:
   an `install.sh` install.
-- It does not exist and the skill path sits under a plugins cache (for example
-  `~/.claude/plugins/`): a plugin install. The version is in the plugin's `plugin.json`.
+- It does not exist and the skill path sits under `~/.claude/plugins/`,
+  `~/.codex/plugins/cache/` or `~/.grok/installed-plugins/`: a plugin install. The version is
+  in the plugin's `plugin.json` (or `VERSION`).
 - Neither: an `npx skills` install, or a copy made by hand.
 
 ## 2. Find the latest release
@@ -29,8 +30,9 @@ Tell the user both versions. If they match, say it is up to date and stop.
 | `install.sh` (`source=<path>`) | `<path>/install.sh --update` (pulls, then refreshes every global and project install made from that checkout) |
 | `install.sh`, no `source=` line (before 0.9.2) | `~/.raystack/install.sh --update` if `~/.raystack` exists; else clone it as in the README, then run `install.sh --update` once |
 | Claude Code plugin | `claude plugin marketplace update raystack` then `claude plugin update raystack@raystack` |
-| Codex plugin | `codex plugin marketplace update raystack` (unverified), else remove and add again |
-| Grok plugin | `grok plugin update raystack` (unverified), else install again |
+| Codex plugin | `codex plugin marketplace upgrade raystack` then `codex plugin add raystack@raystack` |
+| Cursor plugin | `cursor-agent plugin marketplace update raystack` (unverified) |
+| Grok plugin | `grok plugin update raystack` (the name may carry a suffix; `grok plugin list` shows it) |
 | `npx skills` | `npx skills add HarunRRayhan/RayStack -g -a <agent>` again |
 
 Run the command, show its last lines and the new version. Then tell the user to start a new

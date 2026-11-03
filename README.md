@@ -115,7 +115,7 @@ codex plugin marketplace add HarunRRayhan/RayStack
 codex plugin add raystack@raystack
 ```
 
-Codex reads this repo's `.claude-plugin/marketplace.json`. Without a plugin,
+Update with `codex plugin marketplace upgrade raystack`, then the `add` line again. Codex reads this repo's `.claude-plugin/marketplace.json`. Without a plugin,
 `./install.sh --agent codex` copies the skills to `~/.agents/skills/`.
 
 ### Cursor
@@ -128,12 +128,10 @@ picks up the `.claude-plugin/` files is **unverified**. If it doesn't,
 ### Grok Build
 
 ```bash
-grok plugin marketplace add HarunRRayhan/RayStack
-grok plugin install raystack --trust
+grok plugin install HarunRRayhan/RayStack --trust
 ```
 
-`grok plugin validate .` passes on this repo, but these two commands are **unverified** end to
-end. Grok also scans `~/.claude/skills/` and `~/.cursor/skills/`, so `install.sh` covers it.
+Update with `grok plugin update raystack`. Grok also scans `~/.claude/skills/` and `~/.cursor/skills/`, so `install.sh` covers it.
 
 ### Any other agent
 

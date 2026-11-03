@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.3 (2026-11-03)
+
+- Grok: the documented install (`marketplace add`, then `install raystack`) failed. It is now
+  `grok plugin install HarunRRayhan/RayStack --trust`; update with `grok plugin update raystack`.
+- Codex: update is `codex plugin marketplace upgrade raystack`, then `codex plugin add
+  raystack@raystack` again (was a command that does not exist).
+- `/raystack update` recognises Codex and Grok plugin folders. Claude, Codex and Grok install
+  and update commands were run end to end with throwaway homes.
+
 ## 0.9.2 (2026-11-02)
 
 - `install.sh --project [<repo>]` installs into a repo's agent folder (`.claude/skills`,
