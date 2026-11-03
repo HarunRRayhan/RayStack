@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.8 (2026-11-03)
+
+From running the dev flow end to end on a small local repo, through plan, build and ship:
+
+- With no git remote, shipping asks to merge into the default branch locally, then runs the
+  tests there and reports "merged locally, not deployed". It used to stop at the commit on
+  the branch and leave the work unmerged.
+- A question asked before more work in the same turn (a hook, a review) is asked again at
+  the end, so it is not lost above later messages.
+
 ## 0.9.7 (2026-11-03)
 
 From reviewing a real Laravel codebase and checking each finding by hand:
