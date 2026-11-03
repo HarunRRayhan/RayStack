@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.4 (2026-11-03)
+
+- Approval gates (PRD, spec, plan) are one question on their own. Open decisions are asked
+  before the gate, never bundled into it.
+- With no question tool, the dev flow still asks one question per message and ends the turn.
+- `scripts/build-codex-zip.sh` and `docs/publishing.md`: submission kit for the Claude, Cursor
+  and OpenAI plugin directories.
+
 ## 0.9.3 (2026-11-03)
 
 - Grok: the documented install (`marketplace add`, then `install raystack`) failed. It is now

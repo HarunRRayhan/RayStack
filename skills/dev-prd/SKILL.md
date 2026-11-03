@@ -53,5 +53,5 @@ Before handing over:
 ## 5. Finish
 
 Tell the user the file path, the count of behaviours and the count of open markers. Ask
-them to review it. Do not start the next step until they approve. Then hand back to `dev`,
+them to review it, as one approval question with nothing else in it. Do not start the next step until they approve. Then hand back to `dev`,
 usually for `dev-spec`.
