@@ -71,6 +71,10 @@ Pick the smallest track that fits. Say which one and why.
   `dev-research`, `dev-prd`, `dev-spec`, `dev-plan`, `dev-build`, in that order. Research
   covers the market and the technical options for the stack, so `dev-spec` can settle its Stack table from sources.
 
+Keep going between steps. A step with no approval gate (`dev-hub`, `dev-research`) flows
+straight into the next one in the same turn, ending on that step's first question. Never end
+a turn on "next step: X" with nothing asked: stop only at a question or an approval gate.
+
 If the work grows past its track, say so and move it up one track. Do not carry on
 quietly.
 

@@ -58,4 +58,4 @@ This skill never overwrites. Check each target before writing.
 ## 5. Finish
 
 List what was created, what was appended and what was skipped. Show the placeholders
-still unfilled. Then hand back to `dev` for the next step, usually `dev-research`.
+still unfilled. Then hand back to `dev`, which goes straight on to the next step, usually `dev-research`.
