@@ -9,22 +9,101 @@ I build and what I check when I audit someone's stack, written down as agent ski
 By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com/harundotdev)).
 Product page: [harun.dev/raystack](https://harun.dev/raystack).
 
-**New here? Read the [guide](docs/guide.md):** every command, what each flow does, what it writes, and safety.
+## Quick start
 
-## Requirements
+1. Paste this into Claude Code (or Codex, Cursor, Grok: change `claude` in the last line):
 
-- `bash` and `jq`. The guard needs `jq` to read each command; without it, it blocks every
-  shell command during a review (fails closed).
-- For PDF export: Chrome or Chromium, and `npx` (Node.js).
+   ```text
+   Install RayStack globally for claude. Run these two commands, then tell me the version it printed:
+   git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack 2>/dev/null || git -C ~/.raystack pull --ff-only
+   ~/.raystack/install.sh --agent claude
+   ```
+
+2. Start a new agent session, so it loads the skills.
+3. In any repo, type one of these:
+
+   | You want to | Type |
+   | --- | --- |
+   | Start a new product from an idea | `/raystack new project` |
+   | Build a feature or fix a bug, planned and reviewed | `/raystack build <what>` or `/raystack fix <what>` |
+   | Add missing docs (PRD, specs) to an existing repo | `/raystack project update` |
+   | Get a read-only review of this repo | `/raystack` (it suggests reviews) or `/raystack review security` |
+   | Run several reviews as one job | `/raystack scan all` |
+
+Every command and flow is explained in the **[guide](docs/guide.md)**.
+
+Requirements: `git`, `bash` and `jq`. In Claude Code the review guard needs `jq`: without it
+every shell command is blocked during a review. PDF export also needs Chrome or Chromium and
+Node.js (`npx`).
+
+## What it does
+
+**Build.** `/raystack` picks a track by the size of the work. A bug or small change (Quick) is
+fixed, tested, reviewed and shipped. One slice of a feature (Standard) gets a spec, a plan and
+a build. A new product (Full) goes through research, a PRD, architecture, specs, a plan and
+the build. It asks you one question at a time, logs every answer in `DECISIONS.md` so it is
+never asked twice, and stops for your approval at the PRD, spec and plan. The build runs task
+by task with a fresh implementer and a fresh reviewer for each, then ships: PR, green CI,
+merge, deploy confirmed.
+
+**Review.** Read-only reviews write a ranked report to `reviews/` in your repo, each finding
+with file:line evidence and a suggested fix. They never change your code or anything live.
+
+| Review | What it looks at |
+| --- | --- |
+| `app-security-review` | Authorization and IDOR, injection, secrets, sessions, client IP spoofing, dependency risk |
+| `pipeline-security-review` | CI/CD: workflow permissions, untrusted input, pinned actions, Dockerfiles, supply chain |
+| `infra-review` | Deploys, rollback, backups, monitoring and exposure on any platform (Railway, Cloudflare, VPS, Kubernetes, AWS, GCP, Azure) |
+| `performance-review` | N+1 queries, hot paths, blocking calls, caching, payload and bundle weight |
+| `database-review` | Queries, indexes, migrations, backups, connections and bloat (Postgres, MySQL, Redis, DynamoDB, SQLite) |
+| `reliability-review` | Timeouts, retries, idempotency, double charges, queues, health checks, single points of failure, SLOs |
+| `scaling-review` | What breaks first at 10x and 100x load |
+| `architecture-review` | Whether the code follows its pattern (MVC, layered, CQRS, hexagonal, modular monolith, microservices) |
+| `frontend-review` | React, Next, Vue, Svelte, Angular, Inertia: components, data fetching, re-renders, accessibility, forms, bundle |
+| `codebase-review` | Test gaps, complexity hot spots, dead code, duplication, swallowed errors, outdated dependencies |
+| `aws-billing-review` | AWS spend, with ranked savings per month |
+| `aws-security-review` | IAM, public exposure, logging and secrets on AWS |
+| `aws-bottleneck-review` | Throttling, limits, quotas and single points on the AWS request path |
+
+With no live access, a review works from your code and config and marks findings that need
+live data `(unconfirmed)`. Each report ends with the commands it needs you to run.
+
+**Scan.** `/raystack scan <type>` runs a set of reviews as one job with one round of
+questions. Types: `security`, `performance`, `scalability`, `reliability`, `infra`, `aws`,
+`database`, `architecture`, `code`, `frontend` and `all`. When two or more reviews run, it also
+writes one merged, ranked report. What each type runs is in the
+[guide](docs/guide.md#scans).
+
+**Fix.** Reviews never fix. Ask `/raystack fix the findings in reviews/<report>.md` and the
+fixes go through the build flow.
+
+## Safety
+
+- Reviews are read-only. Fixes come back as diffs or commands for you to run.
+- Every live call (a database, a cloud account, a dependency audit) is asked for first. Say no
+  and nothing outside your repo is read.
+- In Claude Code a guard hook checks every shell command during a review and blocks writes
+  to clouds, databases and deploy tools. It is a seatbelt, not a sandbox: other tools and
+  repo scripts are not checked, and other agents don't enforce it. Give reviews read-only
+  credentials; `aws-readonly-setup` creates a read-only AWS profile for you. The six
+  scanners (gitleaks, semgrep, osv-scanner, zizmor, actionlint, hadolint) run when installed;
+  RayStack never installs them.
+- **After a review, start a new session before you build or run tests.** The guard stays on
+  for the rest of the session and blocks things like `npm test` and `$` in commands.
+- RayStack has no server and collects nothing. Your agent sends your code to its own model,
+  as it always does.
+
+Details, read-only credentials per database and platform, and privacy:
+[docs/safety.md](docs/safety.md).
 
 ## Install
 
 ### Install with a prompt
 
-Paste one of these into your coding agent and it installs RayStack for you.
+Paste one of these into your coding agent and it installs RayStack for you. Set the agent
+name: `claude`, `codex`, `cursor`, `grok` or `opencode`.
 
-**Global** (every project on this machine). Set the agent name: `claude`, `codex`, `cursor`,
-`grok` or `opencode`.
+**Global** (every project on this machine):
 
 ```text
 Install RayStack globally for claude. Run these two commands, then tell me the version it printed:
@@ -40,32 +119,13 @@ git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack 2>/
 ~/.raystack/install.sh --agent claude --project .
 ```
 
-**Update** (after a new release):
-
-```text
-Update RayStack: run ~/.raystack/install.sh --update and tell me the new version.
-```
-
-Or, with RayStack installed, type `/raystack update`. It checks the latest release and runs
-the right update for how you installed it.
-
-### Global install (one command)
+### Install from a terminal
 
 ```bash
-git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack && ~/.raystack/install.sh
+git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack 2>/dev/null || git -C ~/.raystack pull --ff-only
+~/.raystack/install.sh                      # global, Claude Code
+~/.raystack/install.sh --agent codex        # global, another agent
 ```
-
-This clones RayStack to `~/.raystack` and copies all thirty skills into `~/.claude/skills`.
-For another agent add `--agent codex`, `--agent cursor`, `--agent grok` or `--agent opencode`.
-`--uninstall` removes them again.
-
-| Agent | Global folder | Project folder (`--project`) |
-| --- | --- | --- |
-| `claude` (default) | `~/.claude/skills` | `<repo>/.claude/skills` |
-| `codex` | `~/.agents/skills` | `<repo>/.agents/skills` |
-| `cursor` | `~/.cursor/skills` | `<repo>/.cursor/skills` |
-| `grok` | `~/.grok/skills` | `<repo>/.claude/skills` (Grok reads it) |
-| `opencode` | `~/.config/opencode/skills` | `<repo>/.opencode/skills` (unverified) |
 
 ### Install into an existing project
 
@@ -77,248 +137,94 @@ cd your-project
 
 Commit the new folder so the whole team gets RayStack with the repo.
 
+| Agent | Global folder | Project folder (`--project`) |
+| --- | --- | --- |
+| `claude` (default) | `~/.claude/skills` | `<repo>/.claude/skills` |
+| `codex` | `~/.agents/skills` | `<repo>/.agents/skills` |
+| `cursor` | `~/.cursor/skills` | `<repo>/.cursor/skills` |
+| `grok` | `~/.grok/skills` | `<repo>/.claude/skills` (Grok reads it) |
+| `opencode` | `~/.config/opencode/skills` | `<repo>/.opencode/skills` (unverified) |
+
+A global install also makes the four principle skills (below) apply in every project on the
+machine. Use `--project` if you only want RayStack in some repos.
+
+Other options: `--dry-run` shows what would happen, `--link` symlinks to the checkout instead
+of copying, `--agent custom --dir <folder>` installs anywhere, and `--help` lists the rest.
+
 ### Update
+
+Type `/raystack update`, or run:
 
 ```bash
 ~/.raystack/install.sh --update
 ```
 
-It pulls the latest release into `~/.raystack`, then refreshes every place that checkout
-installed to, global and project alike (they are listed in `~/.raystack-installs`). Plugin
-installs update through the agent: `claude plugin marketplace update raystack` and
-`claude plugin update raystack@raystack`. Start a new agent session afterwards.
+It pulls the latest release into `~/.raystack`, then refreshes every global and project
+install made from it (they are listed in `~/.raystack-installs`). Start a new agent session
+afterwards.
+
+### Uninstall
+
+```bash
+~/.raystack/install.sh --uninstall                    # global
+~/.raystack/install.sh --uninstall --project .        # this project
+rm -rf ~/.raystack ~/.raystack-installs               # then the checkout and its list
+```
+
+`--uninstall` removes exactly the thirty RayStack skills and nothing else.
+
+### Plugin installs
+
+You can also install RayStack as a plugin instead of with `install.sh`. As a plugin, single
+skills are namespaced: `/raystack` still works, but a review is `/raystack:frontend-review`
+instead of `/frontend-review`.
+
+| Agent | Install | Update |
+| --- | --- | --- |
+| Claude Code | `claude plugin marketplace add HarunRRayhan/RayStack` then `claude plugin install raystack@raystack` | `claude plugin marketplace update raystack` then `claude plugin update raystack@raystack` |
+| Codex | `codex plugin marketplace add HarunRRayhan/RayStack` then `codex plugin add raystack@raystack` | `codex plugin marketplace upgrade raystack` then the `add` line again |
+| Grok Build | `grok plugin install HarunRRayhan/RayStack --trust` | `grok plugin update raystack` |
+| Cursor | `cursor-agent plugin marketplace add <gitUrl>` (unverified) | see [docs/agents.md](docs/agents.md) |
 
 Or use the [skills CLI](https://skills.sh): `npx skills add HarunRRayhan/RayStack -g -a claude-code`.
 
-The per-agent options below do the same thing in each agent's own way.
+Per-agent details, folders and sources: [docs/agents.md](docs/agents.md).
 
-### Claude Code
+## Skills
 
-```text
-/plugin marketplace add HarunRRayhan/RayStack
-/plugin install raystack@raystack
-```
+RayStack is thirty skills. You only need `/raystack`; it calls the rest.
 
-From a terminal it's `claude plugin marketplace add HarunRRayhan/RayStack` and
-`claude plugin install raystack@raystack`. To try a checkout for one session:
-`claude --plugin-dir /path/to/raystack`.
-
-As a plugin, the skills are namespaced: `raystack:raystack`, `raystack:aws-billing-review` and
-so on. `/raystack` still finds the router (it resolves to `/raystack:raystack`); name a single
-review with its full name, e.g. `/raystack:aws-billing-review`. With `./install.sh --agent claude`
-the skills are personal skills and keep their bare names (`/raystack`, `/aws-billing-review`).
-
-### Codex
-
-```bash
-codex plugin marketplace add HarunRRayhan/RayStack
-codex plugin add raystack@raystack
-```
-
-Update with `codex plugin marketplace upgrade raystack`, then the `add` line again. Codex reads this repo's `.claude-plugin/marketplace.json`. Without a plugin,
-`./install.sh --agent codex` copies the skills to `~/.agents/skills/`.
-
-### Cursor
-
-Add the repo as a git marketplace with `cursor-agent plugin marketplace add <gitUrl>`, or try it
-for one session with `cursor-agent --plugin-dir /path/to/raystack`. Whether a git marketplace
-picks up the `.claude-plugin/` files is **unverified**. If it doesn't,
-`./install.sh --agent cursor` copies the skills to `~/.cursor/skills/`.
-
-### Grok Build
-
-```bash
-grok plugin install HarunRRayhan/RayStack --trust
-```
-
-Update with `grok plugin update raystack`. Grok also scans `~/.claude/skills/` and `~/.cursor/skills/`, so `install.sh` covers it.
-
-### Any other agent
-
-Clone the repo and copy (or `--link`) the skills into your agent's skills folder:
-
-```bash
-./install.sh --agent <claude|cursor|codex|grok|opencode>
-./install.sh --agent custom --dir /path/to/skills
-```
-
-`--dry-run` shows what it would do and `--uninstall` removes exactly the thirty RayStack skills.
-Per-agent details and sources are in [docs/agents.md](docs/agents.md).
-
-## Run a review
-
-Type `/raystack` in the repo you want reviewed. It looks at the file names (Terraform,
-`railway.json`, migrations and so on), recommends reviews, and asks you once which ones to run
-and whether it may make read-only live calls. Then it runs them one at a time.
-
-Or just say what you want reviewed: `/raystack review architecture`, `review cqrs`,
-`review mvc`, `review frontend`, `review n+1`, `review database`, `review reliability`,
-`review availability`, `review scalability`, `review codebase`. Every finding comes with a
-suggested fix.
-
-Or skip the router and name a review: "run database-review", `/raystack:aws-billing-review`
-(plugin) or `/aws-billing-review` (`install.sh`), or just "why is my AWS bill so high".
-
-| Skill | What it reviews |
+| Skill | What it does |
 | --- | --- |
-| `raystack` | Entry point. Picks the reviews for this repo and runs them. |
-| `aws-billing-review` | AWS spend, with ranked savings in $/mo |
-| `aws-security-review` | IAM, public exposure, logging and secrets on AWS |
-| `aws-bottleneck-review` | Throttling, limits, quotas and single points on the AWS request path |
-| `infra-review` | Deploys, rollback, backups, monitoring and exposure on any platform |
-| `scaling-review` | What breaks first at 10x and 100x load |
-| `database-review` | Queries, indexes, migrations, backups, connections and bloat |
-| `app-security-review` | App code: authz, injection, secrets, sessions, dependency risk. Code only, never calls a running app. Dependency audits run only with your live consent; without it, the review lists the commands for you to run |
-| `performance-review` | App speed: N+1 queries, hot paths, blocking calls, caching, payload and bundle weight |
-| `pipeline-security-review` | CI/CD pipelines: workflow permissions, untrusted input, pinned actions, Dockerfile and supply chain |
-| `architecture-review` | Detects MVC, layered, CQRS, hexagonal/DDD, modular monolith or microservices and checks the code follows it: fat controllers, CQRS sides mixed, layer leaks, cycles, god classes |
-| `frontend-review` | React, Next, Vue, Svelte, Angular, Inertia: components, state and data fetching, re-renders, accessibility, forms, bundle, SEO basics |
-| `reliability-review` | Reliability and availability: timeouts, retries, idempotency, queues and dead letters, degradation, health checks, single points of failure, backups, rollback, SLOs |
-| `codebase-review` | Code health: test gaps, complexity hot spots, dead code, duplication, swallowed errors, outdated dependencies |
-
-With no live access, a review still works from your IaC and code. It marks those findings
-`(unconfirmed)` and lists the exports or commands it needs from you.
-
-## Scans
-
-`/raystack scan <type>` runs a set of reviews as one job, with one consent call for live
-access, network scanners and targets. Reviews with no signals in the repo are listed as skipped.
-
-| Type | Runs |
-| --- | --- |
-| `security` | `app-security-review`, `pipeline-security-review`, `aws-security-review`, `infra-review` |
-| `performance` | `performance-review`, `database-review`, `aws-bottleneck-review` |
-| `scalability` | `scaling-review`, `database-review` |
-| `infra` | `infra-review`, `pipeline-security-review`, `aws-security-review`, `aws-bottleneck-review` |
-| `aws` | `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review` |
-| `database` | `database-review` |
-| `reliability` | `reliability-review`, `database-review`, `scaling-review`, `infra-review` |
-| `architecture` | `architecture-review`, `codebase-review` |
-| `code` | `codebase-review`, `architecture-review`, `frontend-review` |
-| `frontend` | `frontend-review`, `performance-review` |
-| `all` | every review above whose signals are found |
-
-When 2 or more reviews run, `reviews/YYYY-MM-DD-scan-<type>.md` merges them: one ranked list,
-duplicates merged, with a table of what ran and what was skipped.
-
-Scanners (gitleaks, semgrep, osv-scanner, zizmor, actionlint, hadolint) are used when
-installed and never installed by RayStack: `brew install gitleaks semgrep osv-scanner zizmor actionlint hadolint`.
-
-## Reviews are read-only
-
-No review changes anything live. Fixes come back as diffs or as commands for you to run.
-
-Each review turns on a guard hook (`skills/raystack/hooks/readonly-guard.sh`) that checks every
-shell command before it runs. Only the CLIs it lists are checked: `aws`, `gcloud`, `az`,
-`kubectl`, `oc`, `gh`, `terraform`, `tofu`, `terragrunt`, `helm`, `railway`, `wrangler`, `redis-cli`
-and the SQL clients get read verbs only, one SQL read per call with no SQL comments. Deploy tools
-such as `pulumi`, `cdk`, `serverless`, `fly`, `vercel` or `heroku` are blocked outright, as are
-`pg_dump` and `pg_restore`, and commands that print secret values or credentials (for example
-`terraform show`, `helm get values`, `aws ecr get-login-password`). A name counts even inside a
-hyphenated or slashed word (`aws-cdk`, `amazon/aws-cli`). Package runners (`npx`, `bunx`, `uvx`),
-shells (`bash`, `sh -c`, `env`), `ssh` and most `npm`, `yarn` and `docker` subcommands are
-blocked during a review; only a short list of reads such as `docker ps`, `docker logs --tail
-200` and `npm ls` gets through. Dependency audits are the one package-manager exception, in
-forms that run no repo code: `npm audit`, `composer audit --no-plugins --no-scripts`,
-`bundle-audit check`, and `pip-audit` (with `-r`, also `--disable-pip` and `--no-deps` or
-`--require-hashes`), with read flags only and no `fix`. They run only with your live consent;
-without it, the review lists the commands for you to run. Reads that return env vars or user data
-(Lambda configs, ECS task definitions, launch templates) are left for you to run. The six
-scanners (`gitleaks`, `semgrep`, `osv-scanner`, `zizmor`, `actionlint`, `hadolint`) are checked
-too and run only in the read forms in `skills/raystack/references/scanners.md`; `gh` runs on
-your GitHub token, so it gets a read allow-list.
-
-Everything else is not checked: other tools, the agent's own file Read tool, and scripts in
-the repo (a `make` target can do anything). The guard is a seatbelt, not a
-sandbox, and it only switches on by itself in Claude Code. In Cursor, Codex and Grok the
-reviews follow the same rules but nothing enforces them. Either way, run reviews with read-only
-credentials (AWS `ReadOnlyAccess` or `ViewOnlyAccess`, a read-only DB role). Those are the real
-boundary. No read-only AWS profile yet? The `aws-readonly-setup` skill makes one for you: it
-signs you in through the browser with `aws login`, creates a `raystack-readonly` role with
-`ReadOnlyAccess` minus data reads (S3 objects, secrets, SSM parameters), and proves it can
-read config but not data or writes. It asks before that one IAM change and
-creates no access keys. The full rules are in [the review contract](skills/raystack/references/review-contract.md).
-
-In Claude Code, once a review starts the guard stays on for the rest of the session. It then
-also blocks `$`, backslashes, unquoted globs (`*`, `?`, `[ ]`) and redirects (`>`, `<`) in any
-shell command, not only cloud ones. It also blocks any command that mentions a shell, `env`,
-`ssh` or `scp`, a package runner (`npx`, `uv run`, `npm test` or other scripts, `yarn`, `pnpm`
-and `bun` except `--version`), a container lifecycle command (`docker compose up`, `docker run`),
-a docker flag before the subcommand, or a monitored tool's name anywhere (so `grep -n npm
-Dockerfile` and `grep -rn "@aws-sdk" .` are blocked too). Start a new session after a review.
-
-## What you get back
-
-Each review writes `reviews/YYYY-MM-DD-<skill>.md` in your repo: an executive summary, the
-inputs it used and the ones it lacked, findings ranked Critical to Low with evidence, a fix and an
-estimated $/mo where one can be worked out, then a "Commands for you to run" section. The layout
-is in [report-template.md](skills/raystack/references/report-template.md).
-
-Want a PDF for a client or your boss? The review offers one at the end, via
-`skills/raystack/scripts/report-pdf.sh` (needs Chrome or Chromium and `npx`). Raw HTML in a
-report is shown as text, not rendered.
-
-## Principles
-
-RayStack also ships four principle skills and the `local-verify` playbook. They aren't reviews.
-Each principle is a short rule, and `local-verify` is a step-by-step playbook. Your agent picks
-them up by itself when the task fits, and `/raystack` never runs them.
-
-| Skill | The rule |
-| --- | --- |
+| `raystack` | The entry point. Routes to the dev flow, a review, a scan or an update |
+| `dev` | Picks the Quick, Standard or Full track and runs the right steps |
+| `dev-hub` | Sets up `AGENTS.md`, `DECISIONS.md` and the docs folders, in one repo or a code-free hub for several repos |
+| `dev-research` | Dated research notes with a source beside every fact |
+| `dev-prd` | Interviews you, then writes the PRD (product requirements) with goals, non-goals and numbered, testable behaviours |
+| `dev-spec` | The architecture and a tech spec per area |
+| `dev-plan` | A plan for one slice of work, checked for gaps before the build |
+| `dev-build` | Builds the plan task by task with a fresh implementer and reviewer for each, then ships |
+| `dev-gaps` | Finds the docs an existing project is missing and writes them from the code and your answers |
+| `dev-review` | Read-only check of the architecture, specs and plan against the code |
+| `dev-migrate` | Moves part of a project to another language, framework or database, step by step with parity tests |
+| 13 reviews | See [What it does](#what-it-does) |
+| `aws-readonly-setup` | Creates a read-only AWS profile for the AWS reviews |
+| `local-verify` | Checks a user-facing change in a real local browser before it ships |
 | `principle-ship` | Done means live: PR, self-review, green CI, merge, deploy confirmed |
-| `principle-smallest-change` | The smallest change that solves the whole task, finished everywhere it reaches |
-| `principle-ask-with-question-tool` | Ask through the agent's question tool, batched, recommended option first |
-| `principle-secrets-layout` | Real values in gitignored `.secrets/<service>.env`, committed `.example` templates, never print a value |
-| `local-verify` | Check a user-facing change in a real local browser. `principle-ship` calls it. Never touches `.env`, production data, live payments or real email |
+| `principle-smallest-change` | The smallest change that solves the whole task |
+| `principle-ask-with-question-tool` | Ask through the agent's question tool, recommended option first |
+| `principle-secrets-layout` | Real values in gitignored `.secrets/<service>.env`, committed `.example` templates |
 
-`principle-ship` reads `.raystack.json` at the repo root, or `~/.raystack.json` if the repo has
-none:
+The principle skills load by themselves whenever a task fits, in any project where RayStack
+is installed. `principle-ship` reads `.raystack.json` at the repo root, or `~/.raystack.json`:
 
 ```json
 { "ship": { "autoMerge": false, "deployCheck": "Deploy workflow on main, then GET /health" } }
 ```
 
-With `autoMerge` off (the default), the agent stops at green CI and asks before it merges. Turn
-it on and it merges on green, then waits for the deploy. `deployCheck` tells it how to confirm
-the deploy is live: a workflow name, a URL or a health check.
-
-## Development
-
-RayStack also carries a development flow, from research to a shipped build. Type `/raystack` and pick
-"Build something", say "build this", or call `/dev` directly. It picks a track by size:
-
-- **Quick**: a bug or small change. No PRD. Fix it, test it, ship it.
-- **Standard**: one slice of work. Spec if missing, then a plan, then a reviewed build.
-- **Full**: a new product. Project layout, research, PRD, specs, plan, build.
-
-Project commands:
-
-| Command | What it does |
-| --- | --- |
-| `/raystack project new` (or `new project`) | Asks what you are building, one question at a time, then research, PRD, stack and architecture, tech specs, plan and build |
-| `/raystack project update` (or `project gaps`) | In an existing project: lists the missing research, PRD, architecture, specs and plan, then writes them from the code and your answers |
-| `/raystack project review` | Mid-build, read-only: checks the architecture, specs and plan against the code (drift, unserved behaviours, over-design, stale tasks) |
-| `/raystack project migrate` | Moves part of a project to another stack (say a service to Rust) step by step, with parity tests and the old code kept until the new one is proven |
-
-For N+1 queries and database health, use `performance-review` and `database-review` (or
-`/raystack scan performance`).
-
-Decisions land in `DECISIONS.md` and are never asked twice. The build keeps a ledger, so a
-stopped run can resume.
-
-| Skill | What it does |
-| --- | --- |
-| `dev` | Entry point. Picks Quick, Standard or Full and runs the right skills. |
-| `dev-hub` | Sets up `AGENTS.md`, `DECISIONS.md` and the docs folders, in one repo or a code-free hub |
-| `dev-research` | Dated research notes with a source beside every fact |
-| `dev-prd` | Interviews you, then writes the PRD with goals, non-goals and a behaviour contract |
-| `dev-spec` | Architecture and per-area tech specs from the PRD (on Standard with no PRD, it writes the slice's `## Behaviours` B-IDs), plus the default principles |
-| `dev-plan` | A plan for one slice, checked for gaps before the build starts |
-| `dev-build` | Builds the plan task by task with a fresh implementer and reviewer for each |
-| `dev-gaps` | Finds the dev-flow documents an existing project is missing and fills them |
-| `dev-review` | Read-only review of the architecture, specs and plan against the code |
-| `dev-migrate` | Moves part of a project to another language, framework or database, step by step |
+With `autoMerge` off (the default) the agent stops at green CI and asks before it merges.
+`deployCheck` tells it how to confirm the deploy is live. A repo with no git remote is merged
+locally after you say yes.
 
 ## Credits
 

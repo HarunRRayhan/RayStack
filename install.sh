@@ -56,6 +56,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# The marker names the checkout with ~ for $HOME, so a committed project install carries no home path.
+src="source=$ROOT"; hp=$(cd "$HOME" 2>/dev/null && pwd -P) || hp=$HOME
+case "$ROOT" in "$hp"/*) src="source=~${ROOT#"$hp"}" ;; "$HOME"/*) src="source=~${ROOT#"$HOME"}" ;; esac
+
 if [ "$update" = 1 ]; then
   [ -d "$ROOT/.git" ] || die "--update needs a git checkout (clone it, see the README)"
   [ "$dry" = 0 ] || die "--update does not support --dry-run"
@@ -68,13 +72,14 @@ if [ "$update" = 1 ]; then
       if [ -z "$d" ] || [ ! -d "$d" ]; then continue; fi
       # only targets this checkout installed: a link into it, or a copy whose marker names it
       if [ -L "$d/raystack" ]; then [ "$(readlink "$d/raystack")" = "$ROOT/skills/raystack" ] || continue
-      else grep -qxF "source=$ROOT" "$d/raystack/.raystack-installed" 2>/dev/null || continue; fi
+      else grep -qxF -e "$src" -e "source=$ROOT" "$d/raystack/.raystack-installed" 2>/dev/null || continue; fi
       n=$((n + 1))
-      if [ "$l" = 1 ]; then "$ROOT/install.sh" --dir "$d" --link || rc=1
-      else "$ROOT/install.sh" --dir "$d" || rc=1; fi
+      if [ "$l" = 1 ]; then RAYSTACK_QUIET=1 "$ROOT/install.sh" --dir "$d" --link || rc=1
+      else RAYSTACK_QUIET=1 "$ROOT/install.sh" --dir "$d" || rc=1; fi
     done < "$REGISTRY"
   fi
-  [ "$n" -gt 0 ] || "$ROOT/install.sh" || rc=1  # nothing recorded yet: the default global install
+  [ "$n" -gt 0 ] || RAYSTACK_QUIET=1 "$ROOT/install.sh" || rc=1  # nothing recorded yet: the default global install
+  echo "Start a new agent session to load the update."
   exit "$rc"
 fi
 
@@ -83,7 +88,7 @@ case "$agent" in
   claude)   default="$HOME/.claude/skills";   hint="claude plugin marketplace add HarunRRayhan/RayStack && claude plugin install raystack@raystack" ;;
   cursor)   default="$HOME/.cursor/skills";   hint="cursor-agent plugin marketplace add <gitUrl> (see docs/agents.md)" ;;
   codex)    default="$HOME/.agents/skills";   hint="codex plugin marketplace add HarunRRayhan/RayStack && codex plugin add raystack@raystack" ;;
-  grok)     default="$HOME/.grok/skills";     hint="grok plugin marketplace add HarunRRayhan/RayStack && grok plugin install raystack --trust" ;;
+  grok)     default="$HOME/.grok/skills";     hint="grok plugin install HarunRRayhan/RayStack --trust" ;;
   opencode) default="$HOME/.config/opencode/skills" ;; # shortcut: not in docs/agents.md, unverified; pass --dir if yours differs
   custom)   default="" ;;
   *) die "unknown agent: $agent" ;;
@@ -154,6 +159,7 @@ if [ "$uninstall" = 1 ]; then
   if [ "$dry" = 0 ] && [ -f "$REGISTRY" ]; then
     rtmp=$(mktemp "$REGISTRY.XXXXXX") && awk -F'\t' -v d="$dir" '$1 != d' "$REGISTRY" > "$rtmp" && mv "$rtmp" "$REGISTRY"
   fi
+  [ "$dry" = 1 ] || echo "RayStack removed from $dir. The checkout stays in $ROOT; delete it too if you are done."
   exit "$skipped"
 fi
 
@@ -183,7 +189,7 @@ for s in $SKILLS; do
     tmp="$stage/$s"
     rm -rf "$tmp"
     cp -R "$ROOT/skills/$s" "$tmp" || { rm -rf "$tmp"; die "copy failed for $s"; }
-    { cat "$ROOT/VERSION"; echo "source=$ROOT"; } > "$tmp/.raystack-installed" || { rm -rf "$tmp"; die "marker failed for $s"; }
+    { cat "$ROOT/VERSION"; echo "$src"; } > "$tmp/.raystack-installed" || { rm -rf "$tmp"; die "marker failed for $s"; }
   fi
   rm -rf "$dest"
   mv "$tmp" "$dest"
@@ -196,8 +202,10 @@ if [ "$dry" = 0 ]; then
     rtmp=$(mktemp "$REGISTRY.XXXXXX") && { awk -F'\t' -v d="$dir" '$1 != d' "$REGISTRY"; echo "$line"; } > "$rtmp" && mv "$rtmp" "$REGISTRY"
   fi
 fi
-echo "RayStack $(cat "$ROOT/VERSION") installed in $dir. Update later with: $ROOT/install.sh --update"
+echo "RayStack $(cat "$ROOT/VERSION") installed in $dir."
+[ -n "${RAYSTACK_QUIET:-}" ] && exit "$skipped"
+command -v jq >/dev/null 2>&1 || echo "Warning: jq is not installed. In Claude Code the review guard blocks every shell command without it. Install jq (brew install jq, apt install jq)."
+echo "Next: start a new agent session and type /raystack. Update later with: $ROOT/install.sh --update"
 [ -z "$hint" ] || echo "Tip: $agent also has a native plugin install: $hint"
-echo "Note: the read-only guard hook is enforced automatically only in Claude Code."
-echo "On other agents, pair reviews with read-only credentials. See docs/agents.md."
+[ "$agent" = claude ] || echo "Note: the read-only guard runs only in Claude Code. On $agent, give reviews read-only credentials (docs/agents.md)."
 exit "$skipped"

@@ -68,6 +68,11 @@ H="$T/home"; mkdir -p "$H"
 out=$(cd "$T" && HOME="$H" bash "$OLDPWD/$INSTALL" --agent codex 2>&1)
 assert_eq "$(count "$H/.agents/skills")" 30 "codex default dir"
 case "$out" in *docs/agents.md*) pass "prints guard caveat";; *) fail "no guard caveat";; esac
+case "$out" in *"type /raystack"*) pass "prints the next step";; *) fail "no next step";; esac
+case "$out" in *"grok plugin marketplace"*) fail "stale grok tip";; *) pass "no stale grok tip";; esac
+# A checkout under $HOME is recorded as ~/..., so a committed project install carries no home path.
+mkdir -p "$H/rs" && cp -R install.sh skills VERSION "$H/rs/" && HOME="$H" bash "$H/rs/install.sh" --dir "$T/portable" >/dev/null 2>&1
+assert_eq "$(sed -n 2p "$T/portable/raystack/.raystack-installed")" "source=~/rs" "marker uses ~ for home"
 case "$out" in *"codex plugin"*) pass "prints plugin hint";; *) fail "no plugin hint";; esac
 
 # foreign same-named dir is never deleted
