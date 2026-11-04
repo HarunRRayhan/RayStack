@@ -35,8 +35,8 @@ Product page: [harun.dev/raystack](https://harun.dev/raystack).
    | Start a new product from an idea | `/raystack new project` |
    | Build a feature or fix a bug, planned and reviewed | `/raystack build <what>` or `/raystack fix <what>` |
    | Add missing docs (PRD, specs) to an existing repo | `/raystack project update` |
-   | Get a read-only review of this repo | `/raystack` (it suggests reviews) or `/raystack review security` |
-   | Run several reviews as one job | `/raystack scan all` |
+   | Get a read-only review of this repo | `/audit` (it suggests reviews) or `/audit security` |
+   | Run several reviews as one job | `/audit all` |
 
 Every command and flow is explained in the **[guide](docs/guide.md)**.
 
@@ -46,7 +46,7 @@ Node.js (`npx`).
 
 ## What it does
 
-**Build.** `/raystack` picks a track by the size of the work. A bug or small change (Quick) is
+**Build.** `/dev` (or `/raystack`) picks a track by the size of the work. A bug or small change (Quick) is
 fixed, tested, reviewed and shipped. One slice of a feature (Standard) gets a spec, a plan and
 a build. A new product (Full) goes through research, a PRD, architecture, specs, a plan and
 the build. It asks you one question at a time, logs every answer in `DECISIONS.md` so it is
@@ -54,8 +54,10 @@ never asked twice, and stops for your approval at the PRD, spec and plan. The bu
 by task with a fresh implementer and a fresh reviewer for each, then ships: PR, green CI,
 merge, deploy confirmed.
 
-**Review.** Read-only reviews write a ranked report to `reviews/` in your repo, each finding
-with file:line evidence and a suggested fix. They never change your code or anything live.
+**Review.** `/audit` is the entry point for reviews, as `/dev` is for building. On its own it
+looks at the repo and recommends reviews; `/audit security` or `/audit database` runs one.
+Reviews are read-only and write a ranked report to `reviews/` in your repo, each finding with
+file:line evidence and a suggested fix. They never change your code or anything live.
 
 | Review | What it looks at |
 | --- | --- |
@@ -76,13 +78,13 @@ with file:line evidence and a suggested fix. They never change your code or anyt
 With no live access, a review works from your code and config and marks findings that need
 live data `(unconfirmed)`. Each report ends with the commands it needs you to run.
 
-**Scan.** `/raystack scan <type>` runs a set of reviews as one job with one round of
+**Scan.** `/audit all` or `/audit <type>` runs a set of reviews as one job with one round of
 questions. Types: `security`, `performance`, `scalability`, `reliability`, `infra`, `aws`,
 `database`, `architecture`, `code`, `frontend` and `all`. When two or more reviews run, it also
 writes one merged, ranked report. What each type runs is in the
 [guide](docs/guide.md#scans).
 
-**Fix.** Reviews never fix. Ask `/raystack fix the findings in reviews/<report>.md` and the
+**Fix.** Reviews never fix. Ask `/dev fix the findings in reviews/<report>.md` and the
 fixes go through the build flow.
 
 ## Safety
@@ -109,7 +111,7 @@ Details, read-only credentials per database and platform, and privacy:
 Use a prompt (paste it into your agent) or the same command in a terminal. Either way it keeps
 a checkout in `~/.raystack` that updates use later.
 
-### Every agent on your machine (global)
+### Global (every agent on your machine)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash
@@ -128,13 +130,6 @@ Prompt version:
 Install RayStack globally: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --yes`, then tell me which agents it installed for.
 ```
 
-The same for this project only, for every agent found (commit the new folders and everyone
-who clones the repo gets RayStack):
-
-```text
-Install RayStack into this project: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --yes --project .`, then show me the new skills folders.
-```
-
 Rather not pipe a script into bash? Clone it and run the installer:
 
 ```bash
@@ -143,448 +138,287 @@ git clone --depth 1 https://github.com/HarunRRayhan/RayStack.git ~/.raystack
 ```
 
 A global install also makes the four principle skills (below) apply in every project on the
-machine. Use the project install if you want RayStack only in some repos.
+machine. To install into one repo instead, add `--project .` to any command below; commit the
+new skills folder and everyone who clones the repo gets RayStack.
 
-### One agent
+### Agents
 
-Open your agent for its prompts. In a terminal, run the command inside the backticks. Use the
-script or the agent's plugin, not both. As a plugin, single skills are namespaced: `/raystack`
-still works, but a review is `/raystack:frontend-review` instead of `/frontend-review`.
+Open your agent for its prompt. Install for as many agents as you use. In a terminal, run the
+command inside the backticks. Use the script or the agent's plugin, not both; as a plugin, a
+single review is `/raystack:frontend-review` instead of `/frontend-review`.
 
 <details>
-<summary><b>Claude Code</b></summary>
-
-Global:
+<summary><img src="assets/agents/claude.png" alt="" width="16" height="16"> <b>Claude Code</b></summary>
 
 ```text
 Install RayStack globally for Claude Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent claude`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Claude Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent claude --project .`, then show me the new .claude/skills folder.
-```
-
-Global folder `~/.claude/skills`, project folder `.claude/skills`. Plugin instead: `claude plugin marketplace add HarunRRayhan/RayStack`, then `claude plugin install raystack@raystack` (update with `claude plugin marketplace update raystack` and `claude plugin update raystack@raystack`). Only Claude Code enforces the review guard.
+Global folder `~/.claude/skills`, project folder `.claude/skills` (add `--project .`). Plugin instead: `claude plugin marketplace add HarunRRayhan/RayStack`, then `claude plugin install raystack@raystack` (update with `claude plugin marketplace update raystack` and `claude plugin update raystack@raystack`). Only Claude Code enforces the review guard.
 
 </details>
 
 <details>
-<summary><b>Codex</b></summary>
+<summary><img src="assets/agents/claude.png" alt="" width="16" height="16"> <b>Claude (desktop app)</b></summary>
 
-Global:
+```text
+Install RayStack for Claude: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent claude`, then tell me what it printed.
+```
+
+Paste into the Code tab of the Claude desktop app, which is Claude Code: the skills go to `~/.claude/skills`.
+
+</details>
+
+<details>
+<summary><img src="assets/agents/codex.png" alt="" width="16" height="16"> <b>Codex</b></summary>
 
 ```text
 Install RayStack globally for Codex: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent codex`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Codex: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent codex --project .`, then show me the new .agents/skills folder.
-```
-
-Global folder `~/.agents/skills`, project folder `.agents/skills`. Plugin instead: `codex plugin marketplace add HarunRRayhan/RayStack`, then `codex plugin add raystack@raystack` (update with `codex plugin marketplace upgrade raystack` and the `add` line again).
+Global folder `~/.agents/skills`, project folder `.agents/skills` (add `--project .`). Plugin instead: `codex plugin marketplace add HarunRRayhan/RayStack`, then `codex plugin add raystack@raystack` (update with `codex plugin marketplace upgrade raystack` and the `add` line again).
 
 </details>
 
 <details>
-<summary><b>Cursor</b></summary>
+<summary><img src="assets/agents/chatgpt.png" alt="" width="16" height="16"> <b>ChatGPT (desktop app)</b></summary>
 
-Global:
+```text
+Install RayStack for ChatGPT: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent codex`, then tell me what it printed.
+```
+
+Paste into Codex in the ChatGPT desktop app: the skills go to `~/.agents/skills`.
+
+</details>
+
+<details>
+<summary><img src="assets/agents/cursor.png" alt="" width="16" height="16"> <b>Cursor</b></summary>
 
 ```text
 Install RayStack globally for Cursor: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent cursor`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Cursor: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent cursor --project .`, then show me the new .cursor/skills folder.
-```
-
-Global folder `~/.cursor/skills`, project folder `.cursor/skills`. Plugin instead: `cursor-agent plugin marketplace add <gitUrl>` (unverified, see [docs/agents.md](docs/agents.md)).
+Global folder `~/.cursor/skills`, project folder `.cursor/skills` (add `--project .`). Plugin instead: `cursor-agent plugin marketplace add <gitUrl>` (unverified, see [docs/agents.md](docs/agents.md)).
 
 </details>
 
 <details>
-<summary><b>Grok Build</b></summary>
-
-Global:
+<summary><img src="assets/agents/grok.png" alt="" width="16" height="16"> <b>Grok Build</b></summary>
 
 ```text
 Install RayStack globally for Grok Build: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent grok`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Grok Build: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent grok --project .`, then show me the new .claude/skills folder.
-```
-
-Global folder `~/.grok/skills`, project folder `.claude/skills`. Grok also reads `~/.claude/skills` and `~/.cursor/skills`, so a Claude Code or Cursor install already covers it. Plugin instead: `grok plugin install HarunRRayhan/RayStack --trust` (update with `grok plugin update raystack`).
+Global folder `~/.grok/skills`, project folder `.claude/skills` (add `--project .`). Grok also reads `~/.claude/skills` and `~/.cursor/skills`, so a Claude Code or Cursor install already covers it. Plugin instead: `grok plugin install HarunRRayhan/RayStack --trust` (update with `grok plugin update raystack`).
 
 </details>
 
 <details>
-<summary><b>Antigravity</b></summary>
-
-Global:
+<summary><img src="assets/agents/antigravity.png" alt="" width="16" height="16"> <b>Antigravity</b></summary>
 
 ```text
 Install RayStack globally for Antigravity: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent antigravity`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Antigravity: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent antigravity --project .`, then show me the new .agents/skills folder.
-```
-
-Global folder `~/.gemini/antigravity/skills`, project folder `.agents/skills`.
+Global folder `~/.gemini/antigravity/skills`, project folder `.agents/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Gemini CLI</b></summary>
-
-Global:
+<summary><img src="assets/agents/gemini.png" alt="" width="16" height="16"> <b>Gemini CLI</b></summary>
 
 ```text
 Install RayStack globally for Gemini CLI: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent gemini`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Gemini CLI: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent gemini --project .`, then show me the new .agents/skills folder.
-```
-
-Global folder `~/.gemini/skills`, project folder `.agents/skills`.
+Global folder `~/.gemini/skills`, project folder `.agents/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>GitHub Copilot</b></summary>
-
-Global:
+<summary><img src="assets/agents/copilot.png" alt="" width="16" height="16"> <b>GitHub Copilot</b></summary>
 
 ```text
 Install RayStack globally for GitHub Copilot: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent copilot`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for GitHub Copilot: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent copilot --project .`, then show me the new .agents/skills folder.
-```
-
-Global folder `~/.copilot/skills`, project folder `.agents/skills`.
+Global folder `~/.copilot/skills`, project folder `.agents/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Windsurf</b></summary>
-
-Global:
+<summary><img src="assets/agents/windsurf.png" alt="" width="16" height="16"> <b>Windsurf</b></summary>
 
 ```text
 Install RayStack globally for Windsurf: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent windsurf`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Windsurf: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent windsurf --project .`, then show me the new .windsurf/skills folder.
-```
-
-Global folder `~/.codeium/windsurf/skills`, project folder `.windsurf/skills`.
+Global folder `~/.codeium/windsurf/skills`, project folder `.windsurf/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Cline</b></summary>
-
-Global:
+<summary><img src="assets/agents/cline.png" alt="" width="16" height="16"> <b>Cline</b></summary>
 
 ```text
 Install RayStack globally for Cline: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent cline`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Cline: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent cline --project .`, then show me the new .agents/skills folder.
-```
-
-Global folder `~/.agents/skills`, project folder `.agents/skills`.
+Global folder `~/.agents/skills`, project folder `.agents/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Kiro</b></summary>
-
-Global:
+<summary><img src="assets/agents/kiro.png" alt="" width="16" height="16"> <b>Kiro</b></summary>
 
 ```text
 Install RayStack globally for Kiro: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent kiro`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Kiro: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent kiro --project .`, then show me the new .kiro/skills folder.
-```
-
-Global folder `~/.kiro/skills`, project folder `.kiro/skills`.
+Global folder `~/.kiro/skills`, project folder `.kiro/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Roo Code</b></summary>
-
-Global:
+<summary><img src="assets/agents/roo.png" alt="" width="16" height="16"> <b>Roo Code</b></summary>
 
 ```text
 Install RayStack globally for Roo Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent roo`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Roo Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent roo --project .`, then show me the new .roo/skills folder.
-```
-
-Global folder `~/.roo/skills`, project folder `.roo/skills`.
+Global folder `~/.roo/skills`, project folder `.roo/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Kilo Code</b></summary>
-
-Global:
+<summary><img src="assets/agents/kilo.png" alt="" width="16" height="16"> <b>Kilo Code</b></summary>
 
 ```text
 Install RayStack globally for Kilo Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent kilo`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Kilo Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent kilo --project .`, then show me the new .agents/skills folder.
-```
-
-Global folder `~/.kilo/skills`, project folder `.agents/skills`.
+Global folder `~/.kilo/skills`, project folder `.agents/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Amp</b></summary>
-
-Global:
+<summary><img src="assets/agents/amp.png" alt="" width="16" height="16"> <b>Amp</b></summary>
 
 ```text
 Install RayStack globally for Amp: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent amp`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Amp: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent amp --project .`, then show me the new .agents/skills folder.
-```
-
-Global folder `~/.config/agents/skills`, project folder `.agents/skills`.
+Global folder `~/.config/agents/skills`, project folder `.agents/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Goose</b></summary>
-
-Global:
+<summary><img src="assets/agents/goose.png" alt="" width="16" height="16"> <b>Goose</b></summary>
 
 ```text
 Install RayStack globally for Goose: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent goose`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Goose: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent goose --project .`, then show me the new .goose/skills folder.
-```
-
-Global folder `~/.config/goose/skills`, project folder `.goose/skills`.
+Global folder `~/.config/goose/skills`, project folder `.goose/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>OpenCode</b></summary>
-
-Global:
+<summary><img src="assets/agents/opencode.png" alt="" width="16" height="16"> <b>OpenCode</b></summary>
 
 ```text
 Install RayStack globally for OpenCode: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent opencode`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for OpenCode: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent opencode --project .`, then show me the new .opencode/skills folder.
-```
-
-Global folder `~/.config/opencode/skills`, project folder `.opencode/skills`.
+Global folder `~/.config/opencode/skills`, project folder `.opencode/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Qwen Code</b></summary>
-
-Global:
+<summary><img src="assets/agents/qwen.png" alt="" width="16" height="16"> <b>Qwen Code</b></summary>
 
 ```text
 Install RayStack globally for Qwen Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent qwen`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Qwen Code: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent qwen --project .`, then show me the new .qwen/skills folder.
-```
-
-Global folder `~/.qwen/skills`, project folder `.qwen/skills`.
+Global folder `~/.qwen/skills`, project folder `.qwen/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Trae</b></summary>
-
-Global:
+<summary><img src="assets/agents/trae.png" alt="" width="16" height="16"> <b>Trae</b></summary>
 
 ```text
 Install RayStack globally for Trae: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent trae`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Trae: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent trae --project .`, then show me the new .trae/skills folder.
-```
-
-Global folder `~/.trae/skills`, project folder `.trae/skills`.
+Global folder `~/.trae/skills`, project folder `.trae/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Junie</b></summary>
-
-Global:
+<summary><img src="assets/agents/junie.png" alt="" width="16" height="16"> <b>Junie</b></summary>
 
 ```text
 Install RayStack globally for Junie: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent junie`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Junie: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent junie --project .`, then show me the new .junie/skills folder.
-```
-
-Global folder `~/.junie/skills`, project folder `.junie/skills`.
+Global folder `~/.junie/skills`, project folder `.junie/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Augment</b></summary>
-
-Global:
+<summary><img src="assets/agents/augment.png" alt="" width="16" height="16"> <b>Augment</b></summary>
 
 ```text
 Install RayStack globally for Augment: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent augment`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Augment: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent augment --project .`, then show me the new .augment/skills folder.
-```
-
-Global folder `~/.augment/skills`, project folder `.augment/skills`.
+Global folder `~/.augment/skills`, project folder `.augment/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Warp</b></summary>
-
-Global:
+<summary><img src="assets/agents/warp.png" alt="" width="16" height="16"> <b>Warp</b></summary>
 
 ```text
 Install RayStack globally for Warp: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent warp`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Warp: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent warp --project .`, then show me the new .agents/skills folder.
-```
-
-Global folder `~/.agents/skills`, project folder `.agents/skills`.
+Global folder `~/.agents/skills`, project folder `.agents/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Zed</b></summary>
-
-Global:
+<summary><img src="assets/agents/zed.png" alt="" width="16" height="16"> <b>Zed</b></summary>
 
 ```text
 Install RayStack globally for Zed: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent zed`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Zed: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent zed --project .`, then show me the new .agents/skills folder.
-```
-
-Global folder `~/.agents/skills`, project folder `.agents/skills`.
+Global folder `~/.agents/skills`, project folder `.agents/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>OpenHands</b></summary>
-
-Global:
+<summary><img src="assets/agents/openhands.png" alt="" width="16" height="16"> <b>OpenHands</b></summary>
 
 ```text
 Install RayStack globally for OpenHands: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent openhands`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for OpenHands: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent openhands --project .`, then show me the new .openhands/skills folder.
-```
-
-Global folder `~/.openhands/skills`, project folder `.openhands/skills`.
+Global folder `~/.openhands/skills`, project folder `.openhands/skills` (add `--project .`).
 
 </details>
 
 <details>
-<summary><b>Continue</b></summary>
-
-Global:
+<summary><img src="assets/agents/continue.png" alt="" width="16" height="16"> <b>Continue</b></summary>
 
 ```text
 Install RayStack globally for Continue: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent continue`, then tell me what it printed.
 ```
 
-This project:
-
-```text
-Install RayStack into this project for Continue: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent continue --project .`, then show me the new .continue/skills folder.
-```
-
-Global folder `~/.continue/skills`, project folder `.continue/skills`.
+Global folder `~/.continue/skills`, project folder `.continue/skills` (add `--project .`).
 
 </details>
 
@@ -593,9 +427,9 @@ Not listed? `~/.raystack/install.sh --agent custom --dir /path/to/its/skills`, o
 
 Claude Code, Codex, Cursor and Grok are tested with RayStack. The other folders come from the
 skills CLI's agent table and are not tested here. The read-only review guard runs only in
-Claude Code; on any other agent, give reviews read-only credentials. Other options:
-`--dry-run` shows what would happen, `--link` symlinks to the checkout, and `--help` lists the
-rest. Per-agent details and sources: [docs/agents.md](docs/agents.md).
+Claude Code; on any other agent, give reviews read-only credentials. Logos belong to their
+owners. Other options: `--dry-run` shows what would happen, `--link` symlinks to the checkout,
+and `--help` lists the rest. Per-agent details and sources: [docs/agents.md](docs/agents.md).
 
 ### Update
 
@@ -618,11 +452,11 @@ above). Start a new agent session afterwards.
 rm -rf ~/.raystack ~/.raystack-installs                 # then the checkout and its list
 ```
 
-`--uninstall` removes exactly the thirty RayStack skills and nothing else.
+`--uninstall` removes exactly the thirty-one RayStack skills and nothing else.
 
 ## Skills
 
-RayStack is thirty skills. You only need `/raystack`; it calls the rest.
+RayStack is thirty-one skills. You only need `/raystack` (or `/dev` to build and `/audit` to review); they call the rest.
 
 | Skill | What it does |
 | --- | --- |

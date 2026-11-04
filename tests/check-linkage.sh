@@ -132,10 +132,13 @@ else
 fi
 
 entry=skills/raystack/SKILL.md
-if [ -f "$entry" ]; then
+aud=skills/audit/SKILL.md
+if [ -f "$entry" ] && [ -f "$aud" ]; then
   for s in "${REVIEWS[@]}"; do
-    check "raystack names $s" grep -qF "$s" "$entry"
+    check "audit names $s" grep -qF "$s" "$aud"
   done
+  check "raystack hands reviews to audit" grep -qF '`audit`' "$entry"
+  check "audit is 120 lines or fewer" test "$(wc -l < "$aud")" -le 120
   check "raystack is 120 lines or fewer" test "$(wc -l < "$entry")" -le 120
   # shellcheck disable=SC2016  # literal backticks, not a command substitution
   check "raystack names dev" grep -qF '`dev`' "$entry"
@@ -145,12 +148,12 @@ fi
 
 # scan: the router names the command, every type, the summary skill name and the skipped list.
 # shellcheck disable=SC2016  # literal backticks
-if [ -f "$entry" ]; then
+if [ -f "$aud" ]; then
   for t in 'scan <type>' 'scan-<type>' skipped security performance scalability infra aws database all; do
-    check "raystack scan contains: $t" grep -qF -- "$t" "$entry"
+    check "raystack scan contains: $t" grep -qF -- "$t" "$aud"
   done
   scans=skills/raystack/references/scans.md
-  check "raystack links references/scans.md" grep -qF 'references/scans.md' "$entry"
+  check "audit links scans.md" grep -qF 'raystack/references/scans.md' "$aud"
   check "scans.md exists" test -f "$scans"
   for t in 'security-review*' 'aws-bottleneck-review*' 'database-review*' 'infra-review*' 'one merged entry' 'see <report>' 'skipped'; do
     check "scans.md contains: $t" grep -qF -- "$t" "$scans"
@@ -165,22 +168,22 @@ if [ -f "$entry" ]; then
     check "scans.md contains: $t" grep -qF -- "$t" "$scans"
   done
   check "scans.md all row has a full run order" grep -qE '^\| all \| `app-security-review\*`.*`scaling-review\*`.*`aws-billing-review\*`' "$scans"
-  check "router: type and consent come from scans.md" grep -qF 'Type and consent' "$entry"
-  check "router: scan skips no step it still claims" bash -c '! grep -qF "reuses steps 1 to 4" "$1"' _ "$entry"
-  check "router: full audit and check everything mean all" grep -qE '"full audit", "check everything".*`all`' "$entry"
+  check "router: type and consent come from scans.md" grep -qF 'Type and consent' "$aud"
+  check "router: scan skips no step it still claims" bash -c '! grep -qF "reuses steps 1 to 4" "$1"' _ "$aud"
+  check "router: full audit and check everything mean all" grep -qE '"full audit", "check everything".*`all`' "$aud"
   check "router: ledger only when not clearly a review or scan" grep -qF 'not clearly a review or scan' "$entry"
   check "router: scan rule comes before the ledger rule" test "$(grep -n 'The request starts with "scan"' "$entry" | cut -d: -f1)" -lt "$(grep -n 'unfinished ledger' "$entry" | cut -d: -f1)"
-  check "router: live access offers at most 2 profiles" grep -qF 'at most 2' "$entry"
-  check "router: no-signals fallback is not for scans" grep -qF 'not in a scan' "$entry"
-  check "router: routed consent covers scanners and targets" grep -qF 'scanners, targets' "$entry"
+  check "router: live access offers at most 2 profiles" grep -qF 'at most 2' "$aud"
+  check "router: no-signals fallback is not for scans" grep -qF 'not in a scan' "$aud"
+  check "router: routed consent covers scanners and targets" grep -qF 'scanners, targets' "$aud"
   contract=skills/raystack/references/review-contract.md
   # A routed review skips only what the router asked and passed; unpassed targets are still asked.
   check "contract: routed review skips only what was answered" grep -qF 'skip only the questions it answered' "$contract"
   check "contract: routed review still asks unpassed targets" grep -qF 'still ask what it did not pass' "$contract"
   check "contract: routed review no longer skips targets wholesale" bash -c '! grep -qF "target and scanner questions" "$1"' _ "$contract"
-  check "router: review skips only the questions answered" grep -qF 'skips only the questions answered here' "$entry"
+  check "router: review skips only the questions answered" grep -qF 'skips only the questions answered here' "$aud"
   # In a scan, reviews ask nothing: safe defaults, listed, findings unconfirmed.
-  for f in "$contract" "$scans" "$entry"; do
+  for f in "$contract" "$scans" "$aud"; do
     check "$(basename "$f") names the scan phrase" grep -qF 'part of a raystack scan' "$f"
   done
   for f in "$contract" "$scans"; do
@@ -192,10 +195,10 @@ if [ -f "$entry" ]; then
   check "scans.md: pipeline review starred in infra" grep -qE '^\| infra \|.*`pipeline-security-review\*`' "$scans"
   check "scans.md: a lockfile alone runs the pipeline review" grep -qF 'lockfile alone' "$scans"
   check "scans.md: question 3 owns app-security audits in a scan" grep -qF "app-security-review's dependency audits" "$scans"
-  check "router: live access covers audits only outside a scan" grep -qF 'in a scan, scans.md question 3 asks instead' "$entry"
+  check "router: live access covers audits only outside a scan" grep -qF 'in a scan, scans.md question 3 asks instead' "$aud"
   check "router: first match wins in step 0" grep -qF 'first match wins' "$entry"
-  check "router: scan and fix goes to Scan" grep -qF '"scan and fix"' "$entry"
-  check "router: wrap-up offers dev to fix scan findings" grep -qF 'offer `dev` to fix' "$entry"
+  check "router: scan and fix goes to Scan" grep -qF '"scan and fix"' "$aud"
+  check "router: wrap-up offers dev to fix scan findings" grep -qF 'offer `dev` to fix' "$aud"
   check "router: bare rule comes before the ledger rule" test "$(grep -n 'Bare `/raystack`' "$entry" | cut -d: -f1)" -lt "$(grep -n 'unfinished ledger' "$entry" | cut -d: -f1)"
   check "database-review: Targets needs live access Yes too" grep -qF 'only when live access was also Yes' skills/database-review/SKILL.md
   for s in database-review infra-review performance-review pipeline-security-review app-security-review architecture-review frontend-review reliability-review codebase-review; do
@@ -211,11 +214,11 @@ check "update.md exists" test -f skills/raystack/references/update.md
 for c in 'install.sh --update' 'claude plugin update raystack@raystack' 'source='; do
   check "update.md covers $c" grep -qF -- "$c" skills/raystack/references/update.md
 done
-for c in 'get.sh | bash' '--agent all' '--project .' 'install.sh --update' '### One agent' '--uninstall'; do
+for c in 'get.sh | bash' '--agent all' '--project .' 'install.sh --update' '### Agents' '--uninstall'; do
   check "README install covers $c" grep -qF -- "$c" README.md
 done
 check "README links the guide" grep -qF "docs/guide.md" README.md
-for c in "project new" "project update" "project review" "project migrate" "review cqrs" "review reliability" "scan <type>"; do
+for c in "project new" "project update" "project review" "project migrate" "audit cqrs" "audit reliability" "scan <type>" "/audit all"; do
   check "guide covers $c" grep -qF -- "$c" docs/guide.md
 done
 check "router is 120 lines or fewer" test "$(wc -l < "$entry")" -le 120
@@ -388,7 +391,7 @@ for v in reliability architecture code frontend; do
   check "scans.md has type $v" grep -qE "^\| $v \|" "$scans"
 done
 for r in architecture-review frontend-review reliability-review codebase-review; do
-  check "router names $r" grep -qF "$r" "$rt"
+  check "audit names $r" grep -qF "$r" skills/audit/SKILL.md
   check "scan all includes $r" grep -qF "\`$r*\`" <(grep -E '^\| all \|' "$scans")
 done
 check "router is 120 lines or fewer" test "$(wc -l < "$rt")" -le 120

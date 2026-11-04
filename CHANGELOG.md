@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0 (2026-11-04)
+
+- New `audit` skill: the entry point for reviews and scans, as `dev` is for building.
+  `/audit` recommends reviews for the repo, `/audit security` runs one, and `/audit all` or
+  `/audit <type>` runs a scan. `/raystack` still works and now hands reviews to `audit`. It
+  is not called `/review` because Claude Code has a built-in `/review`. RayStack is now
+  thirty-one skills.
+- README install: the global install first, then one collapsible row per agent with its logo
+  and a copyable prompt. New rows for the Claude desktop app and the ChatGPT desktop app.
+
 ## 1.0.2 (2026-11-03)
 
 - The installer knows 23 agents: Claude Code, Codex, Cursor, Grok Build, Antigravity, Gemini
