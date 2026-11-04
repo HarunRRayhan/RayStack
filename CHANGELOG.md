@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1 (2026-11-04)
+
+- The installer knows OpenClaw (`--agent openclaw`, `~/.openclaw/skills`) and its earlier
+  names Clawdbot and Moltbot (`--agent clawdbot`, `--agent moltbot`).
+- README: rows for OpenClaw and the Grok app; Update and Uninstall are their own sections,
+  each with a prompt to copy.
+
 ## 1.1.0 (2026-11-04)
 
 - New `audit` skill: the entry point for reviews and scans, as `dev` is for building.
