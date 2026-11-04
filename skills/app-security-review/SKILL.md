@@ -79,7 +79,7 @@ Work through `references/checklist.md`, every area, with the framework notes tha
   goes under a "Worth hardening" section after the findings, never ranked as a finding.
   Framework defaults (CSRF tokens, template escaping, ORM binding) are not findings unless the
   code shows them disabled or bypassed.
-- Dependency CVEs: confirm the app's own code reaches the vulnerable function before ranking
+- Dependency CVEs: `cve-review` goes deeper (end-of-life runtimes, images, cloud versions); when its report exists, add a one-line `see <report>` instead of repeating. Confirm the app's own code reaches the vulnerable function before ranking
   it. Otherwise it goes under "Worth hardening" with the upgrade.
 - Logging findings (area 12) use a **Blind spot** line (the attack that would go unseen)
   instead of **Exploit**, and rank at most Medium.

@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Entry point for RayStack's read-only reviews and scans. Use for "/audit", "/audit all", "/audit security", "audit my stack", "review my codebase", "which review should I run", "review my AWS", "review my database", cloud cost, security, bottlenecks, deploys, scaling, databases, app code security, performance, N+1 queries, CI/CD or GitHub Actions security, architecture, CQRS, MVC, frontend, reliability, availability, code quality or tech debt, and scans that run several reviews as one job ("scan", "scan all", "scan security").
+description: Entry point for RayStack's read-only reviews and scans. Use for "/audit", "/audit all", "/audit security", "audit my stack", "review my codebase", "which review should I run", "CVE scan", "review my AWS", "review my database", cloud cost, security, bottlenecks, deploys, scaling, databases, app code security, performance, N+1 queries, CI/CD or GitHub Actions security, architecture, CQRS, MVC, frontend, reliability, availability, code quality or tech debt, and scans that run several reviews as one job ("scan", "scan all", "scan security").
 ---
 
 # Audit
@@ -15,10 +15,10 @@ read-only.
 | `/audit <area>` (security, database, frontend, architecture, AWS cost...) | That review, step 2 skips the pick |
 | `/audit all` or `/audit <scan type>` | A scan: a set of reviews as one job (Scan below) |
 
-The thirteen reviews: `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review`,
+The fourteen reviews: `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review`,
 `infra-review`, `scaling-review`, `database-review`, `app-security-review`,
 `performance-review`, `pipeline-security-review`, `architecture-review`, `frontend-review`,
-`reliability-review`, `codebase-review`. Read-only AWS access: `aws-readonly-setup`.
+`reliability-review`, `codebase-review`, `cve-review`. Read-only AWS access: `aws-readonly-setup`.
 
 ## 0. Scan or review
 
@@ -39,7 +39,8 @@ names only and are fine), `*.tfstate*`, kubeconfigs or credential files.
   or IaC: `database-review`. Queues, workers, autoscaling config: `scaling-review`.
 - App code (routes, controllers, an ORM): `app-security-review`; with an ORM or a frontend
   build also `performance-review`.
-- CI workflows, a `Dockerfile`, IaC or k8s: `pipeline-security-review`.
+- CI workflows, a `Dockerfile`, IaC or k8s: `pipeline-security-review`. A lockfile, a runtime
+  version file, a `Dockerfile` or pinned cloud versions: `cve-review`.
 - App code: also `architecture-review` and `codebase-review`. A frontend build (React, Vue,
   Svelte, Angular, Next, Nuxt, Inertia): `frontend-review`. App code with outbound calls,
   queues, jobs or deploy config: `reliability-review`.
@@ -50,7 +51,8 @@ Then read the user's words:
   `aws-security-review`. "slow", "throttling", "limits": `aws-bottleneck-review`.
 - "slow page", "slow endpoint", "N+1": `performance-review`. "10x", "launch", "will it scale":
   `scaling-review`.
-- "security audit of my app", "IDOR", "XSS", "SQL injection": `app-security-review`.
+- "security audit of my app", "IDOR", "XSS", "SQL injection": `app-security-review`. "CVE",
+  "vulnerable dependencies", "end of life", "known vulnerabilities": `cve-review`.
 - "architecture", "CQRS", "MVC", "layers", "god class", "coupling": `architecture-review`.
   "frontend", "React", "Vue", "accessibility", "re-renders": `frontend-review`. "reliability",
   "availability", "uptime", "SLO", "retries", "failover": `reliability-review`. "code quality",
@@ -69,7 +71,7 @@ Use plain text only without such a tool. It allows up to 4 questions with up to 
 
 1. "AWS and CI reviews" (multi-select): the three `aws-*` reviews, `pipeline-security-review`.
 2. "Code reviews" (multi-select): `app-security-review`, `performance-review`,
-   `architecture-review`, `codebase-review`, `frontend-review`.
+   `architecture-review`, `codebase-review`, `frontend-review`, `cve-review`.
 3. "Platform reviews" (multi-select): `infra-review`, `scaling-review`, `database-review`,
    `reliability-review`.
 
@@ -108,7 +110,7 @@ reference, not a second entry". Run `database-review` before `infra-review`.
 ## Scan
 
 `scan <type>` (security, performance, scalability, reliability, architecture, code, frontend,
-infra, aws, database, all) runs steps 1, 3 and 4 on
+infra, aws, database, cve, all) runs steps 1, 3 and 4 on
 the type's review list. Type and consent: [scans.md](../raystack/references/scans.md), which replaces
 step 2 (no review pick) with one question-tool call. It also has the table, skipped reviews and the
 combined `reviews/YYYY-MM-DD-scan-<type>.md` (skill `scan-<type>`).

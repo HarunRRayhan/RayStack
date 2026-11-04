@@ -64,6 +64,7 @@ file:line evidence and a suggested fix. They never change your code or anything 
 | Review | What it looks at |
 | --- | --- |
 | `app-security-review` | Authorization and IDOR, injection, secrets, sessions, client IP spoofing, dependency risk |
+| `cve-review` | Known CVEs in dependencies, and software that will collect them: end-of-life runtimes and frameworks, old base images, unpinned or vendored code, no update process |
 | `pipeline-security-review` | CI/CD: workflow permissions, untrusted input, pinned actions, Dockerfiles, supply chain |
 | `infra-review` | Deploys, rollback, backups, monitoring and exposure on any platform (Railway, Cloudflare, VPS, Kubernetes, AWS, GCP, Azure) |
 | `performance-review` | N+1 queries, hot paths, blocking calls, caching, payload and bundle weight |
@@ -82,7 +83,7 @@ live data `(unconfirmed)`. Each report ends with the commands it needs you to ru
 
 **Scan.** `/audit all` or `/audit <type>` runs a set of reviews as one job with one round of
 questions. Types: `security`, `performance`, `scalability`, `reliability`, `infra`, `aws`,
-`database`, `architecture`, `code`, `frontend` and `all`. When two or more reviews run, it also
+`database`, `cve`, `architecture`, `code`, `frontend` and `all`. When two or more reviews run, it also
 writes one merged, ranked report. What each type runs is in the
 [guide](docs/guide.md#scans).
 
@@ -476,7 +477,7 @@ above). Start a new agent session afterwards.
 
 ## Skills
 
-RayStack is thirty-one skills. You only need `/raystack` (or `/dev` to build and `/audit` to review); they call the rest.
+RayStack is thirty-two skills. You only need `/raystack` (or `/dev` to build and `/audit` to review); they call the rest.
 
 | Skill | What it does |
 | --- | --- |
@@ -491,7 +492,7 @@ RayStack is thirty-one skills. You only need `/raystack` (or `/dev` to build and
 | `dev-gaps` | Finds the docs an existing project is missing and writes them from the code and your answers |
 | `dev-review` | Read-only check of the architecture, specs and plan against the code |
 | `dev-migrate` | Moves part of a project to another language, framework or database, step by step with parity tests |
-| 13 reviews | See [What it does](#what-it-does) |
+| 14 reviews | See [What it does](#what-it-does) |
 | `aws-readonly-setup` | Creates a read-only AWS profile for the AWS reviews |
 | `local-verify` | Checks a user-facing change in a real local browser before it ships |
 | `principle-ship` | Done means live: PR, self-review, green CI, merge, deploy confirmed |
@@ -524,7 +525,7 @@ Or in a terminal:
 rm -rf ~/.raystack ~/.raystack-installs                 # then the checkout and its list
 ```
 
-`--uninstall` removes exactly the thirty-one RayStack skills and nothing else.
+`--uninstall` removes exactly the thirty-two RayStack skills and nothing else.
 
 ## Credits
 
