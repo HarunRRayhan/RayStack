@@ -1,7 +1,7 @@
 {
-  "$schema": "https://agent-plugins.org/schemas/1.2.0/plugin.schema.json",
+  "$schema": "https://agent-plugins.org/schemas/1.2.1/plugin.schema.json",
   "name": "raystack",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Skills by Harun R. Rayhan: a full development flow (new project intake, research, PRD, specs, plans, reviewed builds, ship; gap-fill, design review and migration for existing projects), read-only scans and reviews (security, performance, scalability, reliability and availability, architecture incl. MVC and CQRS, frontend, code health, CI/CD pipelines, AWS, infrastructure, databases), working principles and local browser verification.",
   "author": {
     "name": "Harun R. Rayhan",
