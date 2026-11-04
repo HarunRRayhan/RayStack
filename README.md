@@ -10,6 +10,8 @@ I build and what I check when I audit someone's stack, written down as agent ski
 By Harun R. Rayhan ([harun.dev](https://harun.dev), [@harundotdev](https://x.com/harundotdev)).
 Product page: [harun.dev/raystack](https://harun.dev/raystack).
 
+<p align="center"><a href="https://github.com/sponsors/HarunRRayhan"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors&logoColor=white" alt="Sponsor RayStack on GitHub Sponsors"></a></p>
+
 ## Quick start
 
 1. Install RayStack for the coding agents on your machine. It finds them (Claude Code, Codex,
@@ -545,3 +547,6 @@ MIT. See [LICENSE](LICENSE).
 Made by [Harun R. Rayhan](https://harun.dev) ([@harundotdev](https://x.com/harundotdev)).
 For a hands-on audit of your stack:
 [harun.dev/consultation](https://harun.dev/consultation).
+
+RayStack is free and MIT licensed. If it saves you time, you can
+[sponsor it on GitHub](https://github.com/sponsors/HarunRRayhan).
