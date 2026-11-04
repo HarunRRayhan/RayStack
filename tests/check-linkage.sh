@@ -137,6 +137,7 @@ if [ -f "$entry" ] && [ -f "$aud" ]; then
   for s in "${REVIEWS[@]}"; do
     check "audit names $s" grep -qF "$s" "$aud"
   done
+  # shellcheck disable=SC2016  # literal backticks
   check "raystack hands reviews to audit" grep -qF '`audit`' "$entry"
   check "audit is 120 lines or fewer" test "$(wc -l < "$aud")" -le 120
   check "raystack is 120 lines or fewer" test "$(wc -l < "$entry")" -le 120
