@@ -433,6 +433,17 @@ Global folder `~/.continue/skills`, project folder `.continue/skills` (add `--pr
 
 </details>
 
+<details>
+<summary><img src="assets/agents/openclaw.png" alt="" width="16" height="16"> <b>OpenClaw (Clawdbot)</b></summary>
+
+```text
+Install RayStack globally for OpenClaw: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent openclaw`, then tell me what it printed.
+```
+
+Global folder `~/.openclaw/skills`, project folder `skills` (add `--project .`). Still on the old name? Use `--agent clawdbot` (`~/.clawdbot/skills`) or `--agent moltbot` (`~/.moltbot/skills`).
+
+</details>
+
 Not listed? `~/.raystack/install.sh --agent custom --dir /path/to/its/skills`, or the
 [skills CLI](https://skills.sh): `npx skills add HarunRRayhan/RayStack -g -a <agent>`.
 

@@ -20,7 +20,8 @@ Usage: install.sh [--agent all|<agent>|custom] [--dir <skills-dir>] [--project [
 
 Copies the thirty-one RayStack skills into an agent's skills directory (default agent: claude).
 Agents: claude codex cursor grok antigravity gemini copilot windsurf cline kiro roo kilo amp
-goose opencode qwen trae junie augment warp zed openhands continue.
+goose opencode qwen trae junie augment warp zed openhands continue openclaw
+clawdbot moltbot.
   --agent all  every agent found in your home folder; asks per agent at a terminal
   --yes        with --agent all, install for every agent found without asking
   --dir        skills directory; required with --agent custom, overrides the agent default
@@ -113,7 +114,10 @@ augment|Augment|.augment|.augment/skills|.augment/skills
 warp|Warp|.warp|.agents/skills|.agents/skills
 zed|Zed|.config/zed|.agents/skills|.agents/skills
 openhands|OpenHands|.openhands|.openhands/skills|.openhands/skills
-continue|Continue|.continue|.continue/skills|.continue/skills'
+continue|Continue|.continue|.continue/skills|.continue/skills
+openclaw|OpenClaw (Clawdbot)|.openclaw|.openclaw/skills|skills
+clawdbot|Clawdbot|.clawdbot|.clawdbot/skills|skills
+moltbot|Moltbot|.moltbot|.moltbot/skills|skills'
 # agent_field <name> <column 2-5>
 agent_field() { printf '%s\n' "$AGENTS" | awk -F'|' -v n="$1" -v c="$2" '$1 == n { print $c }'; }
 

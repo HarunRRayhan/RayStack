@@ -92,6 +92,8 @@ case "$outs" in *"same folder: Cline"*) pass "all: shared folder named";; *) fai
 HOME="$T/x" bash ./install.sh --agent nosuch >/dev/null 2>&1 && fail "unknown agent accepted" || pass "unknown agent rejected"
 P="$T/projgem"; mkdir -p "$P"; HOME="$T/x" bash ./install.sh --agent gemini --project "$P" >/dev/null 2>&1
 assert_eq "$(count "$P/.agents/skills")" 31 "gemini project folder"
+HO="$T/homeclaw"; mkdir -p "$HO/.openclaw"; HOME="$HO" bash ./install.sh --agent all --yes >/dev/null 2>&1
+assert_eq "$(count "$HO/.openclaw/skills")" 31 "all: openclaw folder"
 bash -n get.sh && pass "get.sh parses" || fail "get.sh syntax"
 [ "$(tail -1 get.sh | cut -c1-10)" = 'main "$@" ' ] && pass "get.sh runs main last" || fail "get.sh must end with main"
 case "$out" in *"codex plugin"*) pass "prints plugin hint";; *) fail "no plugin hint";; esac

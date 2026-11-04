@@ -193,8 +193,8 @@ read-only credentials, which the contract asks for anyway.
 ## Other agents
 
 `install.sh` also knows Antigravity, Gemini CLI, GitHub Copilot, Windsurf, Cline, Kiro, Roo
-Code, Kilo Code, Amp, Goose, Qwen Code, Trae, Junie, Augment, Warp, Zed, OpenHands and
-Continue. Their global and project skills folders, and the folder that shows an agent is
+Code, Kilo Code, Amp, Goose, Qwen Code, Trae, Junie, Augment, Warp, Zed, OpenHands,
+Continue and OpenClaw (formerly Clawdbot and Moltbot). Their global and project skills folders, and the folder that shows an agent is
 installed, come from the agent table of the [skills CLI](https://github.com/vercel-labs/skills)
 (`src/agents.ts`). RayStack has not tested them. None of them run the review guard, so pair
 reviews with read-only credentials. If an agent reads a different folder on your machine, use
