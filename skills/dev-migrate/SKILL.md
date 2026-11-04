@@ -18,7 +18,9 @@ is not already clear:
 2. **To what?** The target language, framework, database or platform.
 3. **Why?** Speed, cost, hiring, safety, a dead dependency. The reason decides what to
    measure at the end.
-4. **Limits:** downtime allowed, deadline, data that must not be lost or reshaped.
+4. **Limits:** downtime allowed, then deadline, then data that must not be lost or reshaped
+   (skip data when the part has no store). Each is its own question; never one numbered list.
+   After the last one, ask the deployment shape only if research leaves it open.
 
 Log each answer as a `D-` row.
 

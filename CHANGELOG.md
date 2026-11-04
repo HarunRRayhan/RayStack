@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1 (2026-11-04)
+
+From running `dev-migrate` end to end (a pricing module moved from Express to Go, with the
+old code kept until a parity check passed):
+
+- The limits questions (downtime, deadline, data) are asked one at a time. It had asked all
+  of them in one numbered list.
+
 ## 1.2.0 (2026-11-04)
 
 - New `cve-review`: finds known CVEs in dependencies (osv-scanner and the ecosystem audits,
