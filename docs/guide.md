@@ -19,8 +19,9 @@ and all supported agents are in the [README](../README.md#install).
 To update after a release, type `/raystack update`, or run `~/.raystack/install.sh --update`.
 That refreshes every global and project install made from `~/.raystack`.
 
-RayStack has one front door: `/raystack`. Type it with a few words and it routes you. There
-are three things you can do:
+RayStack has one front door, `/raystack`, and two entry points behind it: `/dev` for building
+and `/audit` for reviews. Type any of them with a few words and it routes you. There are three
+things you can do:
 
 1. **Start a new project**: questions, research, PRD, architecture, specs, plan, build.
 2. **Work on an existing project**: fill missing docs, review the design mid-build, migrate
@@ -38,19 +39,19 @@ are three things you can do:
 | Move part of the project to another stack | `/raystack project migrate` |
 | Build a feature or fix a bug the reviewed way | `/raystack build <what>` or `/raystack fix <what>` |
 | See where a project stands | `/raystack where are we` |
-| Review the architecture (MVC, CQRS, layers) | `/raystack review architecture` (or `review cqrs`, `review mvc`) |
-| Review the frontend | `/raystack review frontend` |
-| Find N+1 queries and slow endpoints | `/raystack review n+1` (or `review performance`) |
-| Review the database | `/raystack review database` |
-| Check reliability and availability | `/raystack review reliability` (or `review availability`) |
-| Check what breaks at 10x load | `/raystack review scalability` |
-| Check code health and tech debt | `/raystack review codebase` |
-| Security review of the app code | `/raystack review security` |
-| Review CI/CD and GitHub Actions | `/raystack review pipeline` |
-| Review deploys, backups, rollback | `/raystack review infra` |
-| Review AWS cost, security or bottlenecks | `/raystack review my AWS bill` (or `AWS security`, `AWS bottlenecks`) |
-| Run several reviews as one job | `/raystack scan <type>` (see [Scans](#scans)) |
-| Let RayStack suggest reviews for this repo | `/raystack` |
+| Review the architecture (MVC, CQRS, layers) | `/audit architecture` (or `/audit cqrs`, `/audit mvc`) |
+| Review the frontend | `/audit frontend` |
+| Find N+1 queries and slow endpoints | `/audit n+1` (or `/audit performance`) |
+| Review the database | `/audit database` |
+| Check reliability and availability | `/audit reliability` (or `/audit availability`) |
+| Check what breaks at 10x load | `/audit scalability` |
+| Check code health and tech debt | `/audit codebase` |
+| Security review of the app code | `/audit security` |
+| Review CI/CD and GitHub Actions | `/audit pipeline` |
+| Review deploys, backups, rollback | `/audit infra` |
+| Review AWS cost, security or bottlenecks | `/audit my AWS bill` (or `AWS security`, `AWS bottlenecks`) |
+| Run several reviews as one job | `/audit all` or `/audit <type>` (see [Scans](#scans)) |
+| Let RayStack suggest reviews for this repo | `/audit` |
 | Update RayStack to the latest release | `/raystack update` |
 
 With a plugin install, a single skill is `/raystack:<name>`, e.g. `/raystack:frontend-review`.
@@ -163,7 +164,7 @@ read-only profile.
 
 ## Scans
 
-`/raystack scan <type>` runs several reviews as one job. It asks its questions once at the
+`/audit <type>` (or `/raystack scan <type>`) runs several reviews as one job. It asks its questions once at the
 start and skips reviews with nothing to look at. Each review writes its own report; when two
 or more ran, it also writes one merged, ranked summary, `reviews/YYYY-MM-DD-scan-<type>.md`.
 
