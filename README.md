@@ -214,6 +214,17 @@ Global folder `~/.grok/skills`, project folder `.claude/skills` (add `--project 
 </details>
 
 <details>
+<summary><img src="assets/agents/grok.png" alt="" width="16" height="16"> <b>Grok (app)</b></summary>
+
+```text
+Install RayStack for Grok: run `curl -fsSL https://raw.githubusercontent.com/HarunRRayhan/RayStack/main/get.sh | bash -s -- --agent grok`, then tell me what it printed.
+```
+
+Paste into the Grok app, where it can run commands on your machine. The skills go to `~/.grok/skills`, which Grok Build reads too.
+
+</details>
+
+<details>
 <summary><img src="assets/agents/antigravity.png" alt="" width="16" height="16"> <b>Antigravity</b></summary>
 
 ```text
@@ -431,9 +442,15 @@ Claude Code; on any other agent, give reviews read-only credentials. Logos belon
 owners. Other options: `--dry-run` shows what would happen, `--link` symlinks to the checkout,
 and `--help` lists the rest. Per-agent details and sources: [docs/agents.md](docs/agents.md).
 
-### Update
+## Update
 
-Type `/raystack update` in your agent, or run:
+Type `/raystack update` in your agent, or paste:
+
+```text
+Update RayStack: run `~/.raystack/install.sh --update`, then tell me the new version.
+```
+
+Or in a terminal:
 
 ```bash
 ~/.raystack/install.sh --update
@@ -443,16 +460,6 @@ It pulls the latest release into `~/.raystack`, then refreshes every global and 
 install made from it (they are listed in `~/.raystack-installs`). Running the one-line install
 again does the same for the agents it finds. Plugin installs update through the agent (see
 above). Start a new agent session afterwards.
-
-### Uninstall
-
-```bash
-~/.raystack/install.sh --uninstall --agent all          # every agent found
-~/.raystack/install.sh --uninstall --project .          # this project (Claude Code)
-rm -rf ~/.raystack ~/.raystack-installs                 # then the checkout and its list
-```
-
-`--uninstall` removes exactly the thirty-one RayStack skills and nothing else.
 
 ## Skills
 
@@ -489,6 +496,22 @@ is installed. `principle-ship` reads `.raystack.json` at the repo root, or `~/.r
 With `autoMerge` off (the default) the agent stops at green CI and asks before it merges.
 `deployCheck` tells it how to confirm the deploy is live. A repo with no git remote is merged
 locally after you say yes.
+
+## Uninstall
+
+```text
+Uninstall RayStack: run `~/.raystack/install.sh --uninstall --agent all`, then delete ~/.raystack and ~/.raystack-installs and tell me what was removed.
+```
+
+Or in a terminal:
+
+```bash
+~/.raystack/install.sh --uninstall --agent all          # every agent found
+~/.raystack/install.sh --uninstall --project .          # this project (Claude Code)
+rm -rf ~/.raystack ~/.raystack-installs                 # then the checkout and its list
+```
+
+`--uninstall` removes exactly the thirty-one RayStack skills and nothing else.
 
 ## Credits
 
