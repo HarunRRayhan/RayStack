@@ -5,20 +5,22 @@ when its signals are found (router step 1). Run the reviews in this order.
 
 | Type | Reviews, in run order |
 | --- | --- |
-| security | `app-security-review`, `pipeline-security-review*`, `aws-security-review*`, `infra-review*` |
+| security | `app-security-review`, `cve-review*`, `pipeline-security-review*`, `aws-security-review*`, `infra-review*` |
 | performance | `performance-review`, `database-review*`, `aws-bottleneck-review*` |
 | scalability | `scaling-review`, `database-review*` |
 | infra | `infra-review`, `pipeline-security-review*`, `aws-security-review*`, `aws-bottleneck-review*` |
 | aws | `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review` |
 | database | `database-review` |
+| cve | `cve-review` |
 | reliability | `reliability-review`, `database-review*`, `scaling-review*`, `infra-review*` |
 | architecture | `architecture-review`, `codebase-review` |
 | code | `codebase-review`, `architecture-review`, `frontend-review*` |
 | frontend | `frontend-review`, `performance-review*` |
-| all | `app-security-review*`, `pipeline-security-review*`, `architecture-review*`, `codebase-review*`, `frontend-review*`, `performance-review*`, `database-review*`, `scaling-review*`, `reliability-review*`, `infra-review*`, `aws-security-review*`, `aws-bottleneck-review*`, `aws-billing-review*` |
+| all | `app-security-review*`, `cve-review*`, `pipeline-security-review*`, `architecture-review*`, `codebase-review*`, `frontend-review*`, `performance-review*`, `database-review*`, `scaling-review*`, `reliability-review*`, `infra-review*`, `aws-security-review*`, `aws-bottleneck-review*`, `aws-billing-review*` |
 
 For `all`, every review is conditional: those with no signals are listed as skipped.
 Scaling signals: queues, workers, schedulers, autoscaling or replica-count config (step 1).
+CVE signals: a lockfile, a runtime or framework version file, a `Dockerfile` or pinned cloud versions in IaC.
 Pipeline signals: CI workflows, a `Dockerfile`, IaC or a lockfile (a lockfile alone runs the
 supply-chain items).
 
@@ -29,7 +31,7 @@ Skip step 2's review pick. Make ONE question-tool call with only what the mapped
 
 1. "Scan type", only when the type is missing or unknown: `all` (Recommended), security,
    performance, and "Other" for the rest (scalability, reliability, architecture, code,
-   frontend, infra, aws, database). When this is
+   frontend, infra, aws, database, cve). When this is
    asked, size questions 2 to 4 for the reviews `all` would run here.
 2. "Live access" as in step 2 item 4 (at most 4 options). Only offer AWS setup when AWS signals
    are found or the type is aws.

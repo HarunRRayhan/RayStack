@@ -150,6 +150,7 @@ It offers a PDF at the end.
 | `scaling-review` | What breaks first at 10x and 100x load |
 | `codebase-review` | Test gaps on core paths, big files that change often, dead code, duplicated business rules, swallowed errors, outdated or abandoned dependencies |
 | `app-security-review` | Authorization and IDOR, injection, secrets in code and git history, sessions, security logging, vulnerable dependencies |
+| `cve-review` | Known CVEs in dependencies (osv-scanner and the ecosystem audits, with reach checked in your code), end-of-life runtimes and frameworks, base images, pinned cloud versions, vendored libraries, and whether anything opens update PRs. Image scans (`trivy`) are listed for you to run, not run |
 | `pipeline-security-review` | GitHub Actions and GitLab CI, pinned actions, workflow permissions, Dockerfiles, IaC, lockfiles and supply chain |
 | `infra-review` | Deploys, rollback, backups, monitoring and exposure on any platform |
 | `aws-billing-review`, `aws-security-review`, `aws-bottleneck-review` | AWS spend ($/mo savings), IAM and exposure, throttling and limits |
@@ -170,7 +171,7 @@ or more ran, it also writes one merged, ranked summary, `reviews/YYYY-MM-DD-scan
 
 | Type | Runs |
 | --- | --- |
-| `security` | app security, pipeline security, AWS security, infra |
+| `security` | app security, CVEs, pipeline security, AWS security, infra |
 | `performance` | performance, database, AWS bottlenecks |
 | `scalability` | scaling, database |
 | `reliability` | reliability, database, scaling, infra |
@@ -180,6 +181,7 @@ or more ran, it also writes one merged, ranked summary, `reviews/YYYY-MM-DD-scan
 | `infra` | infra, pipeline security, AWS security, AWS bottlenecks |
 | `aws` | the three AWS reviews |
 | `database` | database |
+| `cve` | cve |
 | `all` | every review that fits the repo |
 
 ## What RayStack writes

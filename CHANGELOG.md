@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 (2026-11-04)
+
+- New `cve-review`: finds known CVEs in dependencies (osv-scanner and the ecosystem audits,
+  with a check that your code reaches the vulnerable function) and software that will
+  collect CVEs: end-of-life runtimes and frameworks, old or floating base images, unsupported
+  cloud versions, vendored libraries, and no update process. End-of-life dates and the CISA
+  known-exploited list are looked up only with consent. Image scans are listed for you to
+  run, not run. Run it with `/audit cve`; `/audit security` and `/audit all` include it.
+  RayStack is now thirty-two skills.
+
 ## 1.1.1 (2026-11-04)
 
 - The installer knows OpenClaw (`--agent openclaw`, `~/.openclaw/skills`) and its earlier
