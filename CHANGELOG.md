@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.3.0 (2026-11-06)
+
+- New `dev-refactor`: refactors a whole codebase, or one area, to the end without changing
+  what it does. It names the architecture the code already follows and stays inside it,
+  runs the suite for a baseline, writes tests for untested code it will touch before any
+  change, lists every problem (hidden and needless links, surplus, special cases, DRY and
+  SOLID violations) in `docs/refactor/`, fixes them in small commits with the suite green
+  after each, and repeats with a fresh reviewer until nothing worth fixing is left. Run it
+  with `/raystack project refactor`. Inspired by caldoai's `untangle-codebase` (MIT).
+- New `rs`: `/rs` is `/raystack` with a shorter name, so `/rs refactor` and `/rs scan all`
+  work. An existing, different `rs` skill is left alone (installer warns; `--force` replaces).
+  RayStack is now thirty-four skills.
+
 ## 1.2.1 (2026-11-04)
 
 From running `dev-migrate` end to end (a pricing module moved from Express to Go, with the

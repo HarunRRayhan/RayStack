@@ -1,6 +1,6 @@
 ---
 name: dev
-description: Entry point for the RayStack development flow. Use for "/dev", "/raystack new project", "/raystack project new", "/raystack project update", "/raystack project gaps", "/raystack project review", "/raystack project migrate", "start a new project", "plan this feature", "build this", "fix this bug properly", "where are we", or any request to take work from idea to shipped code.
+description: Entry point for the RayStack development flow. Use for "/dev", "/raystack new project", "/raystack project new", "/raystack project update", "/raystack project gaps", "/raystack project review", "/raystack project migrate", "/raystack project refactor", "start a new project", "plan this feature", "build this", "fix this bug properly", "where are we", or any request to take work from idea to shipped code.
 ---
 
 # Dev
@@ -26,6 +26,7 @@ a step, by saying so.
 | `dev-gaps` | Finds and fills missing documents in an existing project |
 | `dev-review` | Read-only review of architecture, specs and plan against the code |
 | `dev-migrate` | Moves part of a project to another stack, step by step |
+| `dev-refactor` | Refactors a codebase inside its own architecture, tests first, DRY and SOLID |
 
 **Project commands** (`/raystack project <verb>`, or `new project`) go straight to:
 
@@ -35,6 +36,7 @@ a step, by saying so.
 | `update`, `gaps` | `dev-gaps` |
 | `review` | `dev-review` |
 | `migrate` | `dev-migrate` |
+| `refactor` | `dev-refactor` |
 
 ## 1. Detect state
 
