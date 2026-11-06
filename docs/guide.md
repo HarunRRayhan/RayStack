@@ -19,7 +19,7 @@ and all supported agents are in the [README](../README.md#install).
 To update after a release, type `/raystack update`, or run `~/.raystack/install.sh --update`.
 That refreshes every global and project install made from `~/.raystack`.
 
-RayStack has one front door, `/raystack`, and two entry points behind it: `/dev` for building
+RayStack has one front door, `/raystack` (`/rs` is the same, shorter), and two entry points behind it: `/dev` for building
 and `/audit` for reviews. Type any of them with a few words and it routes you. There are three
 things you can do:
 
@@ -37,6 +37,7 @@ things you can do:
 | Add missing PRD, architecture, specs, plan to an existing repo | `/raystack project update` (or `project gaps`) |
 | Check the architecture and plan against the code mid-build | `/raystack project review` |
 | Move part of the project to another stack | `/raystack project migrate` |
+| Refactor the code: DRY, SOLID, missing unit tests, same architecture | `/raystack project refactor` (or `/rs refactor`) |
 | Build a feature or fix a bug the reviewed way | `/raystack build <what>` or `/raystack fix <what>` |
 | See where a project stands | `/raystack where are we` |
 | Review the architecture (MVC, CQRS, layers) | `/audit architecture` (or `/audit cqrs`, `/audit mvc`) |

@@ -56,4 +56,4 @@ A drifted document is updated, never rewritten: change the lines that are wrong,
 Report the table again with the new status, the files written, the B-ID count, open
 `[NEEDS CLARIFICATION]` markers and the `D-` rows added. Ask the user to review. Then offer
 the next step: `dev` Standard for the next slice, `dev-review` to check the plan and the
-architecture against the code, or `dev-migrate` to move part of the stack.
+architecture against the code, `dev-migrate` to move part of the stack, or `dev-refactor` to clean up the code.

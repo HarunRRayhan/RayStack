@@ -477,7 +477,7 @@ above). Start a new agent session afterwards.
 
 ## Skills
 
-RayStack is thirty-two skills. You only need `/raystack` (or `/dev` to build and `/audit` to review); they call the rest.
+RayStack is thirty-four skills. You only need `/raystack` (or `/rs`, the same thing shorter; or `/dev` to build and `/audit` to review); they call the rest.
 
 | Skill | What it does |
 | --- | --- |
@@ -492,6 +492,8 @@ RayStack is thirty-two skills. You only need `/raystack` (or `/dev` to build and
 | `dev-gaps` | Finds the docs an existing project is missing and writes them from the code and your answers |
 | `dev-review` | Read-only check of the architecture, specs and plan against the code |
 | `dev-migrate` | Moves part of a project to another language, framework or database, step by step with parity tests |
+| `dev-refactor` | Refactors a codebase inside the architecture it already follows: tests first, then DRY, SOLID and change-together fixes in small green steps, reviewed until clean |
+| `rs` | Short alias for `raystack`: `/rs refactor`, `/rs scan all`, `/rs project new` |
 | 14 reviews | See [What it does](#what-it-does) |
 | `aws-readonly-setup` | Creates a read-only AWS profile for the AWS reviews |
 | `local-verify` | Checks a user-facing change in a real local browser before it ships |
@@ -525,7 +527,7 @@ Or in a terminal:
 rm -rf ~/.raystack ~/.raystack-installs                 # then the checkout and its list
 ```
 
-`--uninstall` removes exactly the thirty-two RayStack skills and nothing else.
+`--uninstall` removes exactly the thirty-four RayStack skills and nothing else.
 
 ## Credits
 

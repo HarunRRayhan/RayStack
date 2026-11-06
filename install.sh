@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install (or remove) the thirty-two RayStack skills for any agent that reads SKILL.md folders.
+# Install (or remove) the thirty-four RayStack skills for any agent that reads SKILL.md folders.
 set -eu
 
 # Resolve symlinks to this script so ROOT is the real checkout.
@@ -11,14 +11,14 @@ done
 ROOT=$(cd "$(dirname "$self")" && pwd -P)
 # Skills earlier versions shipped; removed from the target only when RayStack installed them.
 RETIRED="blog blog-topics blog-draft humanize blog-cover"
-SKILLS="raystack audit aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build dev-gaps dev-review dev-migrate architecture-review frontend-review reliability-review codebase-review cve-review"
+SKILLS="raystack audit aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build dev-gaps dev-review dev-migrate dev-refactor architecture-review frontend-review reliability-review codebase-review cve-review rs"
 
 usage() {
   cat <<'USAGE'
 Usage: install.sh [--agent all|<agent>|custom] [--dir <skills-dir>] [--project [<repo>]]
                   [--link] [--uninstall] [--update] [--dry-run] [--yes] [--force] [-h|--help]
 
-Copies the thirty-two RayStack skills into an agent's skills directory (default agent: claude).
+Copies the thirty-four RayStack skills into an agent's skills directory (default agent: claude).
 Agents: claude codex cursor grok antigravity gemini copilot windsurf cline kiro roo kilo amp
 goose opencode qwen trae junie augment warp zed openhands continue openclaw
 clawdbot moltbot.
@@ -30,7 +30,7 @@ clawdbot moltbot.
   --update     pull the latest RayStack into this checkout, then reinstall every place
                this checkout installed to (global and project); other flags are ignored
   --link       symlink to this checkout instead of copying
-  --uninstall  remove exactly the thirty-two RayStack skills from the target
+  --uninstall  remove exactly the thirty-four RayStack skills from the target
   --dry-run    print what would happen, change nothing
   --force      also replace/remove same-named folders RayStack did not install
 Same-named folders without the .raystack-installed marker (or a link into this checkout)
@@ -215,6 +215,7 @@ skip_foreign() {
   ours "$1" "$2" && return 1
   [ "$force" = 0 ] || return 1
   echo "skipping $1: not installed by RayStack (use --force to replace)" >&2
+  [ "$2" != rs ] || echo "note: /raystack still works without the /rs alias" >&2
   skipped=1
 }
 

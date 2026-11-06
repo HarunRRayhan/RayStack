@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.." || exit 1
 . ./tests/lib.sh
 INSTALL=./install.sh
 if [ ! -f "$INSTALL" ]; then fail "install.sh missing"; exit 1; fi
-SKILLS="raystack audit aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build dev-gaps dev-review dev-migrate architecture-review frontend-review reliability-review codebase-review cve-review"
+SKILLS="raystack audit aws-billing-review aws-security-review aws-bottleneck-review infra-review scaling-review database-review app-security-review performance-review pipeline-security-review aws-readonly-setup principle-ship principle-smallest-change principle-ask-with-question-tool principle-secrets-layout local-verify dev dev-hub dev-research dev-prd dev-spec dev-plan dev-build dev-gaps dev-review dev-migrate dev-refactor architecture-review frontend-review reliability-review codebase-review cve-review rs"
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
 export RAYSTACK_REGISTRY="$T/registry"
@@ -16,7 +16,7 @@ count() { n=0; for s in $SKILLS; do [ -e "$1/$s/SKILL.md" ] && n=$((n + 1)); don
 # install twice into a dir that holds another skill
 D="$T/a"; mkdir -p "$D/other-skill"; echo keep > "$D/other-skill/SKILL.md"
 bash "$INSTALL" --dir "$D" >/dev/null; assert_eq "$?" 0 "install exits 0"
-assert_eq "$(count "$D")" 32 "all thirty-two skills installed"
+assert_eq "$(count "$D")" 34 "all thirty-four skills installed"
 assert_eq "$(cat "$D/other-skill/SKILL.md")" keep "other-skill intact"
 assert_eq "$(find "$D" -maxdepth 1 -name ".raystack-tmp*" | wc -l | tr -d " ")" 0 "no staging folder left behind"
 cp -R "$D" "$T/snap"
@@ -31,7 +31,7 @@ assert_eq "$(gl "$IC")" 0 "installed guard allows its own gitleaks config"
 assert_eq "$(gl "$(pwd -P)/skills/raystack/references/gitleaks.toml")" 2 "installed guard denies the checkout's config"
 [ ! -e "$D/.denylist" ] && [ ! -e "$D/hooks" ] && [ ! -e "$D/scripts" ] && [ ! -e "$D/docs" ] && [ ! -e "$D/raystack/.denylist" ] \
   && pass "nothing outside skills/ copied" || fail "extra files copied"
-assert_eq "$(ls "$D" | wc -l | tr -d ' ')" 33 "target holds thirty-two skills plus other-skill"
+assert_eq "$(ls "$D" | wc -l | tr -d ' ')" 35 "target holds thirty-four skills plus other-skill"
 
 # uninstall removes only ours
 bash "$INSTALL" --dir "$D" --uninstall >/dev/null
@@ -42,7 +42,7 @@ assert_eq "$(ls "$D")" other-skill "uninstall left other-skill"
 L="$T/l"
 bash "$INSTALL" --dir "$L" --link >/dev/null 2>&1
 links=0; for s in $SKILLS; do [ -L "$L/$s" ] && links=$((links + 1)); done
-assert_eq "$links" 32 "--link makes thirty-two symlinks"
+assert_eq "$links" 34 "--link makes thirty-four symlinks"
 bash "$INSTALL" --dir "$L" >/dev/null
 assert_eq "$([ -L "$L/raystack" ] && echo link || echo dir)" dir "copy replaces a symlink with a real dir"
 bash "$INSTALL" --dir "$L" --uninstall >/dev/null
@@ -54,7 +54,7 @@ bash "$INSTALL" --dir "$T/dry" --dry-run >/dev/null
 bash "$INSTALL" --dir "$D" --uninstall --dry-run >/dev/null
 bash "$INSTALL" --dir "$D" >/dev/null
 bash "$INSTALL" --dir "$D" --uninstall --dry-run >/dev/null
-assert_eq "$(count "$D")" 32 "--uninstall --dry-run removes nothing"
+assert_eq "$(count "$D")" 34 "--uninstall --dry-run removes nothing"
 
 # refusals
 bash "$INSTALL" --dir / >/dev/null 2>&1; assert_eq "$?" 1 "refuses /"
@@ -66,7 +66,7 @@ bash "$INSTALL" --agent nope >/dev/null 2>&1; assert_eq "$?" 1 "unknown agent"
 # agent default dir, caveat, works from another cwd
 H="$T/home"; mkdir -p "$H"
 out=$(cd "$T" && HOME="$H" bash "$OLDPWD/$INSTALL" --agent codex 2>&1)
-assert_eq "$(count "$H/.agents/skills")" 32 "codex default dir"
+assert_eq "$(count "$H/.agents/skills")" 34 "codex default dir"
 case "$out" in *docs/agents.md*) pass "prints guard caveat";; *) fail "no guard caveat";; esac
 case "$out" in *"type /raystack"*) pass "prints the next step";; *) fail "no next step";; esac
 case "$out" in *"grok plugin marketplace"*) fail "stale grok tip";; *) pass "no stale grok tip";; esac
@@ -76,24 +76,24 @@ assert_eq "$(sed -n 2p "$T/portable/raystack/.raystack-installed")" "source=~/rs
 # --agent all installs for each agent found in $HOME; Grok only when it has no Claude or Cursor folder to read.
 HA="$T/homeall"; mkdir -p "$HA/.claude" "$HA/.codex" "$HA/.grok"
 outall=$(HOME="$HA" bash ./install.sh --agent all --yes 2>&1)
-assert_eq "$(count "$HA/.claude/skills")" 32 "all: claude"
-assert_eq "$(count "$HA/.agents/skills")" 32 "all: codex"
+assert_eq "$(count "$HA/.claude/skills")" 34 "all: claude"
+assert_eq "$(count "$HA/.agents/skills")" 34 "all: codex"
 [ ! -d "$HA/.grok/skills" ] && pass "all: grok reads ~/.claude/skills" || fail "all: grok got its own copy"
 case "$outall" in *"Installed for: Claude Code, Codex."*) pass "all: summary";; *) fail "all: summary (got $outall)";; esac
 HN="$T/homenone"; mkdir -p "$HN"; HOME="$HN" bash ./install.sh --agent all --yes >/dev/null 2>&1
-assert_eq "$(count "$HN/.claude/skills")" 32 "all: claude when no agent found"
+assert_eq "$(count "$HN/.claude/skills")" 34 "all: claude when no agent found"
 # Agents that share a folder get one copy; each agent maps to its own global folder.
 HS="$T/homeshared"; mkdir -p "$HS/.codex" "$HS/.cline" "$HS/.codeium/windsurf" "$HS/.gemini/antigravity"
 outs=$(HOME="$HS" bash ./install.sh --agent all --yes 2>&1)
-assert_eq "$(count "$HS/.codeium/windsurf/skills")" 32 "all: windsurf folder"
-assert_eq "$(count "$HS/.gemini/antigravity/skills")" 32 "all: antigravity folder"
-assert_eq "$(count "$HS/.gemini/skills")" 32 "all: gemini folder"
+assert_eq "$(count "$HS/.codeium/windsurf/skills")" 34 "all: windsurf folder"
+assert_eq "$(count "$HS/.gemini/antigravity/skills")" 34 "all: antigravity folder"
+assert_eq "$(count "$HS/.gemini/skills")" 34 "all: gemini folder"
 case "$outs" in *"same folder: Cline"*) pass "all: shared folder named";; *) fail "all: shared folder not named";; esac
 HOME="$T/x" bash ./install.sh --agent nosuch >/dev/null 2>&1 && fail "unknown agent accepted" || pass "unknown agent rejected"
 P="$T/projgem"; mkdir -p "$P"; HOME="$T/x" bash ./install.sh --agent gemini --project "$P" >/dev/null 2>&1
-assert_eq "$(count "$P/.agents/skills")" 32 "gemini project folder"
+assert_eq "$(count "$P/.agents/skills")" 34 "gemini project folder"
 HO="$T/homeclaw"; mkdir -p "$HO/.openclaw"; HOME="$HO" bash ./install.sh --agent all --yes >/dev/null 2>&1
-assert_eq "$(count "$HO/.openclaw/skills")" 32 "all: openclaw folder"
+assert_eq "$(count "$HO/.openclaw/skills")" 34 "all: openclaw folder"
 bash -n get.sh && pass "get.sh parses" || fail "get.sh syntax"
 [ "$(tail -1 get.sh | cut -c1-10)" = 'main "$@" ' ] && pass "get.sh runs main last" || fail "get.sh must end with main"
 case "$out" in *"codex plugin"*) pass "prints plugin hint";; *) fail "no plugin hint";; esac
@@ -104,7 +104,7 @@ err=$(bash "$INSTALL" --dir "$F" 2>&1 >/dev/null); rc=$?
 assert_eq "$rc" 1 "install exits 1 when a foreign dir is skipped"
 assert_eq "$(cat "$F/infra-review/notes.txt")" mine "foreign dir preserved by install"
 case "$err" in *"skipping $F/infra-review: not installed by RayStack (use --force to replace)"*) pass "skip warning";; *) fail "no skip warning: $err";; esac
-assert_eq "$(count "$F")" 31 "other thirty-one still installed"
+assert_eq "$(count "$F")" 33 "other thirty-three still installed"
 bash "$INSTALL" --dir "$F" --uninstall >/dev/null 2>&1; assert_eq "$?" 1 "uninstall exits 1 on foreign dir"
 assert_eq "$(cat "$F/infra-review/notes.txt")" mine "foreign dir preserved by uninstall"
 assert_eq "$(find "$F" -mindepth 1 -maxdepth 1 | wc -l | tr -d " ")" 1 "uninstall removed only ours"
@@ -126,8 +126,18 @@ bash "$INSTALL" --dir "$R" --uninstall >/dev/null 2>&1
 [ ! -e "$R/blog-draft" ] && pass "uninstall removes retired skills it installed" || fail "uninstall left retired skill"
 assert_eq "$(cat "$R/blog-cover/notes.txt")" mine "uninstall keeps foreign retired-name dir"
 
+# a foreign rs skill is skipped with a note; raystack itself still installs
+RS="$T/rs"; mkdir -p "$RS/rs"; RS=$(cd "$RS" && pwd -P); echo mine > "$RS/rs/notes.txt"
+err=$(bash "$INSTALL" --dir "$RS" 2>&1 >/dev/null); rc=$?
+assert_eq "$rc" 1 "foreign rs: install exits 1"
+assert_eq "$(cat "$RS/rs/notes.txt")" mine "foreign rs preserved"
+case "$err" in *"/raystack still works"*) pass "foreign rs note";; *) fail "no rs note: $err";; esac
+[ -f "$RS/raystack/SKILL.md" ] && pass "raystack installed beside foreign rs" || fail "raystack missing"
+bash "$INSTALL" --dir "$RS" --force >/dev/null 2>&1
+[ -f "$RS/rs/.raystack-installed" ] && pass "--force replaces foreign rs" || fail "--force kept foreign rs"
+
 # path with spaces
-bash "$INSTALL" --dir "$T/with space/skills" >/dev/null; assert_eq "$(count "$T/with space/skills")" 32 "dir with spaces"
+bash "$INSTALL" --dir "$T/with space/skills" >/dev/null; assert_eq "$(count "$T/with space/skills")" 34 "dir with spaces"
 
 # source tree and HOME/. refused
 bash "$INSTALL" --dir "$PWD/skills" >/dev/null 2>&1; assert_eq "$?" 1 "refuses source skills dir"
@@ -166,14 +176,14 @@ bash "$INSTALL" --dir "$T/bad\"dir" >/dev/null 2>&1; assert_eq "$?" 1 "refuses q
 
 # symlinked install.sh still finds the checkout
 mkdir -p "$T/bin"; ln -s "$PWD/install.sh" "$T/bin/install.sh"
-bash "$T/bin/install.sh" --dir "$T/viaLink" >/dev/null; assert_eq "$(count "$T/viaLink")" 32 "works via symlinked install.sh"
+bash "$T/bin/install.sh" --dir "$T/viaLink" >/dev/null; assert_eq "$(count "$T/viaLink")" 34 "works via symlinked install.sh"
 
 # --project installs into the repo's agent folder (default: current folder)
 P="$T/repo"; mkdir -p "$P"
-bash "$INSTALL" --project "$P" >/dev/null; assert_eq "$(count "$P/.claude/skills")" 32 "--project installs to .claude/skills"
-bash "$INSTALL" --agent codex --project "$P" >/dev/null; assert_eq "$(count "$P/.agents/skills")" 32 "--agent codex --project installs to .agents/skills"
+bash "$INSTALL" --project "$P" >/dev/null; assert_eq "$(count "$P/.claude/skills")" 34 "--project installs to .claude/skills"
+bash "$INSTALL" --agent codex --project "$P" >/dev/null; assert_eq "$(count "$P/.agents/skills")" 34 "--agent codex --project installs to .agents/skills"
 P2="$T/repo2"; mkdir -p "$P2"; I=$PWD/install.sh
-(cd "$P2" && bash "$I" --project >/dev/null); assert_eq "$(count "$P2/.claude/skills")" 32 "--project with no path uses the current folder"
+(cd "$P2" && bash "$I" --project >/dev/null); assert_eq "$(count "$P2/.claude/skills")" 34 "--project with no path uses the current folder"
 bash "$INSTALL" --project "$T/missing" >/dev/null 2>&1; assert_eq "$?" 1 "--project refuses a missing folder"
 grep -q "^$(cd "$P" && pwd -P)/.claude/skills	0$" "$RAYSTACK_REGISTRY" && pass "registry records the project target" || fail "registry missing project target"
 bash "$INSTALL" --project "$P" --uninstall >/dev/null

@@ -372,7 +372,7 @@ check "router: scan rule lists the scan phrases" grep -qF '"security scan", "per
 check "router: scan elsewhere does not win" grep -qF '"scan" elsewhere in a request' "$rt"
 check "router: scan line comes before the build line" test "$(grep -n 'The request starts with "scan"' "$rt" | head -1 | cut -d: -f1)" -lt "$(grep -n 'Words about making or changing' "$rt" | head -1 | cut -d: -f1)"
 # project commands: dev-gaps, dev-review, dev-migrate, intake
-for sk in dev-gaps dev-review dev-migrate; do
+for sk in dev-gaps dev-review dev-migrate dev-refactor; do
   f=skills/$sk/SKILL.md
   check "$sk is 120 lines or fewer" test "$(wc -l < "$f")" -le 120
   check "$sk links the contract" grep -qF '../dev/references/dev-contract.md' "$f"
@@ -380,12 +380,16 @@ done
 check "dev-review has the read-only guard" grep -qF 'readonly-guard.sh' skills/dev-review/SKILL.md
 check "dev-review writes project-review report" grep -qF 'reviews/YYYY-MM-DD-project-review.md' skills/dev-review/SKILL.md
 check "dev-migrate uses parity tests" grep -qF '## Parity tests' skills/dev-migrate/SKILL.md
+check "dev-refactor runs tests first" grep -qF "## 3. Safety net first" skills/dev-refactor/SKILL.md
+check "dev-refactor keeps a log" grep -qF "docs/refactor/YYYY-MM-DD-log.md" skills/dev-refactor/SKILL.md
+check "dev-refactor stays in the architecture" grep -qF "dev-migrate" skills/dev-refactor/SKILL.md
+check "rs hands off to raystack" grep -qF "../raystack/SKILL.md" skills/rs/SKILL.md
 check "dev-gaps lists drift" grep -qF 'Drifted means' skills/dev-gaps/SKILL.md
 check "intake asks one question per call" grep -qF 'one question per call' skills/dev/references/intake.md
-for v in new update gaps review migrate; do
-  check "router names project $v" grep -qF "$v" <(grep -F 'project new|update|gaps|review|migrate' skills/raystack/SKILL.md)
+for v in new update gaps review migrate refactor; do
+  check "router names project $v" grep -qF "$v" <(grep -F 'project new|update|gaps|review|migrate|refactor' skills/raystack/SKILL.md)
 done
-for s in dev-gaps dev-review dev-migrate references/intake.md; do
+for s in dev-gaps dev-review dev-migrate dev-refactor references/intake.md; do
   check "dev maps project command to $s" grep -qF "$s" skills/dev/SKILL.md
 done
 for v in reliability architecture code frontend; do
